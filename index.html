@@ -182,9 +182,9 @@ const seed=[
 {id:"hn19",parentId:null,stage:null,title:"HN19 · PV · проектный пример",client:"Заказчик (обезличено)",city:"Gottmadingen",address:"",value:0,status:"draft",owner:"",source:"PDF HN19",notes:"В проектных документах есть несоответствие количества модулей: проверь титул и Stringplan перед закупкой.",docNames:[],messages:[]}
 ];
 const baseline={
-"base-1":{id:"base-1",parentId:null,stage:null,title:"Скатная кровля · 20 кВт (демо)",client:"Solarbau Süd GmbH",city:"Stockach",address:"",value:2000,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Тестовый объект",docNames:[],messages:[]},
-"base-2":{id:"base-2",parentId:null,stage:null,title:"Частный дом · 14,8 кВт (демо)",client:"Hegau Energie",city:"Singen",address:"",value:1480,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Тестовый объект",docNames:[],messages:[]},
-"base-3":{id:"base-3",parentId:null,stage:null,title:"Инвертор и AC · 12 кВт (демо)",client:"Bodensee PV Service",city:"Überlingen",address:"",value:1200,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Доступ только для квалифицированных AC специалистов",docNames:[],messages:[]}
+"base-1":{id:"base-1",parentId:null,stage:null,title:"Скатная кровля · 20 кВт (демо)",client:"Solarbau Süd GmbH",city:"Stockach",address:"",value:2000,status:"draft",owner:"",source:"Демонстрационный лот",notes:"Тестовый объект",docNames:[],messages:[]},
+"base-2":{id:"base-2",parentId:null,stage:null,title:"Частный дом · 14,8 кВт (демо)",client:"Hegau Energie",city:"Singen",address:"",value:1480,status:"draft",owner:"",source:"Демонстрационный лот",notes:"Тестовый объект",docNames:[],messages:[]},
+"base-3":{id:"base-3",parentId:null,stage:null,title:"Инвертор и AC · 12 кВт (демо)",client:"Bodensee PV Service",city:"Überlingen",address:"",value:1200,status:"draft",owner:"",source:"Демонстрационный лот",notes:"Доступ только для квалифицированных AC специалистов",docNames:[],messages:[]}
 };
 let db;try{db=JSON.parse(localStorage.getItem(KEY)||"null");if(!db||!Array.isArray(db.items))throw Error();}catch(_){db={items:JSON.parse(JSON.stringify(seed)),active:"demo-master",seq:0};}
 for(const k of Object.keys(baseline))if(!db.items.some(x=>x.id===k))db.items.push({...baseline[k]});
@@ -201,7 +201,7 @@ const t=TYPES.find(x=>x[0]===stage),n={...p,
 id:next(),parentId:p.id,stage:stage||"CUSTOM",
 title:t?t[1]:p.title+" · новая задача",value:0,status:"draft",owner:"",source:"Наследовано от "+p.id,
 notes:t?t[2]:p.notes,
-docNames:[...(p.docNames||[])],messages:[]};
+docNames:[...(p.docNames||[])],messages:[],photos:{}};
 db.items.push(n);db.active=p.id;store();draw();
 }
 function split(id){
@@ -211,13 +211,13 @@ db.active=id;store();draw();if(!count)alert("Четыре основных су�
 }
 function addChildQuiet(p,t){db.items.push({...p,id:next(),parentId:p.id,stage:t[0],title:t[1],
 value:0,status:"draft",owner:"",source:"Наследовано от "+p.id,notes:t[2],
-docNames:[...(p.docNames||[])],messages:[]});}
+docNames:[...(p.docNames||[])],messages:[],photos:{}});}
 function createRoot(){
 const t=$("#proj-title")?.value.trim();if(!t)return alert("Введи название проекта");
 const client=$("#proj-client")?.value.trim()||"Заказчик";
 const city=$("#proj-city")?.value.trim()||"";
 const n={id:next(),parentId:null,stage:null,title:t,client,city,address:"",
-value:0,status:"draft",owner:"",source:"Создан пользователем",notes:"",docNames:[],messages:[]};
+value:0,status:"draft",owner:"",source:"Создан пользователем",notes:"",docNames:[],messages:[],photos:{}};
 db.items.push(n);db.active=n.id;store();draw();
 }
 function statusText(x){return ({draft:"Черновик",open:"Опубликован (демо)",work:"В работе",review:"На проверке",accepted:"Принят"})[x]||"Черновик";}
@@ -231,6 +231,31 @@ let p=item,seen=new Set(),ret=[];
 while(p&&!seen.has(p.id)){seen.add(p.id);for(const f of p.docNames||[])if(!ret.includes(f))ret.push(f);p=find(p.parentId);}
 return ret;
 }
+
+const PHOTO_MAP={
+PLAN:["Dachplan / план крыши","UK-Plan / схема крюков и шин","Stringplan / схема стрингов"],
+DC:["Dachschutz / защита крыши","Unterkonstruktion / крюки и шины","Module / монтаж модулей","DC-Stringplan / кабели","Erdung / заземление","Dachausgang und Kabelkanal / выход и спуск кабеля"],
+AC:["Wechselrichter / инвертор","AC-Kabelweg / кабельная трасса","Zählerschrank / щит","Prüfung / протокол проверки"],
+REG:["Netzbetreiber / пакет заявки","Inbetriebnahme / протокол","MaStR / регистрация"],
+CUSTOM:["Фото до","Задача и выполнение","Фото после"]
+};
+function photoLabels(item){return PHOTO_MAP[item.stage]||PHOTO_MAP.CUSTOM}
+function photoState(item,i){item.photos||={};return item.photos[i]||{before:false,after:false,approved:false}}
+function photoUI(item){
+const names=photoLabels(item);
+return '<div class="v03line"></div><h3>📷 Фото-чек-лист · до → задача → после → проверка</h3>'+
+'<p class="v03muted">Фото после отправляет этап заказчику на проверку. Кнопка приёмки в этом демо имитирует решение заказчика, без подтверждения личности.</p>'+
+'<div class="v03grid">'+names.map((name,i)=>{const st=photoState(item,i);
+const before=media[item.id+'-photo-'+i+'-before'],after=media[item.id+'-photo-'+i+'-after'];
+return '<div class="v03tile"><strong>'+clean(name)+'</strong><div class="v03muted">'+(st.approved?'✅ Принято':st.after?'🟡 На проверке':'⚪ Не закрыто')+'</div>'+
+'<label>До<input type="file" accept="image/*,video/*" data-proof="'+i+':before"></label>'+
+(before?'<img src="'+before.url+'" alt="Фото до">':(st.before?'<small>Был файл до, повторно приложи после обновления</small>':''))+
+'<label>После<input type="file" accept="image/*,video/*" data-proof="'+i+':after"></label>'+
+(after?'<img src="'+after.url+'" alt="Фото после">':(st.after?'<small>Был файл после, повторно приложи после обновления</small>':''))+
+'<button class="v03btn" data-proofcheck="'+i+'" '+(!st.after?'disabled':'')+'>'+(st.approved?'Отменить приёмку':'✓ Подтвердить как заказчик')+'</button></div>';
+}).join('')+'</div>';
+}
+
 function draw(){
 const host=$("#projectRoot");if(!host)return;
 const current=find(db.active)||db.items[0];if(!current)return;db.active=current.id;
@@ -259,6 +284,7 @@ host.innerHTML='<div class="v03head"><h2>🏗️ Объекты, лоты и с�
 '<p class="v03muted">Projektierung · DC-Montage · AC-Anschluss · Anmeldung. Роли, суммы и сроки независимы. Бюджеты сублотов по умолчанию нулевые, пока заказчик не установит их самостоятельно.</p>'+
 '<strong>Сублотов: '+direct.length+'. Сумма бюджетов: '+total.toLocaleString("ru-RU")+' €'+(budget?' из '+budget.toLocaleString("ru-RU")+' € родительского лота.':'.')+'</strong>'+
 (direct.length?'<div class="v03grid">'+direct.map(x=>'<div class="v03tile"><div class="v03muted">'+clean(x.stage||"")+'</div><strong>'+clean(x.title)+'</strong><div>'+clean(statusText(x.status))+' • '+Number(x.value||0).toLocaleString("ru-RU")+' €</div><button class="v03btn" data-pick="'+clean(x.id)+'">Открыть сублот →</button></div>').join("")+'</div>':"")+
+photoUI(current)+
 '<div class="v03line"></div><h3>📑 Документы проекта и наследование</h3><p class="v03muted">Документы и файлы хранятся только в текущей вкладке. Имя файла наследуется сублотами, но после перезагрузки файл нужно прикрепить повторно до подключения серверного хранилища.</p>'+
 '<input id="proj-pdf" type="file" accept=".pdf,application/pdf"><div class="v03muted">'+(parentDocs.length?parentDocs.map(x=>clean(x)).join(", "):"Документов пока нет")+'</div>'+
 (pdf?'<iframe title="Просмотр PDF внутри приложения" class="v03pdf" src="'+pdf.url+'"></iframe>':"")+
@@ -273,6 +299,24 @@ host.querySelectorAll("[data-edit]").forEach(el=>{let k=el.dataset.edit;current[
 $("#proj-copy").onclick=()=>addChild(current.id,null);
 $("#proj-split").onclick=()=>split(current.id);
 if($("#proj-nav"))$("#proj-nav").onclick=()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(current.address),"_blank","noopener");
+
+host.querySelectorAll("[data-proof]").forEach(el=>el.onchange=e=>{
+const f=e.target.files?.[0];if(!f)return;
+const [i,p]=el.dataset.proof.split(":"),st=photoState(current,i);
+const k=current.id+"-photo-"+i+"-"+p;
+if(media[k])URL.revokeObjectURL(media[k].url);
+media[k]={url:URL.createObjectURL(f),type:f.type,name:f.name};
+current.photos||={};current.photos[i]||={before:false,after:false,approved:false};
+current.photos[i][p]=true;
+if(p==="after")current.photos[i].approved=false;
+store();draw();
+});
+host.querySelectorAll("[data-proofcheck]").forEach(el=>el.onclick=()=>{
+const i=el.dataset.proofcheck,st=photoState(current,i);
+if(!st.after)return;
+current.photos[i].approved=!st.approved;store();draw();
+});
+
 $("#proj-pdf").onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(f.type!=="application/pdf"&&!/\.pdf$/i.test(f.name))return alert("Выбери PDF");const k=current.id+"-pdf";if(media[k])URL.revokeObjectURL(media[k].url);media[k]={url:URL.createObjectURL(f),filename:f.name};current.docNames||=[];if(!current.docNames.includes(f.name))current.docNames.push(f.name);store();draw();};
 $("#proj-photo").onchange=e=>{const f=e.target.files?.[0];if(f)media[current.id+"-post"]={url:URL.createObjectURL(f),type:f.type,name:f.name};};
 $("#proj-message").onclick=()=>{const v=$("#proj-post").value.trim();if(!v)return;current.messages||=[];const m={from:$("#proj-sender").value.trim()||"Участник",text:v,when:new Date().toLocaleString("ru-RU"),comments:[]};if(media[current.id+"-post"]){m.text+="\n[Медиа в текущем сеансе: "+media[current.id+"-post"].name+"]";delete media[current.id+"-post"];}current.messages.push(m);store();draw();};
@@ -293,6 +337,9 @@ const base=$("#community");if(base)base.after(host);
 for(const nav of ["#sideNav","#bottomNav"]){const n=$(nav);if(n&&!n.querySelector('[data-v03nav="projects"]')){
 const b=document.createElement("button");b.dataset.v03nav="projects";b.textContent=nav==="#bottomNav"?"▦ Проекты":"▦   Проекты 0.3";b.onclick=show;n.appendChild(b);}}
 const root=$("#lots");
+if(root?.classList.contains("active")){
+root.querySelectorAll("h2").forEach(h=>{if(h.textContent.includes("Сдача работ • демо"))h.closest(".panel").style.display="none";});
+}
 if(root?.classList.contains("active")&&!$("#projectsEntry")){
 const bar=document.createElement("div");bar.id="projectsEntry";bar.className="v03tile";
 const currentLot=(root.querySelector(".eyebrow")?.textContent||"").match(/ЛОТ NV-0*(\d+)/);
