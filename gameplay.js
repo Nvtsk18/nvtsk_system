@@ -71,6 +71,7 @@ const requirements=p=>{
 const compactProgress=p=>{const a=proofSteps(p),n=a.filter(x=>x.done).length;return {n,total:a.length,percent:Math.round(n/Math.max(1,a.length)*100)}};
 const stkey=key=>String(key).replace(/[^a-zA-Z0-9_-]/g,"");
 const ch=name=>enc(name||"");
+const empty=t=>'<div class="empty">'+ch(t)+'</div>';
 const userName=id=>ch(person(id)?.name||id||"Пользователь");
 const msgPost=p=>p.author==="me"?person("me")?.name:person(p.author)?.name||"Пользователь";
 const styleIcon=(id)=>({DC:"▥",AC:"ϟ",REG:"⌁",PLAN:"▤",FULL:"♜"})[id]||"▣";
@@ -174,6 +175,38 @@ function world(){
  '<div class="segment game-tabs">'+tabs.map(([key,name])=>'<button data-game="world-tab" data-id="'+key+'" class="'+(game.worldTab===key?"active":"")+'">'+name+'</button>').join("")+'</div>'+
  content[game.worldTab]()+'</div>';
 }
+
+function dashboard(){
+ const active=db.projects.filter(p=>game.starts.includes(p.id)&&!game.claims.includes(p.id)).slice(0,3);
+ const nearby=db.projects.filter(p=>p.status==="published"||p.status==="progress").slice(0,3);
+ const score=Object.values(game.district).reduce((a,b)=>a+Number(b||0),0);
+ const missionRows=active.length?active.map(p=>'<div class="listrow"><div><b>'+ch(p.title)+'</b><div class="small muted">'+ch(p.city)+' • '+compactProgress(p).percent+'% выполнено</div></div>'+btn("game-open","Продолжить ↗","mini",'data-id="'+p.id+'"')+'</div>').join(""):empty("Активных миссий пока нет");
+ const cards=nearby.map(missionCard).join("");
+ return '<div class="stack">'+topCard()+
+ '<div class="grid cols4">'+stat("Уровень",level(),missionRank(level()))+stat("Merit",fmt(db.merit),"Игровой баланс")+stat("Crew",db.crew.members.length,"Моя бригада")+stat("Territory REP",fmt(score),"Региональное влияние")+'</div>'+
+ card('<div class="between"><h2>Активные миссии</h2>'+btn("game-nav","Mission Board ↗","mini",'data-screen="missions"')+'</div>'+missionRows)+
+ card('<div class="between"><h2>Контракты для тебя</h2>'+btn("game-nav","Все миссии ↗","mini",'data-screen="missions"')+'</div><div class="grid cols3">'+cards+'</div>')+
+ card('<h2>Карьера персонажа</h2><p>Репутация растёт от подтверждённых задач, а Merit остаётся отдельным игровым балансом.</p>'+
+ '<div class="career-road">'+["Rookie","Installer","Leader","Legend","Master"].map((name,i)=>'<div class="career-node '+(level()>=[12,13,15,17,20][i]?"done":"")+'"><div class="career-dot">'+(level()>=[12,13,15,17,20][i]?"✓":"◇")+'</div><strong>'+name+'</strong><span>LVL '+[12,13,15,17,20][i]+'</span></div>').join("")+'</div>')+
+ '</div>';
+}
+function cabinet(){
+ const p=person("me"),completed=db.projects.filter(x=>game.claims.includes(x.id));
+ const badges=[["FIRST MISSION",game.claims.length>0],["CREW PLAYER",db.crew.members.length>=4],["SOCIAL SPARK",db.social.posts.some(x=>x.author==="me")],["REGIONAL",Object.values(game.district).some(n=>n>=140)]];
+ const achievements=badges.map(([name,unlocked])=>'<div class="achievement '+(unlocked?"achieved":"")+'"><div class="achievement-icon">'+(unlocked?"★":"◇")+'</div><b>'+name+'</b><small>'+(!unlocked?"Заблокировано":"Получено")+'</small></div>').join("");
+ const history=completed.length?completed.map(x=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+x.id+'">'+ch(x.title)+'</button>'+pill("✓ Готово","ok")+'</div>').join(""):empty("Завершённых миссий пока нет");
+ const activity=game.activity.length?game.activity.slice(0,8).map(x=>'<div class="listrow"><span>'+ch(x.text)+'</span><span class="tiny muted">'+ch(x.when)+'</span></div>').join(""):empty("Действий пока нет");
+ return '<div class="stack">'+topCard()+
+ card('<div class="between"><h2>Личный кабинет</h2>'+btn("edit-profile","✎ Изменить","mini")+'</div>'+
+ '<div class="grid cols3">'+stat("XP",fmt(db.xp),"Прогресс")+stat("Legacy",fmt(totalLegacy(p)),"Репутация")+stat("Merit",fmt(db.merit),"Баланс")+'</div>'+
+ '<div class="row" style="margin-top:15px">'+pill(game.registration.complete?"Демо-персонаж":"Гостевой режим",game.registration.complete?"ok":"warn")+pill(ch(p.city||"Регион не указан"))+'</div>'+
+ '<div class="row" style="margin-top:12px">'+btn("game-nav","◈ Кошелёк","primary",'data-screen="wallet"')+btn("game-nav","✦ Миссии","",'data-screen="missions"')+btn("game-nav","♙ Бригада","",'data-screen="crew"')+
+ (game.registration.complete?"":btn("game-register","Регистрация"))+'</div>'+
+ '<p class="footnote">Это локальный кабинет без авторизации на сервере. Для работы на нескольких устройствах нужна общая база данных.</p>')+
+ '<div class="grid cols2">'+card('<h2>Награды</h2><div class="grid cols2">'+achievements+'</div>')+card('<h2>Завершённые проекты</h2>'+history)+'</div>'+
+ card('<h2>Последние действия</h2>'+activity)+
+ '<div class="row">'+btn("game-export","Экспортировать JSON","mini")+btn("game-nav","Skill Tree ↗","mini",'data-screen="world" data-tab="skills"')+'</div></div>';
+}
 function wallet(){
  const ledgerRows=[...(db.ledger||[])].slice().reverse();
  const locked=db.frozen||0,available=db.merit||0;
@@ -222,7 +255,7 @@ function raidModal(p){
 function onboardingAvatar(){
  // The existing profile avatar upload works on the cabinet page; no unverified identity claims.
 }
-const screens={missions,world,social,wallet};
+const screens={dashboard,missions,world,social,wallet,profile:cabinet};
 window.NVTSK_EXT={screens};
 const gameActions={
  "game-nav":b=>{if(b.dataset.tab)game.worldTab=b.dataset.tab;go(b.dataset.screen)},
