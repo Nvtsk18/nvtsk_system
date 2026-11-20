@@ -69,3 +69,26 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Known limitations:** use of sample organisation names is explicitly marked demo; no real company membership. No actual uploaded photos or PDFs, no secure storage, no authenticated server chat or stage acceptance. No verified electronic qualifications. UI has not been manually tested in Safari on a real iPhone. Public GitHub Pages availability of the new subdirectory has not been independently confirmed. These remain **open**, not PASS.
 
 **Immediate next pass priorities:** persistent project storage and schema validation, user-scoped authentication/permission model, media/evidence lifecycle, social feed and comment model, secure backend plan, controlled MentorGate ledger events. Recheck no-JS iOS fallback in physical Safari.
+
+
+## Implementation pass #2 · 2026-11-20 23:00 CET
+
+**Commit:** `91ff0c483d9d87575e10af1159c796265978c196` (only `silver-command/app.js`). No edits to 0.3 root.
+
+**Prioritised fixes (4):**
+1. Validate local saved state: schema shape, lot IDs, references, cyclic parent graphs and finite non-negative prices. Reject corrupt saves and initialise safe demo defaults with a visible warning.
+2. Enforce author-scoped lot mutation for assignment and splitting. An outsider cannot assign an executor or create derived sublots for a third party's lot in the local demo.
+3. Block demo AC and Anmeldung assignment until an independent qualification/authorisation mechanism exists. Prevent assigned worker from placing another bid on the same lot.
+4. Add user-triggered JSON backup export, explicit localStorage failure warning and bounded local audit events for create, split, bid, assign and profile edit.
+
+**Three perspectives and conflicts reviewed:**
+- Customer vs unauthorised outsider: assigning someone to a lot created by `demo-client` must be refused. **Code-path guard added.**
+- DC installer vs AC specialist: an unverified user may not be assigned regulated AC or Anmeldung work. **Guard added; real verification remains absent.**
+- Project owner vs self-interested bidder: author cannot bid own lot; appointed executor cannot rebid after appointment. **Guards present.**
+- Device owner vs storage failure: localStorage exception must not silently masquerade as persistence. **Warning and JSON export implemented.**
+
+**Verification:** 8 static source invariant assertions PASS after transformation (schema validation, cycle check, scoped assignment, AC gate, storage warning, backup export, bid conflict, audit event). These are **static source assertions**, NOT browser tests, syntax parser execution or end-to-end proof. GitHub update returned a commit SHA. Actual Safari/iPhone behavior and corrupted-storage recovery remain unverified. No backend/authentication; client-side checks are bypassable and must not be treated as security controls.
+
+**Open problems:** no authenticated organisations, server-side permission checks, stage evidence workflow, chat/social network, immutable audit, independent acceptance, financial ledger, cloud backup or regulated electrical authorisation. Prototype export includes demo data only; must not be used for sensitive production records.
+
+**Next:** add testable pure domain model for stage lifecycle and independent acceptance; introduce local posts/comments with visibility semantics clearly marked demo; design server authorization before any real users.
