@@ -122,7 +122,7 @@ function hierarchy(p,depth=0){
 function projectCards(){
  return db.projects.filter(p=>!p.parentId).filter(p=>ui.filter==="all"||p.kind===ui.filter).map(p=>{
  const count=children(p.id).length,done=Object.values(p.tasks||{}).filter(s=>s.status==="accepted").length;
- return '<div class="lot"><div class="between">'+pill(enc(p.kind==="FULL"?"DC + AC":p.kind),"blue")+pill(enc(p.status),"")+'</div><div><h3>'+enc(p.title)+'</h3><div class="small muted">'+enc(p.client)+' · '+enc(p.city)+'</div></div><div class="between"><div class="price">'+fmt(p.budget)+' €</div><span class="small muted">'+(count?count+" сублотов":done+" фотоэтапов")+'</span></div><div class="row">'+btn("open-project","Открыть проект ↗","primary mini",'data-id="'+p.id+'"')+btn("split","Разбить на 4","mini",'data-id="'+p.id+'"')+'</div></div>'
+ return '<div class="lot"><div class="between">'+pill(enc(p.kind==="FULL"?"DC + AC":p.kind),"blue")+pill(enc(p.status),"")+'</div><div><h3>'+enc(p.title)+'</h3><div class="small muted">'+enc(p.client)+' · '+enc(p.city)+'</div><div class="row" style="margin-top:8px">'+lotRoleTag(p)+'</div></div><div class="between"><div class="price">'+fmt(p.budget)+' €</div><span class="small muted">'+(count?count+" сублотов":done+" фотоэтапов")+'</span></div><div class="row">'+btn("open-project","Открыть проект ↗","primary mini",'data-id="'+p.id+'"')+btn("split","Разбить на 4","mini",'data-id="'+p.id+'"')+'</div></div>'
  }).join("");
 }
 function projectList(){
@@ -210,7 +210,7 @@ function mapScreen(){
 function market(){
  const lots=db.projects.filter(p=>p.status==="published"||p.status==="progress").filter(p=>ui.filter==="all"||p.kind===ui.filter);
  return '<div class="stack">'+card('<h2>Биржа подрядов</h2><p class="small">Ищем работу по компетенциям, срокам и репутации. Цена не единственный критерий. AC и Anmeldung требуют дополнительной проверки полномочий.</p><div class="segment">'+["all","DC","AC","PLAN","REG","FULL"].map(f=>'<button class="'+(ui.filter===f?"active":"")+'" data-act="filter" data-id="'+f+'">'+f.toUpperCase()+'</button>').join("")+'</div>')+
- '<div class="grid cols3">'+lots.map(p=>'<div class="lot"><div class="between">'+pill(enc(p.kind),"blue")+pill(enc(p.city),"")+'</div><h3>'+enc(p.title)+'</h3><div class="tiny muted">'+enc(p.client)+'</div><div class="price">'+fmt(p.budget)+' €</div><div class="small muted">'+(p.bids||[]).length+' предложений • '+(p.parentId?"Сублот":"Основной лот")+'</div>'+btn("open-project","Детали и ставка ↗","primary full",'data-id="'+p.id+'"')+'</div>').join("")+'</div></div>';
+ '<div class="grid cols3">'+lots.map(p=>'<div class="lot"><div class="between">'+pill(enc(p.kind),"blue")+pill(enc(p.city),"")+'</div><h3>'+enc(p.title)+'</h3><div class="tiny muted">'+enc(p.client)+'</div><div class="row">'+lotRoleTag(p)+'</div><div class="price">'+fmt(p.budget)+' €</div><div class="small muted">'+(p.bids||[]).length+' предложений • '+(p.parentId?"Сублот":"Основной лот")+'</div>'+btn("open-project","Детали и ставка ↗","primary full",'data-id="'+p.id+'"')+'</div>').join("")+'</div></div>';
 }
 function radar(p){
  const skills=p.stats||[55,55,55,55,55,55]; const pts=(v,scale=1)=>skills.map((x,i)=>{let a=(-Math.PI/2)+Math.PI*2*i/6,rad=95*(scale?x/100:1);return (130+Math.cos(a)*rad).toFixed(1)+","+(130+Math.sin(a)*rad).toFixed(1)}).join(" ");
@@ -459,7 +459,7 @@ const appActions={
  "show-stage-pdf":b=>{const p=project(b.dataset.id),docs=docsInherited(p);if(!docs.length)return notify("Прикрепи PDF к этому проекту");const page=p.tasks[b.dataset.phase]?.pdfPage||1;openPdf(docs[0].mediaId,page)},
  pdf:b=>openPdf(b.dataset.mediaid),
  "approve-task":b=>approve(project(b.dataset.id),b.dataset.phase),
- "assign":()=>{const p=project(ui.project);p.assignee=Q("#projectAssignee").value;if(p.assignee&&p.assignee!==p.createdBy){p.members||=[];if(!p.members.includes(p.assignee))p.members.push(p.assignee);}persist();render();notify("Исполнитель назначен (демо)")},
+ "assign":()=>{const p=project(ui.project);const selected=Q("#projectAssignee").value;if(selected&&selected===p.createdBy)return notify("Создатель лота уже заказчик; назначь другого исполнителя");p.assignee=selected;if(p.assignee&&p.assignee!==p.createdBy){p.members||=[];if(!p.members.includes(p.assignee))p.members.push(p.assignee);}persist();render();notify("Исполнитель назначен (демо)")},
  "lot-invite":()=>inviteLotMemberModal(),
  "lot-add-member":b=>{const p=project(ui.project);if(!p)return;const id=b.dataset.id;if(id===p.createdBy){notify("Создатель лота уже является заказчиком");return}p.members||=[];if(!p.members.includes(id))p.members.push(id);persist();closeModal();render();notify("Участник добавлен в лот как исполнитель")},
  "set-status":()=>{const p=project(ui.project);p.status=Q("#projectStatus").value;persist();render();notify("Статус обновлён")},
