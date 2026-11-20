@@ -523,6 +523,6 @@ document.addEventListener("touchend",e=>{
  ui.projectDetail=false;go(nav[next][0]);
 },{passive:true});
 document.addEventListener("DOMContentLoaded",()=>{});
-window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy};
+window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy,splitProject};
 render();
 })();
