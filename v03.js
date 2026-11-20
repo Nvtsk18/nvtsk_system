@@ -133,10 +133,10 @@ function projectDetail(){
  const par=p.parentId?project(p.parentId):null,sub=children(p.id),docids=docsInherited(p);
  const bids=[...(p.bids||[])].sort((a,b)=>a.price-b.price);
  const total=sub.reduce((a,b)=>a+Number(b.budget||0),0);
- const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div><h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted"><button class="itemlink" data-act="company" data-name="'+enc(p.client)+'">'+enc(p.client)+'</button> • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
+ const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div>'+(p.cover?'<div class="project-cover"><img data-media="'+enc(p.cover)+'" alt="Фото кровли до работ"></div>':'')+'<h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted"><button class="itemlink" data-act="company" data-name="'+enc(p.client)+'">'+enc(p.client)+'</button> • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
  (par?'<div class="breadcrumb">Родитель: <button class="itemlink" data-act="open-project" data-id="'+par.id+'">'+enc(par.title)+'</button></div>':"")+
  '<div class="grid cols3" style="margin:19px 0">'+stat("Бюджет",fmt(p.budget)+" €","")+stat("Сублоты",sub.length,"На этом уровне")+stat("Исполнитель",owner(p)?idName(p.assignee):"Не выбран","")+'</div>'+
- '<div class="row">'+btn("edit-project","✎ Редактировать")+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div>'+
+ '<div class="row">'+btn("edit-project","✎ Редактировать")+'<label class="btn mini" style="cursor:pointer;margin:0">＋ Фото крыши<input type="file" data-file="cover" data-id="'+p.id+'" accept="image/*" style="display:none"></label>'+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div>'+
  '<div class="divider"></div><p>'+enc(p.notes||"Описание ещё не заполнено")+'</p>'+
  (sub.length?'<div class="small sub">Сумма бюджетов сублотов: <b>'+fmt(total)+' €</b> '+(p.budget&&total>p.budget?pill("Превышен бюджет родителя","bad"):"")+'</div>':""));
  const subView=sub.length?card('<h2>Сублоты · '+sub.length+'</h2><div class="grid cols2">'+sub.map(c=>'<div class="step"><div class="between">'+pill(enc(c.kind),"blue")+pill(enc(c.status),"")+'</div><h3 style="margin:12px 0 4px">'+enc(c.title)+'</h3><div class="between"><strong>'+fmt(c.budget)+' €</strong><span class="small muted">'+(owner(c)?idName(c.assignee):"Исполнитель свободен")+'</span></div><div style="margin-top:10px">'+btn("open-project","Открыть ↗","mini primary",'data-id="'+c.id+'"')+'</div></div>').join("")+'</div>'):"";
@@ -264,7 +264,7 @@ function createProjectModal(parentId=null){
  '<label>Заказчик<input name="client" required value="'+(p?enc(p.client):"")+'" list="clients-list"></label><datalist id="clients-list">'+companyNames.map(s=>'<option value="'+enc(s)+'">').join("")+'</datalist>'+
  '<div class="grid cols2"><div><label>Город<input name="city" value="'+(p?enc(p.city):"")+'" required></label></div><div><label>Тип лота<select name="kind">'+["FULL","DC","AC","PLAN","REG"].map(k=>'<option value="'+k+'" '+(p?.kind===k?"selected":"")+'>'+k+'</option>').join("")+'</select></label></div></div>'+
  '<label>Адрес<input name="address" value="'+(p?enc(p.address):"")+'" placeholder="Точный адрес объекта"></label>'+
- '<label>Бюджет, €<input name="budget" type="number" step=".01" min="0" value="'+(p?"":0)+'"></label><label>Описание<textarea name="notes">'+(p?enc(p.notes):"")+'</textarea></label>'+
+ '<label>Бюджет, €<input name="budget" type="number" step=".01" min="0" value="'+(p?"":0)+'"></label><label>Описание<textarea name="notes">'+(p?enc(p.notes):"")+'</textarea></label><label>Фото объекта ДО <input type="file" data-file="cover-create" accept="image/*"></label><span id="coverFileLabel" class="tiny muted"></span>'+
  '<div class="row" style="margin-top:15px"><button type="submit" class="btn primary">Сохранить</button>'+btn("close","Отмена","ghost")+'</div></form>');
 }
 function editProjectModal(){
@@ -441,6 +441,7 @@ document.addEventListener("submit",ev=>{
   const p=par?{...par,id:uid(),parentId:par.id,title:d.title,kind:d.kind,client:d.client,city:d.city,address:d.address,notes:d.notes,budget:Number(d.budget||0),status:"draft",assignee:"",docs:[],posts:[],messages:[],bids:[],tasks:{},tip:0,created:date()}:
   seedProject(uid(),d.title,d.client,d.city,0,Number(d.budget||0),d.kind,d.notes);
   if(!par){p.address=d.address;p.status="draft";}
+  p.cover=ui.pendingCoverMedia||(par?.cover||"");ui.pendingCoverMedia="";
   db.projects.push(p);persist();closeModal();detail(p.id);notify("Проект создан");
  }else if(f.id==="editProjectForm"){
   const p=project(ui.project);for(const k of ["title","client","city","address","notes"])p[k]=d[k]||"";
@@ -484,6 +485,8 @@ document.addEventListener("change",async ev=>{
  try{
   notify("Сохраняю файл…");
   const id=await saveMedia(file);
+  if(type==="cover-create"){ui.pendingCoverMedia=id;const l=Q("#coverFileLabel");if(l)l.textContent="Прикреплено: "+file.name;notify("Фото объекта подготовлено");return;}
+  if(type==="cover"){const p=project(el.dataset.id);p.cover=id;persist();render();notify("Фото объекта обновлено");return;}
   if(type==="avatar"){person("me").avatar=id;persist();render();notify("Аватар обновлён");return;}
   if(type==="pdf"){const p=project(el.dataset.id);p.docs.push({mediaId:id,name:file.name,from:p.id,when:date()});persist();render();notify("PDF сохранён в этом браузере");return;}
   if(type==="proof"){receiveProof(project(el.dataset.id),el.dataset.phase,el.dataset.side,id);return;}
