@@ -8,9 +8,9 @@ const uuid = () => "lot-" + Math.random().toString(36).slice(2,10);
 const tabs = [["dashboard","⌂","Главная"],["map","⌾","Карта"],["projects","▤","Проекты"],["chats","☷","Чаты"],["profile","◉","Профиль"]];
 const kinds = [["PLAN","Projektierung"],["DC","DC-Montage"],["AC","AC-Anschluss"],["REG","Anmeldung"]];
 const initial = [
-  {id:"stock",title:"20 кВт DC • Stockach",city:"Stockach",client:"Демо Solarbau Süd",price:2000,kind:"DC",creator:"demo-client",parent:null,bids:[]},
-  {id:"singen",title:"14,8 кВт DC • Singen",city:"Singen",client:"Демо Hegau Energie",price:1480,kind:"DC",creator:"demo-client",parent:null,bids:[{amount:1380,team:"SüdMontage (демо)"}]},
-  {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,bids:[]}
+  {id:"stock",title:"20 кВт DC • Stockach",city:"Stockach",client:"Демо Solarbau Süd",price:2000,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[]},
+  {id:"singen",title:"14,8 кВт DC • Singen",city:"Singen",client:"Демо Hegau Energie",price:1480,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[{amount:1380,team:"SüdMontage (демо)"}]},
+  {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,members:[],bids:[]}
 ];
 let state;
 try { state = JSON.parse(localStorage.getItem(KEY) || "null"); if (!state || !Array.isArray(state.lots)) throw Error("Empty"); }
@@ -19,7 +19,7 @@ let screen = "dashboard";
 let selected = "singen";
 const save = () => localStorage.setItem(KEY, JSON.stringify(state));
 const find = id => state.lots.find(l => l.id === id);
-const role = l => l.creator === "me" ? "Заказчик" : (l.bids || []).some(b => b.mine) ? "Кандидат" : "Наблюдатель";
+const role = l => l.creator === "me" ? "Заказчик" : l.assignee === "me" || (l.members || []).includes("me") ? "Исполнитель" : (l.bids || []).some(b => b.mine) ? "Кандидат" : "Наблюдатель";
 const button = (act, label, id) => '<button class="btn sm" data-act="' + act + '" data-id="' + (id || "") + '">' + label + '</button>';
 const panel = content => '<section class="glass work">' + content + '</section>';
 const badge = text => '<span class="pill blue">' + encode(text) + '</span>';
@@ -48,7 +48,7 @@ function lotScreen() {
  let bidlist = (l.bids||[]).map(b=>'<div class="listrow"><span>'+encode(b.team)+'</span><b>'+money(b.amount)+' €</b></div>').join("");
  return '<div class="stack">'+panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
  '<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фото до/после, PDF, Stringplan, Erdung и подтверждение заказчиком станут следующими подключаемыми модулями. Фото само по себе не означает принятия работ.</p>') +
- panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><p class="small" style="margin-top:10px">Демонстрационные данные остаются в браузере. На собственный лот подавать ставку нельзя.</p>')+'</div></div>';
+ panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div></div>';
 }
 function chat() {
  return panel('<h2>Коммуникация</h2><p>Ленты объектов, сообщения и комментарии входят в архитектуру. Для настоящего межпользовательского чата нужны авторизация и сервер, поэтому здесь пока только концептуальный экран.</p><div class="tile">Личные сообщения • Чаты объектов • Социальная лента • Уведомления</div>');
@@ -76,7 +76,7 @@ function split(l) {
  if (!l) return;
  for(const [kind,title] of kinds) {
   if (state.lots.some(x=>x.parent===l.id&&x.kind===kind)) continue;
-  state.lots.push({id:uuid(),title,city:l.city,client:l.client,price:0,kind,creator:"me",parent:l.id,assignee:null,bids:[]});
+  state.lots.push({id:uuid(),title,city:l.city,client:l.client,price:0,kind,creator:"me",parent:l.id,assignee:null,members:[],bids:[]});
  }
  save();selected=l.id;go("lot");
 }
@@ -88,6 +88,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="new")create();
  if(b.dataset.act==="split")split(find(b.dataset.id));
  if(b.dataset.act==="edit-name")modal('<h2>Ваше имя</h2><form id="nameForm"><label>Ваше имя<input name="name" value="'+encode(state.name)+'" required></label><button class="btn primary" type="submit">Сохранить</button></form>');
+ if(b.dataset.act==="assign"){const l=find(selected),who=$("#assignee").value;if(who===l.creator&&who){alert("Самоназначение автора лота запрещено");return;}l.assignee=who||null;save();render();return;}
  if(b.dataset.act==="bid"){
   const l=find(selected),amount=Number($("#bid").value);
   if(role(l)==="Заказчик"){alert("Нельзя подавать ставку на свой лот");return;}
@@ -99,7 +100,7 @@ document.addEventListener("submit",e=>{
  const f=e.target;if(!(f instanceof HTMLFormElement))return;e.preventDefault();
  const data=Object.fromEntries(new FormData(f));
  if(f.id==="newForm"){
- state.lots.push({id:uuid(),title:data.title,city:data.city,client:"Создано пользователем",price:Number(data.price)||0,kind:data.kind,creator:"me",parent:null,assignee:null,bids:[]});
+ state.lots.push({id:uuid(),title:data.title,city:data.city,client:"Создано пользователем",price:Number(data.price)||0,kind:data.kind,creator:"me",parent:null,assignee:null,members:[],bids:[]});
  save();close();go("projects");
  }
  if(f.id==="nameForm"){state.name=data.name;save();close();go("profile");}
