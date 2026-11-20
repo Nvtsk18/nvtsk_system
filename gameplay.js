@@ -54,7 +54,7 @@ const requirements=p=>{
  const reasons=[],r=missionLevel(p),members=db.crew.members.map(person).filter(Boolean);
  if(level()<r)reasons.push("Нужен уровень "+r);
  if(p.kind==="AC"||p.kind==="REG"||p.kind==="FULL"){
-   if(!members.some(x=>x.skills?.includes("AC")&&x.verified))reasons.push("Требуется проверенная Elektrofachkraft");
+   if(!members.some(x=>x.skills?.includes("AC")&&(x.verified||game.demoAcReady)))reasons.push("Требуется Elektrofachkraft (для демо можно включить тестовый флаг в гараже)");
  }
  if(p.kind==="DC"||p.kind==="FULL"){
   if(!members.some(x=>x.skills?.includes("DC")))reasons.push("Нужен DC-монтажник");
@@ -137,7 +137,9 @@ function finishMission(p){
 }
 function garage(){
  const owned=id=>id==="tools"?db.crew.tools:id==="vehicle"?db.crew.vehicle:!!game.inventory[id];
- return '<div class="stack">'+card('<div class="between"><h2>Crew Garage · оснащение</h2>'+pill("READY CHECK","blue")+'</div><p class="small">Гараж показывает оборудование, заявленное бригадой. Нажми на карточку, чтобы отметить наличие на объекте. Это не приобретение реального оборудования и не подтверждение его исправности.</p><div class="grid cols3">'+gear.map(g=>'<div class="garage-card '+(owned(g.id)?"garage-owned":"")+'"><div class="garage-icon">'+g.icon+'</div><h3>'+g.name+'</h3><p class="small">'+g.subtitle+'</p><div class="small muted">'+g.required+'</div><div style="margin-top:10px">'+btn("game-gear",owned(g.id)?"✓ В наличии":"Отметить наличие","mini "+(owned(g.id)?"primary":""),'data-id="'+g.id+'"')+'</div></div>').join("")+'</div><div class="divider"></div><h3>Проверка готовности к рейдам</h3><div class="row">'+pill(db.crew.tools?"✓ Инструменты":"○ Инструменты",db.crew.tools?"ok":"warn")+pill(db.crew.vehicle?"✓ Бус":"○ Бус",db.crew.vehicle?"ok":"warn")+pill(game.inventory.rss?"✓ RSS":"○ RSS",game.inventory.rss?"ok":"warn")+pill(game.inventory.lift?"✓ Lift":"○ Lift",game.inventory.lift?"ok":"warn")+'</div>')+'</div>';
+ return '<div class="stack">'+card('<div class="between"><h2>Crew Garage · оснащение</h2>'+pill("READY CHECK","blue")+'</div><p class="small">Гараж показывает оборудование, заявленное бригадой. Нажми на карточку, чтобы отметить наличие на объекте. Это не приобретение реального оборудования и не подтверждение его исправности.</p><div class="grid cols3">'+gear.map(g=>'<div class="garage-card '+(owned(g.id)?"garage-owned":"")+'"><div class="garage-icon">'+g.icon+'</div><h3>'+g.name+'</h3><p class="small">'+g.subtitle+'</p><div class="small muted">'+g.required+'</div><div style="margin-top:10px">'+btn("game-gear",owned(g.id)?"✓ В наличии":"Отметить наличие","mini "+(owned(g.id)?"primary":""),'data-id="'+g.id+'"')+'</div></div>').join("")+'</div><div class="divider"></div><h3>Проверка готовности к рейдам</h3><div class="row">'+pill(db.crew.tools?"✓ Инструменты":"○ Инструменты",db.crew.tools?"ok":"warn")+pill(db.crew.vehicle?"✓ Бус":"○ Бус",db.crew.vehicle?"ok":"warn")+pill(game.inventory.rss?"✓ RSS":"○ RSS",game.inventory.rss?"ok":"warn")+pill(game.inventory.lift?"✓ Lift":"○ Lift",game.inventory.lift?"ok":"warn")+'</div>'+
+ '<div class="divider"></div><h3>Тестовый AC-допуск</h3><p class="small">Этот переключатель нужен только для проверки игровых сценариев AC и Anmeldung. Он не удостоверяет квалификацию и не разрешает реальные подключения.</p>'+
+ btn("demo-ac-toggle",game.demoAcReady?"✓ Игровой флаг включён":"Включить игровой AC-флаг","mini "+(game.demoAcReady?"primary":""))+'</div>')+'</div>';
 }
 function skills(){
  const n=level(),stats=person("me")?.stats||[80,70,70,70,70,70];
@@ -255,7 +257,7 @@ function raidModal(p){
  const info=game.raids[p.id]||{};
  openModal('<div class="eyebrow">CO-OP MEGA MISSION</div><h2>Рейд • '+ch(p.title)+'</h2><p>Раздели большой объект на четыре независимых сублота и назначь исполнителей. Это планирование, не реальные приглашения внешних бригад.</p>'+
  '<div class="grid cols2">'+stat("Участники",db.crew.members.length,"В локальном отряде")+stat("Уровень",level(),"Требуется "+missionLevel(p))+'</div>'+
- '<form id="gameRaidForm" data-id="'+p.id+'"><div class="grid cols2">'+steps.map(([code,name,desc])=>'<div class="step"><h3>'+name+'</h3><p class="small">'+desc+'</p><label>Ответственный<select name="'+code+'"><option value="">Не назначено</option>'+db.crew.members.map(id=>'<option value="'+id+'" '+(info[code]===id?"selected":"")+'>'+userName(id)+'</option>').join("")+'</select></label></div>').join("")+'</div><button class="btn primary" type="submit" style="margin-top:12px">Сохранить план рейда</button></form>'+
+ '<form id="gameRaidForm" data-id="'+p.id+'"><div class="grid cols2">'+steps.map(([code,name,desc])=>'<div class="step"><h3>'+name+'</h3><p class="small">'+desc+'</p><label>Ответственный<select name="'+code+'"><option value="">Не назначено</option>'+db.crew.members.map(id=>'<option value="'+id+'" '+(info[code]===id?"selected":"")+'>'+userName(id)+'</option>').join("")+'</select></label></div>').join("")+'</div><button class="btn primary" type="submit" style="margin-top:12px">Сохранить план и 4 сублота</button></form>'+
  '<p class="footnote">Назначение AC здесь не подтверждает допуск. Для Германии необходимы полномочия и проверка квалификации.</p>');
 }
 function onboardingAvatar(){
@@ -274,6 +276,7 @@ const gameActions={
   p.status="progress";activity("Взята миссия: "+p.title);save();render();notify("MISSION STARTED • "+p.title);
  },
  "game-claim":b=>{const p=project(b.dataset.id);if(p)finishMission(p)},
+ "demo-ac-toggle":()=>{game.demoAcReady=!game.demoAcReady;save();render();notify(game.demoAcReady?"Тестовый игровой флаг AC включён":"Тестовый игровой флаг AC выключен")},
  "game-gear":b=>{
   const id=b.dataset.id;const existing=id==="tools"?db.crew.tools:id==="vehicle"?db.crew.vehicle:!!game.inventory[id];
   if(id==="tools")db.crew.tools=!existing;else if(id==="vehicle")db.crew.vehicle=!existing;else game.inventory[id]=!existing;
@@ -341,7 +344,10 @@ document.addEventListener("submit",e=>{
  }else if(f.id==="gameRaidForm"){
   const p=project(f.dataset.id);if(!p)return;
   const info=Object.fromEntries(["PLAN","DC","AC","REG"].map(k=>[k,d[k]||""]));
-  game.raids[p.id]=info;save();closeModal();render();notify("План рейда сохранён");
+  game.raids[p.id]=info;
+  api.splitProject(p.id);
+  for(const [kind,id] of Object.entries(info)){const sub=children(p.id).find(s=>s.kind===kind);if(sub&&id)sub.assignee=id;}
+  activity("Спланирован рейд: "+p.title);save();closeModal();render();notify("План рейда и четыре связанных сублота сохранены");
  }
 });
 document.addEventListener("change",async e=>{
