@@ -33,7 +33,7 @@ const users=[
  {id:"artem",name:"Артём",role:"PV • монтажник",skills:["DC"],city:"Überlingen",phone:"",legacy:{dc:2100,ac:0,plan:0,lead:300},xp:6400,verified:false,stats:[75,76,70,75,78,68]}
 ];
 function seedProject(id,title,client,city,kw,budget,kind,notes) {
- return {id,parentId:null,title,client,city,kw,budget,kind,notes,address:"",status:"published",assignee:"",tasks:{},docs:[],posts:[],messages:[],bids:[],created:date(),tip:0};
+ return {id,parentId:null,title,client,city,kw,budget,kind,notes,address:"",status:"published",assignee:"",tasks:{},docs:[],posts:[],messages:[],bids:[],created:date(),tip:0,createdBy:"demo-client",members:[]};
 }
 function initial(){
  const projects=[
@@ -53,12 +53,31 @@ function initial(){
  return {users,projects,crew:{name:old.teamName||"NVTSK Solar Crew",members:["me","roman","denis","olena"],captain:"me",admins:["me","roman"],tools:true,vehicle:true},me:"me",xp:old.xp||24650,merit:old.merit==null?3000:Number(old.merit),frozen:0,legacy:old.legacy||{dc:8500,ac:3200,engineering:1500,leadership:2000},mentor:[],ledger:[],direct:[],version:3};
 }
 let db;try{db=JSON.parse(localStorage.getItem(KEY)||"null");if(!db||!db.projects||!db.users)throw Error("empty");}catch(_){db=initial()}
-const ui={screen:"dashboard",project:"p-singen",person:"me",company:companyNames[0],filter:"all",chat:"p-singen",chatKind:"lot",files:{},modal:null,role:"worker",photoPhase:"",userTab:"info",profileEdit:false};
+for(const p of db.projects){
+ if(!Object.prototype.hasOwnProperty.call(p,"createdBy"))p.createdBy=p.id.startsWith("p-")?"demo-client":null;
+ if(!Array.isArray(p.members))p.members=[];
+}
+const ui={screen:"dashboard",project:"p-singen",person:"me",company:companyNames[0],filter:"all",chat:"p-singen",chatKind:"lot",files:{},modal:null,photoPhase:"",userTab:"info",profileEdit:false};
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(_){notify("Не удалось сохранить локальные данные: хранилище заполнено")}}
 const project=id=>db.projects.find(p=>p.id===id);
 const person=id=>db.users.find(p=>p.id===id);
 const children=id=>db.projects.filter(p=>p.parentId===id);
 const owner=p=>p&&p.assignee?person(p.assignee):null;
+const skillText=p=>(p?.skills||[]).length?p.skills.join(" • "):"Навыки не указаны";
+function roleInLot(lot,userId="me"){
+ if(!lot)return {code:"none",label:"Не участвует"};
+ if(lot.createdBy===userId)return {code:"client",label:"Заказчик"};
+ if(lot.assignee===userId||(lot.members||[]).includes(userId)){
+  const kinds={DC:"Монтажник DC",AC:"Исполнитель AC",PLAN:"Проектировщик",REG:"Исполнитель Anmeldung",FULL:"Исполнитель проекта"};
+  return {code:"worker",label:kinds[lot.kind]||"Исполнитель"};
+ }
+ if((lot.bids||[]).some(b=>b.userId===userId||(userId==="me"&&b.mine)))return {code:"bidder",label:"Кандидат в исполнители"};
+ return {code:"none",label:"Не участвует"};
+}
+function lotRoleTag(lot,userId="me"){
+ const r=roleInLot(lot,userId);
+ return pill("Моя роль: "+r.label,r.code==="client"?"blue":r.code==="worker"?"ok":r.code==="bidder"?"warn":"");
+}
 const totalLegacy=p=>Object.values(p.legacy||{}).reduce((a,b)=>a+Number(b||0),0);
 const scope=["dashboard","projects","market","crew","messages","profile"];
 const nav=[["dashboard","▦","Обзор"],["missions","✦","Миссии"],["projects","▤","Проекты"],["market","◇","Биржа"],["map","⌾","Карта"],["social","◎","Соцсеть"],["crew","♙","Бригада"],["world","⛭","Мир"],["messages","☷","Чаты"],["wallet","◈","Кошелёк"],["profile","◉","Кабинет"]];
@@ -78,17 +97,17 @@ function pill(t,type=""){return '<span class="tag '+type+'">'+t+'</span>'}
 function btn(act,label,cls="",attrs=""){return '<button type="button" class="btn '+cls+'" data-act="'+act+'" '+attrs+'>'+label+'</button>'}
 function empty(t){return '<div class="empty">'+t+'</div>'}
 function userAvatar(p,big=false){const f=p?.avatar;return '<div class="avatar '+(big?'big':'')+'">'+(f?'<img data-media="'+enc(f)+'" alt="Аватар">':enc((p?.name||"?").slice(0,1)))+'</div>'}
-function userCard(p){return '<div class="listrow"><div class="person">'+userAvatar(p)+'<div><button class="itemlink" data-act="person" data-id="'+enc(p.id)+'">'+enc(p.name)+'</button><small>'+enc(p.role)+'</small><small>Legacy '+fmt(totalLegacy(p))+'</small></div></div>'+btn("person","Профиль ↗","mini",'data-id="'+enc(p.id)+'"')+'</div>'}
+function userCard(p){return '<div class="listrow"><div class="person">'+userAvatar(p)+'<div><button class="itemlink" data-act="person" data-id="'+enc(p.id)+'">'+enc(p.name)+'</button><small>'+enc(skillText(p))+'</small><small>Legacy '+fmt(totalLegacy(p))+'</small></div></div>'+btn("person","Профиль ↗","mini",'data-id="'+enc(p.id)+'"')+'</div>'}
 function idName(id){return enc(person(id)?.name||"Не назначено")}
 function navRender(){
  Q("#snav").innerHTML=nav.map(x=>'<button class="'+(ui.screen===x[0]?"active":"")+'" data-act="nav" data-id="'+x[0]+'"><span class="ic">'+x[1]+'</span>'+x[2]+'</button>').join("");
  Q("#bottomnav").innerHTML=nav.map(x=>'<button class="'+(ui.screen===x[0]?"active":"")+'" data-act="nav" data-id="'+x[0]+'"><span class="ic">'+x[1]+'</span>'+x[2]+'</button>').join("");
  Q("#screenTitle").textContent=nav.find(x=>x[0]===ui.screen)?.[2]||"Обзор";
- Q("#roleDisplay").textContent=ui.role==="client"?"Режим: заказчик":"Режим: исполнитель";
+ // Global roles do not exist: lot participants have contextual roles.
 }
 function overview(){
  const open=db.projects.filter(p=>!p.parentId&&p.status!=="accepted").length;
- const mine=db.projects.filter(p=>p.assignee==="me"||p.bids.some(b=>b.mine));
+ const mine=db.projects.filter(p=>roleInLot(p).code!=="none");
  return '<div class="stack">'+
  '<div class="card hero"><div class="eyebrow">NVTSK • SOLAR OPERATIONS • SILVER EDITION</div><h2>От проекта до сдачи, в одной системе.</h2><p>Связанные лоты, бригады, документы, доказательства монтажа, расчёты и репутация. Тестовая среда для PV-команд.</p><div class="row">'+btn("new-project","＋ Создать проект","primary")+btn("nav","Открыть биржу","",'data-id="market"')+'</div></div>'+
  '<div class="grid cols4">'+stat("Активные объекты",fmt(open),"Демонстрационные проекты")+stat("Merit • доступно",fmt(db.merit),"Заморожено "+fmt(db.frozen))+stat("Моя бригада",fmt(db.crew.members.length)+" чел.","Администраторы: "+db.crew.admins.length)+stat("Legacy",fmt(Object.values(db.legacy).reduce((a,b)=>a+Number(b||0),0)),"Подтверждённый опыт в демо")+'</div>'+
@@ -140,6 +159,7 @@ function projectDetail(){
  const total=sub.reduce((a,b)=>a+Number(b.budget||0),0);
  const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div>'+(p.cover?'<div class="project-cover"><img data-media="'+enc(p.cover)+'" alt="Фото кровли до работ"></div>':'')+'<h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted"><button class="itemlink" data-act="company" data-name="'+enc(p.client)+'">'+enc(p.client)+'</button> • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
  (par?'<div class="breadcrumb">Родитель: <button class="itemlink" data-act="open-project" data-id="'+par.id+'">'+enc(par.title)+'</button></div>':"")+
+ '<div class="row" style="margin-top:14px">'+lotRoleTag(p)+pill("Создал: "+(p.createdBy==="me"?idName("me"):p.createdBy==="demo-client"?"Демо-заказчик":p.createdBy?idName(p.createdBy):"Автор старого лота не указан"))+'</div>'+
  '<div class="grid cols3" style="margin:19px 0">'+stat("Бюджет",fmt(p.budget)+" €","")+stat("Сублоты",sub.length,"На этом уровне")+stat("Исполнитель",owner(p)?idName(p.assignee):"Не выбран","")+'</div>'+
  '<div class="row">'+btn("edit-project","✎ Редактировать")+'<label class="btn mini" style="cursor:pointer;margin:0">＋ Фото крыши<input type="file" data-file="cover" data-id="'+p.id+'" accept="image/*" style="display:none"></label>'+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div>'+
  '<div class="divider"></div><p>'+enc(p.notes||"Описание ещё не заполнено")+'</p>'+
@@ -150,9 +170,11 @@ function projectDetail(){
  '<label>Моя ставка, €<input type="number" id="newBid" min="1" step=".01" placeholder="Введи свою цену"></label>'+btn("bid","Подать ставку","primary full")+'<p class="footnote">Цена не заполняется автоматически. Ставки сохраняются только в этом браузере.</p>');
  const staff=card('<h2>Участники и задачи</h2><label>Назначить исполнителя</label><select id="projectAssignee"><option value="">Не назначено</option>'+db.crew.members.map(id=>'<option value="'+id+'" '+(p.assignee===id?"selected":"")+'>'+idName(id)+'</option>').join("")+'</select>'+
  btn("assign","Сохранить исполнителя","mini",'style="margin-top:9px"')+
+ '<div class="divider"></div><div class="between"><h3>Участники лота</h3>'+btn("lot-invite","＋ Добавить","mini")+'</div>'+
+ '<div class="small muted">'+((p.members||[]).length?p.members.map(id=>idName(id)+" · "+roleInLot(p,id).label).join(", "):"Участники ещё не добавлены")+'</div>'+
  '<div class="divider"></div><label>Статус лота</label><select id="projectStatus">'+[["draft","Черновик"],["published","Опубликован"],["progress","В работе"],["review","На приёмке"],["accepted","Принят"]].map(a=>'<option value="'+a[0]+'" '+(p.status===a[0]?"selected":"")+'>'+a[1]+'</option>').join("")+'</select>'+
  btn("set-status","Обновить статус","mini",'style="margin-top:8px"')+
- '<p class="footnote">В демо роли не проверяются. В рабочем приложении потребуются права доступа.</p>');
+ '<p class="footnote">Роль в каждом лоте определяется действиями. Реальные права доступа появятся после подключения авторизации и серверной базы.</p>');
  const bonus=card('<h2>Чаевые и Merit</h2><p class="small">Демо-конверсия: 1 Merit = 0,01 €. Бонус заказчика не покупает Legacy. Юридический и налоговый статус требует отдельной проверки.</p><div class="metric">'+fmt(p.tip||0)+' Merit</div>'+
  '<label>Бонус, €<input id="tipAmount" type="number" min=".01" max="10000" step=".01" placeholder="Например, 200"></label>'+btn("tip","Начислить тестовые Merit","primary full"));
  return '<div class="stack"><div class="detailhead">'+btn("projects-back","← Объекты","mini")+pill(enc(p.kind==="FULL"?"COMPLEX":p.kind),"blue")+pill(enc(p.status),p.status==="accepted"?"ok":"")+'</div>'+top+subView+
@@ -197,9 +219,9 @@ function radar(p){
 }
 function personDetails(p){
  const mine=p.id==="me";
- const active=db.projects.filter(pr=>pr.assignee===p.id||(pr.bids||[]).some(b=>b.userId===p.id));
+ const active=db.projects.filter(pr=>pr.createdBy===p.id||pr.assignee===p.id||(pr.members||[]).includes(p.id)||(pr.bids||[]).some(b=>b.userId===p.id));
  const journal=mine?db.ledger.filter(x=>x.userId==="me"):[];
- const header=card('<div class="row">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="sub">'+enc(p.role)+'</div><div class="small muted">'+enc(p.city)+'</div></div></div>'+
+ const header=card('<div class="row">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="sub">'+enc(skillText(p))+'</div><div class="small muted">'+enc(p.city)+'</div></div></div>'+
  '<div style="margin-top:13px" class="row">'+pill(p.verified?"Подтверждён":"Навыки не проверены",p.verified?"ok":"warn")+pill("Legacy "+fmt(totalLegacy(p)),"blue")+pill("XP "+fmt(p.xp))+'</div>'+
  '<div class="divider"></div><div class="grid cols2"><div><h3>Специализация</h3><div class="row">'+(p.skills||[]).map(s=>pill(enc(s))).join("")+'</div><p class="small">Телефон: '+(p.phone?enc(p.phone):"не указан")+'</p>'+contactButtons(p)+'</div><div><h3>Характеристики • demo</h3>'+radar(p)+'</div></div>'+
  (mine?'<div class="divider"></div>'+btn("edit-profile","✎ Редактировать мой профиль","primary")+' <label class="btn mini" style="cursor:pointer;margin:0">＋ Загрузить аватар<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>':""));
@@ -233,8 +255,8 @@ function messages(){
 function profile(){
  const p=person("me");
  const ledger=db.ledger.slice().reverse();
- const active=db.projects.filter(x=>x.assignee==="me"||(x.bids||[]).some(b=>b.mine));
- const header=card('<div class="between"><div class="person">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="small muted">'+enc(p.role)+' • '+enc(p.city)+'</div><div class="row" style="margin-top:7px">'+pill("Merit "+fmt(db.merit),"blue")+pill("Заморожено "+fmt(db.frozen))+'</div></div></div>'+
+ const active=db.projects.filter(x=>roleInLot(x).code!=="none");
+ const header=card('<div class="between"><div class="person">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="small muted">'+enc(skillText(p))+' • '+enc(p.city)+'</div><div class="row" style="margin-top:7px">'+pill("Merit "+fmt(db.merit),"blue")+pill("Заморожено "+fmt(db.frozen))+'</div></div></div>'+
  btn("edit-profile","✎ Изменить","mini")+'</div><div class="divider"></div><div class="row"><label class="btn mini" style="cursor:pointer;margin:0">＋ Фото профиля<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>'+contactButtons(p)+'</div>');
  const metrics=card('<h2>Персональные показатели</h2>'+radar(p)+'<div class="grid cols2">'+stat("XP",fmt(db.xp),"Опыт в системе")+stat("Legacy",fmt(totalLegacy(p)),"Профессиональный след")+'</div>');
  const projects=card('<h2>Связанные проекты</h2>'+(active.length?active.map(pr=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+pr.id+'">'+enc(pr.title)+'</button><span>'+fmt(pr.budget)+' €</span></div>').join(""):empty("Пока без назначений")));
@@ -285,7 +307,7 @@ function splitProject(id){
  const p=project(id);if(!p)return;
  let added=0;
  for(const [kind,name,description] of splits){if(children(id).some(x=>x.kind===kind))continue;
- const n={...p,id:uid(),parentId:p.id,title:name,kind,notes:description,budget:0,status:"draft",assignee:"",tasks:{},docs:[],posts:[],messages:[],bids:[],tip:0,created:date()};
+ const n={...p,id:uid(),parentId:p.id,title:name,kind,notes:description,budget:0,status:"draft",assignee:"",members:[],createdBy:"me",tasks:{},docs:[],posts:[],messages:[],bids:[],tip:0,created:date()};
  db.projects.push(n);added++;}
  persist();detail(id);notify(added?"Добавлено "+added+" связанных сублота(ов)":"Четыре типовых сублота уже есть");
 }
@@ -307,15 +329,22 @@ function companyModal(name){
 }
 function inviteModal(){
  openModal('<h2>Пригласить участника</h2><p>Существующие тестовые специалисты присоединяются к твоему отряду. Для нового человека используй MentorGate.</p>'+
- db.users.filter(x=>!db.crew.members.includes(x.id)).map(p=>'<div class="listrow"><div class="person">'+userAvatar(p)+'<div><b>'+enc(p.name)+'</b><div class="small muted">'+enc(p.role)+'</div></div></div>'+btn("add-member","В отряд","mini",'data-id="'+p.id+'"')+'</div>').join("")+
+ db.users.filter(x=>!db.crew.members.includes(x.id)).map(p=>'<div class="listrow"><div class="person">'+userAvatar(p)+'<div><b>'+enc(p.name)+'</b><div class="small muted">'+enc(skillText(p))+'</div></div></div>'+btn("add-member","В отряд","mini",'data-id="'+p.id+'"')+'</div>').join("")+
  '<div class="divider"></div>'+btn("mentor","＋ Новый через MentorGate","primary full"));
+}
+function inviteLotMemberModal(){
+ const p=project(ui.project);
+ if(!p)return;
+ openModal('<h2>Участники лота</h2><p>Создатель лота автоматически заказчик. Приглашённый в конкретный лот получает роль исполнителя по его задачам. Эта роль не распространяется на другие лоты.</p>'+
+ db.crew.members.filter(id=>id!==p.createdBy&&!(p.members||[]).includes(id)).map(id=>'<div class="listrow"><div><b>'+idName(id)+'</b><div class="small muted">'+enc(skillText(person(id)))+'</div></div>'+btn("lot-add-member","Добавить в лот","mini",'data-id="'+id+'"')+'</div>').join("")+
+ '<p class="footnote">Добавление в демо локальное и не отправляет приглашение другому пользователю.</p>');
 }
 function teamSettings(){
  openModal('<h2>Настройки отряда</h2><form id="teamForm"><label>Название<input name="name" value="'+enc(db.crew.name)+'" required></label><label><input type="checkbox" name="tools" '+(db.crew.tools?"checked":"")+'> Есть инструменты</label><label><input type="checkbox" name="vehicle" '+(db.crew.vehicle?"checked":"")+'> Есть транспорт</label><div class="divider"></div><h3>Администраторы</h3>'+db.crew.members.map(id=>'<label><input type="checkbox" name="admin" value="'+id+'" '+(db.crew.admins.includes(id)?"checked":"")+' '+(id==="me"?"disabled":"")+'>'+idName(id)+'</label>').join("")+'<button type="submit" class="btn primary" style="margin-top:13px">Сохранить</button></form>');
 }
 function editProfile(){
  const p=person("me");
- openModal('<h2>Мой профиль</h2><form id="profileForm"><label>Имя<input name="name" required value="'+enc(p.name)+'"></label><label>Специализация<input name="role" value="'+enc(p.role)+'"></label><label>Город<input name="city" value="'+enc(p.city)+'"></label><label>Телефон (+49…) <input name="phone" type="tel" value="'+enc(p.phone||"")+'" placeholder="+49 123 456789"></label><button class="btn primary" type="submit">Сохранить профиль</button></form>');
+ openModal('<h2>Мой профиль</h2><form id="profileForm"><label>Имя<input name="name" required value="'+enc(p.name)+'"></label><p class="footnote">Роль заказчика или исполнителя не выбирается в профиле. Она назначается автоматически в каждом лоте.</p><label>Город<input name="city" value="'+enc(p.city)+'"></label><label>Телефон (+49…) <input name="phone" type="tel" value="'+enc(p.phone||"")+'" placeholder="+49 123 456789"></label><button class="btn primary" type="submit">Сохранить профиль</button></form>');
 }
 function receiveProof(p,phase,side,id){
  p.tasks||={};p.tasks[phase]||={status:"new"};
@@ -338,6 +367,7 @@ function tip(p,eur){
  persist();render();notify("Тестовое начисление +"+fmt(pts)+" Merit");
 }
 function bid(p,amount){
+ if(p?.createdBy==="me"){notify("Нельзя подать ставку на собственный лот: здесь ты заказчик");return}
  if(!(amount>0)){notify("Введи действительную цену");return}
  const memberIds=db.crew.members;
  const appropriate=p.kind==="AC"?memberIds.some(id=>person(id)?.skills.includes("AC")):true;
@@ -429,7 +459,9 @@ const appActions={
  "show-stage-pdf":b=>{const p=project(b.dataset.id),docs=docsInherited(p);if(!docs.length)return notify("Прикрепи PDF к этому проекту");const page=p.tasks[b.dataset.phase]?.pdfPage||1;openPdf(docs[0].mediaId,page)},
  pdf:b=>openPdf(b.dataset.mediaid),
  "approve-task":b=>approve(project(b.dataset.id),b.dataset.phase),
- "assign":()=>{const p=project(ui.project);p.assignee=Q("#projectAssignee").value;persist();render();notify("Исполнитель назначен (демо)")},
+ "assign":()=>{const p=project(ui.project);p.assignee=Q("#projectAssignee").value;if(p.assignee&&p.assignee!==p.createdBy){p.members||=[];if(!p.members.includes(p.assignee))p.members.push(p.assignee);}persist();render();notify("Исполнитель назначен (демо)")},
+ "lot-invite":()=>inviteLotMemberModal(),
+ "lot-add-member":b=>{const p=project(ui.project);if(!p)return;const id=b.dataset.id;if(id===p.createdBy){notify("Создатель лота уже является заказчиком");return}p.members||=[];if(!p.members.includes(id))p.members.push(id);persist();closeModal();render();notify("Участник добавлен в лот как исполнитель")},
  "set-status":()=>{const p=project(ui.project);p.status=Q("#projectStatus").value;persist();render();notify("Статус обновлён")},
  bid:()=>bid(project(ui.project),Number(Q("#newBid").value)),
  tip:()=>tip(project(ui.project),Number(Q("#tipAmount").value)),
@@ -448,9 +480,10 @@ document.addEventListener("submit",ev=>{
  ev.preventDefault();const d=Object.fromEntries(new FormData(f));
  if(f.id==="projectForm"){
   const par=d.parentId?project(d.parentId):null;
-  const p=par?{...par,id:uid(),parentId:par.id,title:d.title,kind:d.kind,client:d.client,city:d.city,address:d.address,notes:d.notes,budget:Number(d.budget||0),status:"draft",assignee:"",docs:[],posts:[],messages:[],bids:[],tasks:{},tip:0,created:date()}:
+  const p=par?{...par,id:uid(),parentId:par.id,title:d.title,kind:d.kind,client:d.client,city:d.city,address:d.address,notes:d.notes,budget:Number(d.budget||0),status:"draft",assignee:"",members:[],createdBy:"me",docs:[],posts:[],messages:[],bids:[],tasks:{},tip:0,created:date()}:
   seedProject(uid(),d.title,d.client,d.city,0,Number(d.budget||0),d.kind,d.notes);
   if(!par){p.address=d.address;p.status="draft";}
+  p.createdBy="me";p.members=[];
   p.cover=ui.pendingCoverMedia||(par?.cover||"");ui.pendingCoverMedia="";
   db.projects.push(p);persist();closeModal();detail(p.id);notify("Проект создан");
  }else if(f.id==="editProjectForm"){
@@ -467,7 +500,7 @@ document.addEventListener("submit",ev=>{
   db.crew.name=d.name;db.crew.tools=!!d.tools;db.crew.vehicle=!!d.vehicle;db.crew.admins=["me",...new FormData(f).getAll("admin").filter(id=>id!=="me")];
   persist();closeModal();render();notify("Состав администраторов обновлён");
  }else if(f.id==="profileForm"){
-  const p=person("me");for(const k of ["name","role","city","phone"])p[k]=d[k]||"";
+  const p=person("me");for(const k of ["name","city","phone"])p[k]=d[k]||"";
   persist();closeModal();render();notify("Профиль сохранён");
  }else if(f.id==="chatForm"){
   const p=project(ui.chat);p.messages||=[];p.messages.push({id:uid(),from:"me",text:d.text,when:date()});
@@ -505,7 +538,7 @@ document.addEventListener("change",async ev=>{
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 Q("#modalback").addEventListener("click",e=>{if(e.target===Q("#modalback"))closeModal()});
-Q("#modeSwitch").onclick=()=>{ui.role=ui.role==="worker"?"client":"worker";render();notify("Демо-режим переключён. Роли пока не ограничивают действия.")};
+// Removed the global role switch.
 Q("#appReset").onclick=modalConfirmReset;
 let gestureStart=null;
 document.addEventListener("touchstart",e=>{
@@ -523,6 +556,6 @@ document.addEventListener("touchend",e=>{
  ui.projectDetail=false;go(nav[next][0]);
 },{passive:true});
 document.addEventListener("DOMContentLoaded",()=>{});
-window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy,splitProject};
+window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy,splitProject,roleInLot,skillText};
 render();
 })();
