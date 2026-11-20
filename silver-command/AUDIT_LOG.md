@@ -112,3 +112,27 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Risks:** Stage state is currently mutable local JS and cannot establish real-world independent identity, verified AC permissions, authentic capture metadata, or legal acceptance. On accepted stages, a correction must be opened as a separate stage/change order, not mutate signed-off evidence. Stage evidence IDs must be unique across server storage in production, not merely within one local stage.
 
 **Next:** integrate stage lifecycle into the lot screen with a safe demo role switcher and durable storage; add a test for reload and corrupted stage state; then add a scoped social feed with visibility semantics. Do not claim actual uploaded media or production approvals.
+
+
+## Implementation pass #4 · 2026-11-21 ~01:00 CET
+
+**Scope:** `silver-command/app.js`, `silver-command/index.html` and this audit log. No root 0.3 changes.
+**Code commits:** `2776867120749a893337d3a8ce452725c44c55a2`, `989c04f6da88c1ea8101fb63430a0b1f06d9ff74`, `cbceb4755e0d0cb7366f354a0b897129264effd9`.
+
+**Priorities implemented (4):**
+1. Load the isolated `stage-domain.js` module before `app.js` so stage operations are available to the actual lot UI.
+2. Add a stage section to each lot: create stage, add before/after metadata and optional PDF page, submit, return with reason or accept. **No actual image/PDF upload.**
+3. Persist stage objects in the same local demo state, validate stage shape and lot reference on reload, cap stage count/evidence/history, and include stage records in the existing user-triggered JSON export.
+4. Add an explicitly labeled local actor switcher to simulate separate customer and installer interactions, without pretending to authenticate identities.
+
+**Stakeholders / conflict checks:**
+- **Customer vs DC installer:** author of own lot assigns a separate executor; stage owner adds before+after metadata; customer reviews after submission. Pure domain enforces reviewer distinct from owner. **Code path connected, browser run not verified.**
+- **Installer vs outsider:** wrong actor cannot append stage evidence or submit it; owner check in stage-domain. **Domain invariant from previous unit tests, new UI not end-to-end tested.**
+- **Customer vs self-approval:** if stage owner equals lot creator, stage creation is refused; stage-domain also blocks self-review. **Code path present; identity switcher can be spoofed and is strictly demo.**
+- **Planner vs old Stringplan:** stage-domain rejects old-revision evidence; revision UI is not yet wired. **Partial.**
+
+**Verification:** GitHub returned commit SHAs for all three code changes. Static source checks confirmed stage module import and action dispatch. Attempted live download of GitHub raw source for Node syntax/unit tests; runtime network DNS failed (`Could not resolve host: raw.githubusercontent.com`). **Do not count this as a passed syntax or browser test.** Previous isolated domain tests 15/15 were performed in pass #3, not rerun in this pass. Safari/iPhone and persistence across reload are still unverified. The UI uses browser prompts and is a provisional field interface.
+
+**Critical remaining risks:** no server-side permissions or authentication; demo actor switcher is not a security boundary; no actual media bytes, independent qualification, shared chat or immutable evidence. Stage schema validation is permissive for nested history contents, and invalid stored stage records are dropped without per-record recovery. UI must gain version-change controls, a formal actor/organisation permission model and automated integration tests before a real pilot. Never store real customer data in this demo.
+
+**Next:** implement a structured scoped social feed (local-only), clarify visibility defaults and add automated tests for cross-lot access; then improve evidence metadata persistence/revision controls and test mobile Safari.
