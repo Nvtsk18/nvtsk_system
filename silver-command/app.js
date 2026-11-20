@@ -30,6 +30,7 @@ const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOStrin
 
 let screen = "dashboard";
 let selected = "singen";
+let demoActor = "me"; // local stage simulation only, never authentication
 const save = () => {try{localStorage.setItem(KEY,JSON.stringify(state));storageError="";return true;}catch(err){storageError="Не удалось сохранить данные на устройстве. Освободите место или экспортируйте демоданные.";console.error(err);return false;}};
 const notify = msg => {window.alert(msg)};
 
@@ -60,13 +61,13 @@ function stagePanel(l){
  const d=window.NVTSK_STAGE;
  if(!d)return panel('<h2>Фотоэтапы</h2><p>Модуль недоступен. Обновите страницу.</p>');
  const stages=state.stages.filter(s=>s.lotId===l.id);
- let content='<h2>Фотоэтапы · демонстрация</h2><p class="small">Только ссылки и текстовые метаданные. Реальных фото, PDF и независимой проверки личности нет.</p>';
- if(l.creator==="me" || l.assignee==="me")content+=button("stage-new","＋ Новый этап",l.id);
+ let content='<h2>Фотоэтапы · демонстрация</h2><p class="small">Переключение персонажа только для теста, не авторизация. Файлы не загружаются.</p><label>Персонаж для проверки <select id="demoActor"><option value="me"'+(demoActor==="me"?" selected":"")+'>Автор / я</option><option value="roman"'+(demoActor==="roman"?" selected":"")+'>Роман</option><option value="denis"'+(demoActor==="denis"?" selected":"")+'>Денис</option><option value="olena"'+(demoActor==="olena"?" selected":"")+'>Олена</option></select></label>';
+ if(l.creator===demoActor || l.assignee===demoActor)content+=button("stage-new","＋ Новый этап",l.id);
  for(const s of stages){
   content+='<div class="tile"><b>'+encode(s.title)+'</b> · '+badge(s.status)+'<p class="small">План рев. '+s.revision+' · '+s.evidence.length+' записей</p>';
   for(const ev of s.evidence)content+='<div class="small">'+encode(ev.type)+': '+encode(ev.note)+(ev.pdfPage?' · PDF стр. '+ev.pdfPage:'')+'</div>';
-  if(s.ownerId==="me"&&s.status!=="accepted")content+='<div class="row">'+button("stage-evidence","＋ До/после",s.id)+button("stage-submit","На проверку",s.id)+'</div>';
-  if(l.creator==="me"&&s.ownerId!=="me"&&s.status==="submitted")content+='<div class="row">'+button("stage-accept","Принять (демо)",s.id)+button("stage-return","Вернуть",s.id)+'</div>';
+  if(s.ownerId===demoActor&&s.status!=="accepted")content+='<div class="row">'+button("stage-evidence","＋ До/после",s.id)+button("stage-submit","На проверку",s.id)+'</div>';
+  if(l.creator===demoActor&&s.ownerId!==demoActor&&s.status==="submitted")content+='<div class="row">'+button("stage-accept","Принять (демо)",s.id)+button("stage-return","Вернуть",s.id)+'</div>';
   content+='</div>';
  }
  return panel(content);
@@ -75,8 +76,8 @@ function stageAction(act,id){
  const d=window.NVTSK_STAGE;if(!d)return;
  const stage=state.stages.find(s=>s.id===id);
  if(act==="stage-new"){
-  const l=find(id);if(!l||!(l.creator==="me"||l.assignee==="me"))return notify("Нет доступа");
-  const ownerId=l.assignee||"me";if(ownerId==="me"&&l.creator==="me")return notify("Сначала назначьте независимого исполнителя.");
+  const l=find(id);if(!l||!(l.creator===demoActor||l.assignee===demoActor))return notify("Нет доступа");
+  const ownerId=l.assignee||demoActor;if(ownerId===l.creator)return notify("Сначала назначьте независимого исполнителя.");
   const title=prompt("Название этапа (демо):","Монтаж DC");if(!title?.trim())return;
   state.stages.push(d.createStage({id:uuid(),lotId:id,title,ownerId,planRevision:1}));
   log("stage_created",id,title);save();render();return;
@@ -90,12 +91,12 @@ function stageAction(act,id){
    if(!note?.trim())return;
    const pageText=prompt("Номер страницы PDF (пусто = нет)","");
    const pdfPage=pageText?.trim()?Number(pageText):null;
-   d.addEvidence(stage,{id:uuid(),actor:"me",type,note,planRevision:stage.revision,pdfPage});
-  }else if(act==="stage-submit")d.submit(stage,"me");
-  else if(act==="stage-accept")d.review(stage,{actor:"me",decision:"accepted",lotCreator:lot.creator});
+   d.addEvidence(stage,{id:uuid(),actor:demoActor,type,note,planRevision:stage.revision,pdfPage});
+  }else if(act==="stage-submit")d.submit(stage,demoActor);
+  else if(act==="stage-accept")d.review(stage,{actor:demoActor,decision:"accepted",lotCreator:lot.creator});
   else if(act==="stage-return"){
    const reason=prompt("Причина возврата:","");if(reason===null)return;
-   d.review(stage,{actor:"me",decision:"returned",reason,lotCreator:lot.creator});
+   d.review(stage,{actor:demoActor,decision:"returned",reason,lotCreator:lot.creator});
   }
   log(act,lot.id,stage.id);save();render();
  }catch(err){notify("Этап не изменён: "+err.message)}
@@ -164,6 +165,7 @@ document.addEventListener("click",e=>{
   l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);save();render();
  }
 });
+document.addEventListener("change",e=>{if(e.target?.id==="demoActor"){demoActor=e.target.value;render();}});
 document.addEventListener("submit",e=>{
  const f=e.target;if(!(f instanceof HTMLFormElement))return;e.preventDefault();
  const data=Object.fromEntries(new FormData(f));
