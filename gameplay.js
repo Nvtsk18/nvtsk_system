@@ -47,7 +47,7 @@ const xpReward=p=>isRaid(p)?1200:p.kind==="AC"?750:p.kind==="REG"?550:500;
 const meritReward=p=>isRaid(p)?350:Math.max(120,Math.min(300,Math.round(Number(p.budget||0)/10)||140));
 const proofSteps=p=>{
  const kind=p.kind;
- const ids=kind==="AC"?["inverter","extra"]:kind==="REG"?["docs","extra"]:kind==="PLAN"?["plans"]:kind==="DC"?["roof","uk","modules","strings","earth","cable","extra"]:["roof","uk","modules","strings","earth","cable","inverter","docs","extra"];
+ const ids=kind==="AC"?["inverter"]:kind==="REG"?["docs"]:kind==="PLAN"?["plans"]:kind==="DC"?["roof","uk","modules","strings","earth","cable"]:["roof","uk","modules","strings","earth","cable","inverter","docs"];
  return ids.map(id=>({id,done:p.tasks?.[id]?.status==="accepted"}));
 };
 const requirements=p=>{
