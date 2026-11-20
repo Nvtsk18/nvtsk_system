@@ -16,7 +16,7 @@ test('customer can accept',()=>{const s=fresh();before(s);after(s);d.submit(s,'i
 test('accepted stage cannot mutate',()=>{const s=fresh();before(s);after(s);d.submit(s,'installer');d.review(s,{actor:'client',decision:'accepted',lotCreator:'client'});assert.throws(()=>d.addEvidence(s,{id:'e3',actor:'installer',type:'after',note:'x',planRevision:1}),/locked/));
 test('stale plan evidence rejected',()=>assert.throws(()=>d.addEvidence(fresh(),{id:'e',actor:'installer',type:'before',note:'x',planRevision:2}),/Stale/));
 test('revision invalidates old evidence',()=>{const s=fresh();before(s);after(s);d.revisePlan(s,{actor:'client',revision:2});assert.throws(()=>d.submit(s,'installer'),/Stale/));
-test('duplicate evidence id rejected',()=>{const s=fresh();before(s);assert.throws(()=>before(s),/Duplicate/));
+test('duplicate evidence id rejected',()=>{const s=fresh();before(s);assert.throws(()=>before(s),/Duplicate/)});
 test('invalid PDF page rejected',()=>assert.throws(()=>d.addEvidence(fresh(),{id:'e',actor:'installer',type:'document',note:'x',planRevision:1,pdfPage:0}),/PDF/));
 test('audit trail retains actor and actions',()=>{const s=fresh();before(s);after(s);d.submit(s,'installer');assert.deepEqual(s.history.map(h=>h.action),['evidence_added','evidence_added','submitted'])});
 console.log('TOTAL',count,'PASS');
