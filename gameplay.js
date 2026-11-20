@@ -208,17 +208,23 @@ function cabinet(){
  '<div class="row">'+btn("game-export","Экспортировать JSON","mini")+btn("game-nav","Skill Tree ↗","mini",'data-screen="world" data-tab="skills"')+'</div></div>';
 }
 function wallet(){
- const ledgerRows=[...(db.ledger||[])].slice().reverse();
- const locked=db.frozen||0,available=db.merit||0;
- return '<div class="stack">'+card('<div class="eyebrow">NVTSK • MERIT WALLET / DEMO</div><h2 style="font-size:27px;margin:9px 0">Кошелёк участника</h2><p class="small">Merit представляет тестовые баллы. Это не деньги, не платёжный счёт и не электронные деньги. Конверсия 1 Merit = 0,01 € показывается только как игровая модель.</p><div class="grid cols3">'+
- stat("Доступно",fmt(available)+" M","Условный баланс")+
- stat("Зарезервировано",fmt(locked)+" M","MentorGate")+
- stat("Legacy",fmt(totalLegacy(person("me"))),"Нельзя купить за Merit")+'</div>'+
- '<div class="grid cols2" style="margin-top:15px"><div class="step"><div class="small muted">Демо-эквивалент Merit</div><div class="metric">'+fmt(available/100)+' €</div><div class="tiny caveat">Не подлежит обмену или выводу</div></div><div class="step"><div class="small muted">Номер игрового кошелька</div><div style="font-weight:800;overflow-wrap:anywhere">NVTSK-'+enc((game.registration.handle||"GUEST").toUpperCase())+'</div><div class="tiny muted">Локальная идентификация</div></div></div></div>')+
- card('<div class="between"><h2>История транзакций</h2>'+pill(ledgerRows.length+" операций","blue")+'</div>'+
- (ledgerRows.length?ledgerRows.map(x=>'<div class="listrow"><div><b>'+ch(x.label)+'</b><div class="tiny muted">'+ch(x.when)+' • '+(x.projectId?ch(project(x.projectId)?.title||"Миссия"):"Система")+'</div></div><strong class="'+(x.delta>=0?"greenText":"caveat")+'">'+(x.delta>0?"+":"")+fmt(x.delta)+' M</strong></div>').join(""):empty("Транзакций пока нет"))+
- '<div class="row" style="margin-top:12px">'+btn("game-export","Экспорт данных","mini")+btn("game-nav","Косметика →","mini",'data-screen="world" data-tab="skills"')+'</div>')+
- card('<h2>Правила игровой экономики</h2><p class="small">XP нельзя купить. Legacy отражает проверенные достижения. Merit расходуется на косметику и предусмотренные системой действия. Переводы, чаевые, награды и резервы пока имитируются. Само хранение баллов в приложении не освобождает реальные выплаты от законодательства и налогов.</p>')+'</div>';
+ const active=db.merit||0,locked=db.frozen||0,all=[...(db.ledger||[])].slice().reverse();
+ game.walletFilter||="all";
+ const visible=all.filter(l=>game.walletFilter==="all"||(game.walletFilter==="income"&&l.delta>0)||(game.walletFilter==="expense"&&l.delta<0)||(game.walletFilter==="neutral"&&l.delta===0));
+ const income=all.filter(l=>l.delta>0).reduce((sum,l)=>sum+l.delta,0);
+ const expenses=-all.filter(l=>l.delta<0).reduce((sum,l)=>sum+l.delta,0);
+ const rows=visible.length?visible.map(l=>'<div class="wallet-entry"><div class="wallet-icon '+(l.delta>0?"in":l.delta<0?"out":"neutral")+'">'+(l.delta>0?"↓":l.delta<0?"↑":"✓")+'</div><div class="wallet-description"><b>'+ch(l.label)+'</b><div class="tiny muted">'+ch(l.when)+(l.projectId?" • "+ch(project(l.projectId)?.title||"Проект"):"")+'</div></div><strong class="'+(l.delta>0?"wallet-in":l.delta<0?"wallet-out":"")+'">'+(l.delta>0?"+":"")+fmt(l.delta)+' M</strong></div>').join(""):empty("Операций в этой категории пока нет.");
+ return '<div class="stack">'+
+ '<div class="card wallet-hero"><div class="eyebrow">MERIT ACCOUNT • NVTSK SYSTEM</div><div class="between"><h2>Мой кошелёк</h2>'+pill("DEMO • LOCAL","warn")+'</div><div class="wallet-balance"><span class="small">Доступные Merit</span><div>'+fmt(active)+' <small>Ⓜ</small></div></div><div class="wallet-short"><span>Персонаж: '+ch(game.registration.handle||person("me")?.name||"Guest")+'</span><span>NVTSK-CREW-03</span></div></div>'+
+ '<div class="grid cols3">'+stat("Заблокировано",fmt(locked)+" M","Резерв MentorGate")+stat("Всего начислено",fmt(income)+" M","Локальная история")+stat("Всего списано",fmt(expenses)+" M","Локальная история")+'</div>'+
+ card('<div class="between"><h2>Операции кошелька</h2>'+btn("game-export","Экспорт JSON","mini")+'</div><div class="segment" style="margin:11px 0 13px">'+[["all","Все"],["income","Поступления"],["expense","Расходы"],["neutral","Действия"]].map(([id,label])=>'<button data-game="wallet-filter" data-id="'+id+'" class="'+(game.walletFilter===id?"active":"")+'">'+label+'</button>').join("")+'</div>'+
+ '<div class="wallet-ledger">'+rows+'</div>')+
+ card('<h2>Что можно делать с Merit</h2><div class="grid cols3">'+[
+ ["◈","Косметика","Форма и оформление персонажа","world","skills"],
+ ["♙","MentorGate","Резерв на обучение новичка","crew",""],
+ ["✦","Миссии","Заработать новые очки за работу","missions",""]
+ ].map(([icon,name,sub,screen,tab])=>'<div class="wallet-feature"><div class="wallet-feature-icon">'+icon+'</div><strong>'+name+'</strong><div class="small muted">'+sub+'</div>'+btn("game-nav","Открыть ↗","mini",'data-screen="'+screen+'" '+(tab?'data-tab="'+tab+'"':""))+'</div>').join("")+'</div>')+
+ card('<h2>Важно о балансе</h2><p class="small">1 Merit = 0,01 € используется здесь только для демонстрации расчётов, а не как обещание обмена. Тестовые Merit не являются деньгами или платёжным счётом. Реальные выплаты и чаевые требуют правового и налогового анализа; Legacy нельзя купить.</p><div class="row">'+pill("Демо-эквивалент: "+fmt(active/100)+" €","warn")+pill("Вывод средств недоступен")+'</div>')+'</div>';
 }
 function social(){
  const posts=db.social.posts;
@@ -274,6 +280,7 @@ const gameActions={
   activity("Оснащение: "+id+" "+(!existing?"готово":"не отмечено"));save();render();
  },
  "world-tab":b=>{game.worldTab=b.dataset.id;save();render()},
+ "wallet-filter":b=>{game.walletFilter=b.dataset.id;save();render()},
  "game-skin":b=>{
   const o=outfits.find(o=>o.id===b.dataset.id);if(!o)return;
   if(game.wardrobe.includes(o.id)){game.outfit=o.id;save();render();return}
