@@ -58,3 +58,43 @@ This document is a product risk inventory, not legal advice or a claim that the 
 
 ### Product quality gate
 A feature is not **done** unless: actor and permission are defined, business state change is explicit, UI works on iPhone, data survives reload, failure path tested, backend-vs-demo status truthful, and an audit entry records it.
+
+
+### Second review: overlooked product life-cycle failures (2026-11-20, additional discovery)
+
+The first 20 risks mainly covered roles, permissions, safety and in-lot execution. A second review identifies **12 distinct scenarios** that deserve explicit product behavior and tests. These are *new requirements, not implemented features*.
+
+| # | Failure scenario | Required behavior | Priority |
+|---|---|---|---|
+| 21 | A crew wins 3 lots starting the same day, but has only 2 installers and one van | Capacity calendar, crew-member availability, booking conflict, contingency reservation and clash warning before award | P0 |
+| 22 | Customer cancels after scaffolding / worker travel booked, or crew is a no-show | Cancellation terms, deposits or contractual cancellation costs (subject to legal review), proof of notice, no-show clock, incident/audit trail | P0 |
+| 23 | Procurement lists 90 PV modules; 88 arrive and 2 are damaged | Delivered-vs-planned materials ledger, photo evidence, chain of custody, shortage/damage owner, replenishment and return workflow | P0 |
+| 24 | Bid priced for easy roof work; onsite reality needs tile repair or longer cable route | Quote scope/baseline version, approval of additional work *before* execution, price + schedule impact, dispute-safe revision | P0 |
+| 25 | DC crew finishes but AC crew arrives after a week and defects block commissioning | A cross-party handover checklist, wiring/photos/measurement sign-off and a formal 'ready for AC' gate | P0 |
+| 26 | A fault appears six months after acceptance | Warranty/service case linked to original lot, serials, installation snapshots, responsible firm, deadline and resolution | P1 |
+| 27 | Panels, inverter, battery, optimiser serials must be traced for warranty and recalls | Device inventory with QR/serial import, location mapping, ownership and documentation, with appropriate privacy | P1 |
+| 28 | Work priced at €2k looks profitable but travel, lifting gear, materials and rework erase margin | Project contribution margin and estimates-vs-actuals, with private accounting data isolated by legal entity | P0 |
+| 29 | A captain, driver, licensed electrician, vehicle or lifting device becomes unavailable unexpectedly | Substitute workflow with verification, team approval, responsibilities, access revocation and revised schedule | P1 |
+| 30 | Installer submits recycled/photoshopped evidence to farm Legacy | Duplicate hash detection, reviewer independence, suspicious submission signals and human review; metadata alone is not proof | P0 |
+| 31 | Client leaves NVTSK or the platform shuts down | Export structured data + PDFs + photos + audit trail, backups, retention rules, transfer/exit and account continuity | P0 |
+| 32 | Users do not join because features are too complex, market has no liquidity | Minimal operational utility for one customer + one real crew without marketplace: project intake, checklist, handoff, invoice-ready report; measure activation and completion before broader gamification | P0 |
+
+Further system-design questions to explicitly resolve before backend:
+- **Time model:** work start, staff shift, public holidays, site access windows, delivery slot, dependent AC/Netzbetreiber inspection appointments; all timezone-aware with calendar sync and conflict management.
+- **Assignment vs binding contract:** a 'bid placed', 'bid accepted', 'contract signed', 'site access granted', 'work started' and 'stage accepted' are different states. Don't make one button legally or financially imply them all.
+- **Resource ownership:** who supplied scaffolding, lifting gear, modules, rails, cable, van; who owns them and who pays for loss/damage.
+- **Post-project longevity:** photos, serials, warranties, callbacks, original scope and acceptance must be retrievable after membership change and offboarding.
+- **Sustainable adoption:** on day one each stakeholder needs a useful workflow even if there are zero external bids and no active social feed.
+
+Suggested immediate tests:
+1. Attempt to award a lot when crew or licensed resource is double-booked.
+2. Mark material missing/damaged, ensure associated task and delivery gate cannot be silently cleared.
+3. Reprice a change order and prove original bid, old document revision and acceptance remain visible.
+4. Hand DC work over to AC with required evidence; prevent bypass without explicit waiver/authority.
+5. Open a warranty case after closing the original contract; revoke former worker access while preserving audit.
+6. Re-upload a previously accepted photo to another project; flag rather than automatically award reputation.
+7. Export a complete signed-off case (structured history + references to media files, subject to access rights).
+8. Have a newly invited, untrained worker attempt to accept AC tasks; reject until independent qualification/authorisation.
+9. Simulate a single-crew pilot with no marketplace: it should still eliminate real coordination overhead.
+
+These points complement, not replace, the earlier P0 requirements for legal contracting parties, privacy, safety, disputes, financial-service boundaries and server-backed multi-user security.
