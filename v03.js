@@ -436,7 +436,7 @@ const appActions={
  chat:b=>{ui.chat=b.dataset.id;go("messages")},
  export:()=>exportJson(),
  "reset-demo":()=>modalConfirmReset(),
- "confirm-reset":()=>{db=initial();persist();closeModal();ui.projectDetail=false;go("dashboard");notify("Демо сброшено")}
+ "confirm-reset":()=>{db=initial();persist();closeModal();ui.projectDetail=false;if(window.location?.reload){window.location.reload();return}go("dashboard");notify("Демо сброшено")}
 };
 document.addEventListener("click",ev=>{
  const b=ev.target.closest("[data-act]");if(!b)return;const fn=appActions[b.dataset.act];
