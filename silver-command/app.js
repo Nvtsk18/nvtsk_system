@@ -12,12 +12,25 @@ const initial = [
   {id:"singen",title:"14,8 кВт DC • Singen",city:"Singen",client:"Демо Hegau Energie",price:1480,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[{amount:1380,team:"SüdMontage (демо)"}]},
   {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,members:[],bids:[]}
 ];
-let state;
-try { state = JSON.parse(localStorage.getItem(KEY) || "null"); if (!state || !Array.isArray(state.lots)) throw Error("Empty"); }
-catch (_) { state = {lots:initial, name:"Серёжа", merit:3000, crew:["Серёжа","Роман","Денис","Олена"]}; }
+const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),name:"Участник",merit:3000,crew:["Участник","Роман","Денис","Олена"],audit:[]});
+const validLot = l => l && typeof l.id==="string" && typeof l.title==="string" && typeof l.creator==="string" && (l.parent===null || typeof l.parent==="string") && Array.isArray(l.members) && Array.isArray(l.bids) && Number.isFinite(l.price) && l.price>=0;
+function normalize(raw) {
+ if(!raw || !Array.isArray(raw.lots) || raw.lots.length>2000 || !raw.lots.every(validLot)) throw Error("Invalid saved lot data");
+ const ids=new Set(raw.lots.map(l=>l.id));
+ if(ids.size!==raw.lots.length || raw.lots.some(l=>l.parent!==null && (!ids.has(l.parent)||l.parent===l.id)))throw Error("Invalid lot references");
+ for(const l of raw.lots){const seen=new Set([l.id]);let p=l.parent;while(p!==null){if(seen.has(p))throw Error("Cyclic lot hierarchy");seen.add(p);p=raw.lots.find(x=>x.id===p).parent;}}
+ return {...fresh(),...raw,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
+}
+let state,storageError="";
+try {const saved=localStorage.getItem(KEY);state=saved?normalize(JSON.parse(saved)):fresh();}
+catch (err) {state=fresh();storageError="Локальные данные не удалось прочитать. Изменения в этой сессии могут не сохраниться.";console.warn("NVTSK storage recovery:",err);}
+const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOString(),action,lotId,actor:"me",details});state.audit=state.audit.slice(-300)};
+
 let screen = "dashboard";
 let selected = "singen";
-const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+const save = () => {try{localStorage.setItem(KEY,JSON.stringify(state));storageError="";return true;}catch(err){storageError="Не удалось сохранить данные на устройстве. Освободите место или экспортируйте демоданные.";console.error(err);return false;}};
+const notify = msg => {window.alert(msg)};
+
 const find = id => state.lots.find(l => l.id === id);
 const role = l => l.creator === "me" ? "Заказчик" : l.assignee === "me" || (l.members || []).includes("me") ? "Исполнитель" : (l.bids || []).some(b => b.mine) ? "Кандидат" : "Наблюдатель";
 const button = (act, label, id) => '<button class="btn sm" data-act="' + act + '" data-id="' + (id || "") + '">' + label + '</button>';
@@ -27,7 +40,7 @@ function item(l) {
   return panel(badge(l.kind) + '<h3 style="font-size:19px;margin-top:12px">' + encode(l.title) + '</h3><p>' + encode(l.client) + '</p><div class="stat" style="margin:10px 0">' + money(l.price) + ' €</div><div class="small muted">' + role(l) + '</div><div style="margin-top:12px">' + button("lot","Открыть лот",l.id) + '</div>');
 }
 function overview() {
-  return '<div class="stack"><section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
+  return '<div class="stack">' + (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong>'):"") + '<section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
   panel('<div class="statlabel">Проекты</div><div class="stat">'+state.lots.length+'</div>') +
   panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>') +
   panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>') +
@@ -55,7 +68,7 @@ function chat() {
 }
 function profile() {
  return '<div class="stack">'+panel('<div class="row"><div class="avatar big">'+encode(state.name[0])+'</div><div><h2>'+encode(state.name)+'</h2><p>Ваше имя, без выбора роли при регистрации</p></div></div><div style="margin-top:14px">'+button("edit-name","✎ Изменить имя")+'</div>')+
- '<div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
+ '<div style="margin:12px 0">'+button("export","↓ Экспорт демоданных")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
  panel('<h2>Команда и MentorGate</h2><p>Здесь будут навыки, Merit, финансовая история, капитан и администраторы бригад, наставничество и личные проекты.</p><div class="tile">'+state.crew.map(encode).join(" • ")+'</div>')+'</div>';
 }
 function render() {
@@ -73,12 +86,13 @@ function create() {
  modal('<h2>Новый лот</h2><p>Автор автоматически становится заказчиком в этом лоте.</p><form id="newForm" class="formstack"><label>Название<input name="title" required></label><label>Город<input name="city" required></label><label>Тип<select name="kind"><option>DC</option><option>AC</option><option>PLAN</option><option>REG</option></select></label><label>Цена, €<input name="price" type="number" min="0" value="0"></label><button class="btn primary" type="submit">Создать</button></form>');
 }
 function split(l) {
- if (!l) return;
+ if (!l || l.creator!=="me"){notify("Создавать сублоты может только автор этого лота (демо).");return;}
+ if(l.parent){notify("Автоматическая разбивка доступна только для корневого лота.");return;}
  for(const [kind,title] of kinds) {
   if (state.lots.some(x=>x.parent===l.id&&x.kind===kind)) continue;
   state.lots.push({id:uuid(),title,city:l.city,client:l.client,price:0,kind,creator:"me",parent:l.id,assignee:null,members:[],bids:[]});
  }
- save();selected=l.id;go("lot");
+ log("split",l.id,"Generated missing phase sublots");save();selected=l.id;go("lot");
 }
 document.addEventListener("click",e=>{
  const n=e.target.closest("[data-screen]"); if(n){e.preventDefault();go(n.dataset.screen);return;}
@@ -87,23 +101,32 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="projects")go("projects");
  if(b.dataset.act==="new")create();
  if(b.dataset.act==="split")split(find(b.dataset.id));
+ if(b.dataset.act==="export"){const payload=JSON.stringify({exportedAt:new Date().toISOString(),data:state},null,2);const blob=new Blob([payload],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-silver-demo-backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
  if(b.dataset.act==="edit-name")modal('<h2>Ваше имя</h2><form id="nameForm"><label>Ваше имя<input name="name" value="'+encode(state.name)+'" required></label><button class="btn primary" type="submit">Сохранить</button></form>');
- if(b.dataset.act==="assign"){const l=find(selected),who=$("#assignee").value;if(who===l.creator&&who){alert("Самоназначение автора лота запрещено");return;}l.assignee=who||null;save();render();return;}
+ if(b.dataset.act==="assign"){const l=find(selected),who=$("#assignee").value;
+ if(l.creator!=="me"){notify("Назначать исполнителя может только автор лота. Демонстрация не предоставляет полномочий чужой компании.");return;}
+ if(!who){notify("Выберите исполнителя.");return;}
+ if(who===l.creator){notify("Самоназначение автора лота запрещено");return;}
+ if(l.kind==="AC"||l.kind==="REG"){notify("Для AC/Anmeldung требуется подтверждённая квалификация и право выполнения работ. Назначение заблокировано в демо.");return;}
+ l.assignee=who;log("assign",l.id,"Executor assigned: "+who);save();render();return;}
  if(b.dataset.act==="bid"){
   const l=find(selected),amount=Number($("#bid").value);
   if(role(l)==="Заказчик"){alert("Нельзя подавать ставку на свой лот");return;}
   if(!(amount>0)){alert("Введите корректную сумму");return;}
-  l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});save();render();
+  if(l.assignee==="me"){notify("Назначенный исполнитель не может одновременно подавать новую ставку.");return;}
+  l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);save();render();
  }
 });
 document.addEventListener("submit",e=>{
  const f=e.target;if(!(f instanceof HTMLFormElement))return;e.preventDefault();
  const data=Object.fromEntries(new FormData(f));
  if(f.id==="newForm"){
- state.lots.push({id:uuid(),title:data.title,city:data.city,client:"Создано пользователем",price:Number(data.price)||0,kind:data.kind,creator:"me",parent:null,assignee:null,members:[],bids:[]});
- save();close();go("projects");
+ const title=String(data.title||"").trim().slice(0,120),city=String(data.city||"").trim().slice(0,100),price=Number(data.price);
+ if(!title||!city||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, город и сумму.");return;}
+ const id=uuid();state.lots.push({id,title,city,client:"Создано пользователем",price,kind:["DC","AC","PLAN","REG"].includes(data.kind)?data.kind:"DC",creator:"me",parent:null,assignee:null,members:[],bids:[]});
+ log("create",id,"Lot created");save();close();go("projects");
  }
- if(f.id==="nameForm"){state.name=data.name;save();close();go("profile");}
+ if(f.id==="nameForm"){const name=String(data.name||"").trim().slice(0,80);if(!name){notify("Введите имя.");return;}state.name=name;log("profile",null,"Name updated");save();close();go("profile");}
 });
 $("#newLot").onclick=create;
 $("#dialogBackdrop").onclick=e=>{if(e.target.id==="dialogBackdrop")close()};
