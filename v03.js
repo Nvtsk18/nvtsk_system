@@ -128,27 +128,29 @@ function taskView(p){
  }).join("")+'</div><p class="footnote">Фото и PDF сохраняются в IndexedDB этого браузера. Отметка приёмки в демо не подтверждает личность заказчика; для реальных работ нужна проверка прав.</p>');
 }
 function projectDetail(){
- const p=project(ui.project); if(!p){ui.project=db.projects[0]?.id;return projectList()}
- const par=p.parentId?project(p.parentId):null;const sub=children(p.id);
+ const p=project(ui.project);if(!p){ui.project=db.projects[0]?.id;return projectList()}
+ const par=p.parentId?project(p.parentId):null,sub=children(p.id),docids=docsInherited(p);
  const bids=[...(p.bids||[])].sort((a,b)=>a.price-b.price);
  const total=sub.reduce((a,b)=>a+Number(b.budget||0),0);
- const docids=docsInherited(p);
- return '<div class="stack"><div class="detailhead">'+btn("projects-back","← Объекты","mini")+' '+pill(enc(p.kind==="FULL"?"COMPLEX":p.kind),"blue")+' '+pill(enc(p.status),p.status==="accepted"?"ok":"")+'</div>'+
- card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div><h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted">'+enc(p.client)+' • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+(par?'<div class="breadcrumb">Родитель: <button class="itemlink" data-act="open-project" data-id="'+par.id+'">'+enc(par.title)+'</button></div>':"")+
+ const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div><h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted">'+enc(p.client)+' • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
+ (par?'<div class="breadcrumb">Родитель: <button class="itemlink" data-act="open-project" data-id="'+par.id+'">'+enc(par.title)+'</button></div>':"")+
  '<div class="grid cols3" style="margin:19px 0">'+stat("Бюджет",fmt(p.budget)+" €","")+stat("Сублоты",sub.length,"На этом уровне")+stat("Исполнитель",owner(p)?idName(p.assignee):"Не выбран","")+'</div>'+
- '<div class="row">'+btn("edit-project","✎ Редактировать")+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div><div class="divider"></div><p>'+enc(p.notes||"Описание ещё не заполнено")+'</p>'+
- (sub.length?'<div class="small sub">Сумма бюджетов сублотов: <b>'+fmt(total)+' €</b> '+(p.budget&&total>p.budget?pill("Превышен бюджет родителя","bad"):"")+'</div>':"")+
- '</div>'+
- (sub.length?card('<h2>Сублоты · '+sub.length+'</h2><div class="grid cols2">'+sub.map(c=>'<div class="step"><div class="between">'+pill(enc(c.kind),"blue")+pill(enc(c.status),"")+'</div><h3 style="margin:12px 0 4px">'+enc(c.title)+'</h3><div class="between"><strong>'+fmt(c.budget)+' €</strong><span class="small muted">'+(owner(c)?idName(c.assignee):"Исполнитель свободен")+'</span></div><div style="margin-top:10px">'+btn("open-project","Открыть ↗","mini primary",'data-id="'+c.id+'"')+'</div></div>').join("")+'</div>'):"")+
- '<div class="grid colsMain"><div class="stack">'+taskView(p)+docsSection(p,docids)+feed(p)+'</div>'+
- '<div class="stack">'+card('<h2>Аукцион · '+bids.length+' ставок</h2>'+
+ '<div class="row">'+btn("edit-project","✎ Редактировать")+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div>'+
+ '<div class="divider"></div><p>'+enc(p.notes||"Описание ещё не заполнено")+'</p>'+
+ (sub.length?'<div class="small sub">Сумма бюджетов сублотов: <b>'+fmt(total)+' €</b> '+(p.budget&&total>p.budget?pill("Превышен бюджет родителя","bad"):"")+'</div>':""));
+ const subView=sub.length?card('<h2>Сублоты · '+sub.length+'</h2><div class="grid cols2">'+sub.map(c=>'<div class="step"><div class="between">'+pill(enc(c.kind),"blue")+pill(enc(c.status),"")+'</div><h3 style="margin:12px 0 4px">'+enc(c.title)+'</h3><div class="between"><strong>'+fmt(c.budget)+' €</strong><span class="small muted">'+(owner(c)?idName(c.assignee):"Исполнитель свободен")+'</span></div><div style="margin-top:10px">'+btn("open-project","Открыть ↗","mini primary",'data-id="'+c.id+'"')+'</div></div>').join("")+'</div>'):"";
+ const auction=card('<h2>Аукцион · '+bids.length+' ставок</h2>'+
  (bids.length?bids.map(b=>'<div class="listrow"><div><b>'+enc(b.team)+'</b><div class="tiny muted">Legacy '+fmt(b.legacy||0)+' • '+enc(b.at||"")+'</div></div><strong>'+fmt(b.price)+' €</strong></div>').join(""):empty("Пока нет ставок"))+
- '<label>Предложение, €<input type="number" id="newBid" min="1" step=".01" placeholder="Введи свою цену"></label>'+btn("bid","Подать ставку","primary full")+'<p class="footnote">Цена не заполняется автоматически. Ставки сохраняются только в этом браузере и не видны другим людям.</p>')+
- card('<h2>Участники и задачи</h2><label>Назначить исполнителя</label><select id="projectAssignee"><option value="">Не назначено</option>'+db.crew.members.map(id=>'<option value="'+id+'" '+(p.assignee===id?"selected":"")+'>'+idName(id)+'</option>').join("")+'</select>'+btn("assign","Сохранить исполнителя","mini",'style="margin-top:9px"')+
- '<div class="divider"></div><label>Статус лота</label><select id="projectStatus">'+[["draft","Черновик"],["published","Опубликован"],["progress","В работе"],["review","На приёмке"],["accepted","Принят"]].map(a=>'<option value="'+a[0]+'" '+(p.status===a[0]?"selected":"")+'>'+a[1]+'</option>').join("")+'</select>'+btn("set-status","Обновить статус","mini",'style="margin-top:8px"')+
- '<p class="footnote">Изменение статуса доступно в демо. В рабочем приложении это должны разрешать только соответствующие роли.</p>')+
- card('<h2>Чаевые и Merit</h2><p class="small">Демо-конверсия: 1 Merit = 0,01 €. Условный бонус заказчика не покупает Legacy. Юридический и налоговый статус бонусов не определяется тем, что баллы находятся внутри платформы.</p><div class="metric">'+fmt(p.tip||0)+' Merit</div><label>Бонус, €<input id="tipAmount" type="number" min=".01" max="10000" step=".01" placeholder="Например, 200"></label>'+btn("tip","Начислить тестовые Merit","primary full")+'</div>')+
- '</div></div></div>';
+ '<label>Моя ставка, €<input type="number" id="newBid" min="1" step=".01" placeholder="Введи свою цену"></label>'+btn("bid","Подать ставку","primary full")+'<p class="footnote">Цена не заполняется автоматически. Ставки сохраняются только в этом браузере.</p>');
+ const staff=card('<h2>Участники и задачи</h2><label>Назначить исполнителя</label><select id="projectAssignee"><option value="">Не назначено</option>'+db.crew.members.map(id=>'<option value="'+id+'" '+(p.assignee===id?"selected":"")+'>'+idName(id)+'</option>').join("")+'</select>'+
+ btn("assign","Сохранить исполнителя","mini",'style="margin-top:9px"')+
+ '<div class="divider"></div><label>Статус лота</label><select id="projectStatus">'+[["draft","Черновик"],["published","Опубликован"],["progress","В работе"],["review","На приёмке"],["accepted","Принят"]].map(a=>'<option value="'+a[0]+'" '+(p.status===a[0]?"selected":"")+'>'+a[1]+'</option>').join("")+'</select>'+
+ btn("set-status","Обновить статус","mini",'style="margin-top:8px"')+
+ '<p class="footnote">В демо роли не проверяются. В рабочем приложении потребуются права доступа.</p>');
+ const bonus=card('<h2>Чаевые и Merit</h2><p class="small">Демо-конверсия: 1 Merit = 0,01 €. Бонус заказчика не покупает Legacy. Юридический и налоговый статус требует отдельной проверки.</p><div class="metric">'+fmt(p.tip||0)+' Merit</div>'+
+ '<label>Бонус, €<input id="tipAmount" type="number" min=".01" max="10000" step=".01" placeholder="Например, 200"></label>'+btn("tip","Начислить тестовые Merit","primary full"));
+ return '<div class="stack"><div class="detailhead">'+btn("projects-back","← Объекты","mini")+pill(enc(p.kind==="FULL"?"COMPLEX":p.kind),"blue")+pill(enc(p.status),p.status==="accepted"?"ok":"")+'</div>'+top+subView+
+ '<div class="grid colsMain"><div class="stack">'+taskView(p)+docsSection(p,docids)+feed(p)+'</div><div class="stack">'+auction+staff+bonus+'</div></div></div>';
 }
 function docsInherited(p){
  const files=[];let cur=p,seen=new Set();
@@ -179,13 +181,17 @@ function radar(p){
  return '<svg class="radar" viewBox="0 0 260 260" role="img" aria-label="Навыки участника">'+[.25,.5,.75,1].map(s=>'<polygon points="'+skills.map((_,i)=>{let a=(-Math.PI/2)+Math.PI*2*i/6,r=95*s;return (130+Math.cos(a)*r)+","+(130+Math.sin(a)*r)}).join(" ")+'" stroke="#6d8896" stroke-width=".7" fill="none" opacity=".7"/>').join("")+'<polygon points="'+pts(skills)+'" stroke="#d9e8ed" stroke-width="2.5" fill="#b5d3dd" fill-opacity=".27"/>'+labels.map((x,i)=>{let a=-Math.PI/2+Math.PI*2*i/6;return '<text x="'+(130+Math.cos(a)*115)+'" y="'+(130+Math.sin(a)*115)+'" font-size="9" fill="#c5d5dd" text-anchor="middle">'+x+'</text>'}).join("")+'</svg>';
 }
 function personDetails(p){
- const mine=p.id==="me",active=db.projects.filter(pr=>pr.assignee===p.id||pr.bids.some(b=>b.userId===p.id));
+ const mine=p.id==="me";
+ const active=db.projects.filter(pr=>pr.assignee===p.id||(pr.bids||[]).some(b=>b.userId===p.id));
  const journal=mine?db.ledger.filter(x=>x.userId==="me"):[];
- return '<div class="stack">'+card('<div class="row">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="sub">'+enc(p.role)+'</div><div class="small muted">'+enc(p.city)+'</div></div></div><div style="margin-top:13px" class="row">'+pill((p.verified?"Подтверждён":"Навыки не проверены"),p.verified?"ok":"warn")+pill("Legacy "+fmt(totalLegacy(p)),"blue")+pill("XP "+fmt(p.xp))+'</div><div class="divider"></div><div class="grid cols2"><div><h3>Специализация</h3><div class="row">'+(p.skills||[]).map(s=>pill(enc(s),"")).join("")+'</div><p class="small" style="margin-top:10px">Телефон: '+(p.phone?enc(p.phone):"не указан")+'</p>'+contactButtons(p)+'</div><div><h3>Характеристики • demo</h3>'+radar(p)+'</div></div>'+
- (mine?'<div class="divider"></div>'+btn("edit-profile","✎ Редактировать мой профиль","primary")+' <label class="btn mini" style="cursor:pointer;margin:0">＋ Загрузить аватар<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>':"")+'</div>'+
- '<div class="grid cols2">'+card('<h2>История проектов</h2>'+(active.length?active.map(pr=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+pr.id+'">'+enc(pr.title)+'</button><span class="small muted">'+fmt(pr.budget)+' €</span></div>').join(""):empty("Проектов ещё нет")))+
- card('<h2>Финансовая история</h2>'+(journal.length?journal.slice().reverse().map(x=>'<div class="listrow finance"><div><b>'+enc(x.label)+'</b><div class="tiny muted">'+enc(x.when)+'</div></div><span class="'+(x.delta>=0?"plus":"minus")+'">'+(x.delta>=0?"+":"")+fmt(x.delta)+' Merit</span></div>').join(""):empty(mine?"Тестовых операций ещё нет":"Доступно только владельцу профиля"))+'</div>'+
- card('<h2>Legacy • подтверждённые достижения</h2><div class="grid cols4">'+Object.entries(p.legacy||{}).map(([k,v])=>stat(enc(k.toUpperCase()),fmt(v),"Показатели демо")).join("")+'</div>')+'</div>';
+ const header=card('<div class="row">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="sub">'+enc(p.role)+'</div><div class="small muted">'+enc(p.city)+'</div></div></div>'+
+ '<div style="margin-top:13px" class="row">'+pill(p.verified?"Подтверждён":"Навыки не проверены",p.verified?"ok":"warn")+pill("Legacy "+fmt(totalLegacy(p)),"blue")+pill("XP "+fmt(p.xp))+'</div>'+
+ '<div class="divider"></div><div class="grid cols2"><div><h3>Специализация</h3><div class="row">'+(p.skills||[]).map(s=>pill(enc(s))).join("")+'</div><p class="small">Телефон: '+(p.phone?enc(p.phone):"не указан")+'</p>'+contactButtons(p)+'</div><div><h3>Характеристики • demo</h3>'+radar(p)+'</div></div>'+
+ (mine?'<div class="divider"></div>'+btn("edit-profile","✎ Редактировать мой профиль","primary")+' <label class="btn mini" style="cursor:pointer;margin:0">＋ Загрузить аватар<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>':""));
+ const projects=card('<h2>История проектов</h2>'+(active.length?active.map(pr=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+pr.id+'">'+enc(pr.title)+'</button><span class="small muted">'+fmt(pr.budget)+' €</span></div>').join(""):empty("Проектов ещё нет")));
+ const finance=card('<h2>Финансовая история</h2>'+(journal.length?journal.slice().reverse().map(x=>'<div class="listrow finance"><div><b>'+enc(x.label)+'</b><div class="tiny muted">'+enc(x.when)+'</div></div><span class="'+(x.delta>=0?"plus":"minus")+'">'+(x.delta>=0?"+":"")+fmt(x.delta)+' Merit</span></div>').join(""):empty(mine?"Тестовых операций ещё нет":"Доступно только владельцу профиля")));
+ const reputation=card('<h2>Legacy • профессиональный опыт</h2><div class="grid cols4">'+Object.entries(p.legacy||{}).map(([k,v])=>stat(enc(k.toUpperCase()),fmt(v),"Показатели демо")).join("")+'</div>');
+ return '<div class="stack">'+header+'<div class="grid cols2">'+projects+finance+'</div>'+reputation+'</div>';
 }
 function contactButtons(p){
  const phone=String(p.phone||"").replace(/[^\d+]/g,""),digits=phone.replace(/\D/g,"");
@@ -193,10 +199,14 @@ function contactButtons(p){
 }
 function crew(){
  const selected=person(ui.person)||person("me");
- return '<div class="stack">'+card('<div class="between"><div><div class="eyebrow">МОЯ БРИГАДА</div><h2 style="font-size:26px;margin:7px 0">'+enc(db.crew.name)+'</h2><p class="small">Капитан: '+idName(db.crew.captain)+' • Администраторы: '+db.crew.admins.map(idName).join(", ")+'</p></div>'+btn("team-settings","⚙ Команда","mini")+'</div><div class="row">'+pill(db.crew.members.length+" участников","blue")+pill(db.crew.tools?"🛠 Инструменты":"Без инструментов")+pill(db.crew.vehicle?"▣ Транспорт":"Без транспорта")+'</div></div>'+
- '<div class="grid colsMain">'+card('<div class="between"><h2>Состав и профили</h2>'+btn("invite","＋ Пригласить","primary mini")+'</div>'+db.users.map(p=>userCard(p)).join(""))+
- card('<div class="between"><h2>MentorGate</h2>'+pill("Invite only","blue")+'</div><p class="small">Ввести новичка в систему может участник с достаточным Merit. На обучение резервируется депозит, который возвращается после проверенных этапов.</p><div class="grid cols2">'+stat("Зарезервировано",fmt(db.frozen),"Merit")+stat("Наставничеств",db.mentor.length,"Всего в демо")+'</div><div style="margin-top:13px">'+btn("mentor","Открыть MentorGate","primary full")+'</div><div class="divider"></div>'+db.mentor.map(m=>'<div class="listrow"><div><b>'+enc(person(m.trainee)?.name||"Новичок")+'</b><div class="small muted">'+fmt(m.progress)+' / '+fmt(m.stake)+' учебных Merit</div></div>'+pill(m.finished?"Завершено":"Обучение",m.finished?"ok":"warn")+'</div>').join(""))+'</div>'+
- card('<h2>Статистика участника</h2>'+personDetails(selected))+'</div>';
+ const header=card('<div class="between"><div><div class="eyebrow">МОЯ БРИГАДА</div><h2 style="font-size:26px;margin:7px 0">'+enc(db.crew.name)+'</h2><p class="small">Капитан: '+idName(db.crew.captain)+' • Администраторы: '+db.crew.admins.map(idName).join(", ")+'</p></div>'+btn("team-settings","⚙ Команда","mini")+'</div>'+
+ '<div class="row">'+pill(db.crew.members.length+" участников","blue")+pill(db.crew.tools?"🛠 Инструменты":"Без инструментов")+pill(db.crew.vehicle?"▣ Транспорт":"Без транспорта")+'</div>');
+ const members=card('<div class="between"><h2>Состав и профили</h2>'+btn("invite","＋ Пригласить","primary mini")+'</div>'+db.users.map(p=>userCard(p)).join(""));
+ const mentor=card('<div class="between"><h2>MentorGate</h2>'+pill("Invite only","blue")+'</div><p class="small">Ввести новичка в систему может участник с достаточным Merit. На обучение резервируется депозит, который возвращается после проверки этапов.</p>'+
+ '<div class="grid cols2">'+stat("Зарезервировано",fmt(db.frozen),"Merit")+stat("Наставничеств",db.mentor.length,"Всего в демо")+'</div><div style="margin-top:13px">'+btn("mentor","Открыть MentorGate","primary full")+'</div><div class="divider"></div>'+
+ db.mentor.map(m=>'<div class="listrow"><div><b>'+enc(person(m.trainee)?.name||"Новичок")+'</b><div class="small muted">'+fmt(m.progress)+' / '+fmt(m.stake)+' учебных Merit</div></div>'+pill(m.finished?"Завершено":"Обучение",m.finished?"ok":"warn")+'</div>').join(""));
+ const stats=card('<h2>Статистика участника</h2>'+personDetails(selected));
+ return '<div class="stack">'+header+'<div class="grid colsMain"><div class="stack">'+members+stats+'</div>'+mentor+'</div></div>';
 }
 function messages(){
  const channels=db.projects.filter(p=>!p.parentId).map(p=>({id:p.id,title:p.title}));
@@ -207,12 +217,16 @@ function messages(){
 }
 function profile(){
  const p=person("me");
- const ledger=db.ledger.slice().reverse();const active=db.projects.filter(x=>x.assignee==="me"||x.bids.some(b=>b.mine));
- return '<div class="stack">'+card('<div class="between"><div class="person">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="small muted">'+enc(p.role)+' • '+enc(p.city)+'</div><div class="row" style="margin-top:7px">'+pill("Merit "+fmt(db.merit),"blue")+pill("Заморожено "+fmt(db.frozen))+'</div></div></div>'+btn("edit-profile","✎ Изменить","mini")+'</div><div class="divider"></div><div class="row"><label class="btn mini" style="cursor:pointer;margin:0">＋ Фото профиля<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>'+contactButtons(p)+'</div></div>'+
- '<div class="grid cols2">'+card('<h2>Персональные показатели</h2>'+radar(p)+'<div class="grid cols2">'+stat("XP",fmt(db.xp),"Опыт в системе")+stat("Legacy",fmt(totalLegacy(p)),"Профессиональный след")+'</div>')+
- card('<h2>Связанные проекты</h2>'+(active.length?active.map(pr=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+pr.id+'">'+enc(pr.title)+'</button><span>'+fmt(pr.budget)+' €</span></div>').join(""):empty("Пока без назначений"))+'</div>'+
- card('<div class="between"><h2>История Merit и операций</h2>'+pill("Локальный учёт","warn")+'</div>'+(ledger.length?ledger.map(l=>'<div class="listrow finance"><div><b>'+enc(l.label)+'</b><div class="tiny muted">'+enc(l.when)+' • '+(project(l.projectId)?enc(project(l.projectId).title):"MentorGate")+'</div></div><strong class="'+(l.delta>=0?"plus":"minus")+'">'+(l.delta>=0?"+":"")+fmt(l.delta)+' Merit</strong></div>').join(""):empty("История пока пустая")))+
- card('<h2>Безопасность данных</h2><p class="small">Всё хранится на устройстве. Очистка данных сайта может удалить проекты, фото и PDF. Для реальной работы требуются аккаунты, разграничение доступа, резервные копии и серверная база.</p>'+btn("export","Экспортировать данные JSON","mini")+' '+btn("reset-demo","Сбросить демо","danger mini"))+'</div>';
+ const ledger=db.ledger.slice().reverse();
+ const active=db.projects.filter(x=>x.assignee==="me"||(x.bids||[]).some(b=>b.mine));
+ const header=card('<div class="between"><div class="person">'+userAvatar(p,true)+'<div><h2 style="font-size:27px;margin:0">'+enc(p.name)+'</h2><div class="small muted">'+enc(p.role)+' • '+enc(p.city)+'</div><div class="row" style="margin-top:7px">'+pill("Merit "+fmt(db.merit),"blue")+pill("Заморожено "+fmt(db.frozen))+'</div></div></div>'+
+ btn("edit-profile","✎ Изменить","mini")+'</div><div class="divider"></div><div class="row"><label class="btn mini" style="cursor:pointer;margin:0">＋ Фото профиля<input type="file" data-file="avatar" accept="image/*" style="display:none"></label>'+contactButtons(p)+'</div>');
+ const metrics=card('<h2>Персональные показатели</h2>'+radar(p)+'<div class="grid cols2">'+stat("XP",fmt(db.xp),"Опыт в системе")+stat("Legacy",fmt(totalLegacy(p)),"Профессиональный след")+'</div>');
+ const projects=card('<h2>Связанные проекты</h2>'+(active.length?active.map(pr=>'<div class="listrow"><button class="itemlink" data-act="open-project" data-id="'+pr.id+'">'+enc(pr.title)+'</button><span>'+fmt(pr.budget)+' €</span></div>').join(""):empty("Пока без назначений")));
+ const history=card('<div class="between"><h2>История Merit и операций</h2>'+pill("Локальный учёт","warn")+'</div>'+(ledger.length?ledger.map(l=>'<div class="listrow finance"><div><b>'+enc(l.label)+'</b><div class="tiny muted">'+enc(l.when)+' • '+(project(l.projectId)?enc(project(l.projectId).title):"MentorGate")+'</div></div><strong class="'+(l.delta>=0?"plus":"minus")+'">'+(l.delta>=0?"+":"")+fmt(l.delta)+' Merit</strong></div>').join(""):empty("История пока пустая")));
+ const safety=card('<h2>Безопасность данных</h2><p class="small">Всё хранится на устройстве. Очистка данных сайта может удалить проекты, фото и PDF. Для реальной работы требуются аккаунты, разграничение доступа, резервные копии и серверная база.</p>'+
+ btn("export","Экспортировать данные JSON","mini")+' '+btn("reset-demo","Сбросить демо","danger mini"));
+ return '<div class="stack">'+header+'<div class="grid cols2">'+metrics+projects+'</div>'+history+safety+'</div>';
 }
 function currentPage(){
  if(ui.screen==="dashboard")return overview();
