@@ -92,3 +92,23 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Open problems:** no authenticated organisations, server-side permission checks, stage evidence workflow, chat/social network, immutable audit, independent acceptance, financial ledger, cloud backup or regulated electrical authorisation. Prototype export includes demo data only; must not be used for sensitive production records.
 
 **Next:** add testable pure domain model for stage lifecycle and independent acceptance; introduce local posts/comments with visibility semantics clearly marked demo; design server authorization before any real users.
+
+
+## Implementation pass #3 · 2026-11-21 ~00:00 CET
+
+**Scope:** only `silver-command/stage-domain.js`, `silver-command/stage-domain.test.js` and this log. No root 0.3 files changed.
+**Commits:** domain `b0e81d08`, tests `0f51fbf6`, test syntax correction `26ea2b33`.
+
+**Four priorities:**
+1. A pure local-domain model for evidence stages with explicit `draft → submitted → returned/accepted` transitions.
+2. Before + after evidence requirements and optional PDF page reference, tied to a positive integer Stringplan/plan revision. Metadata references only; **no actual image or PDF upload yet**.
+3. Independent review guards: stage owner cannot accept own work; only the lot's customer may accept/return in this local model; return requires a reason; accepted stage is locked.
+4. Revision invalidation and traceability: newer plan revisions invalidate older evidence; append local action history. This is **not immutable server audit**.
+
+**Stakeholder conflict review:** DC installer tries to submit without AFTER evidence; customer tries to upload evidence for installer; installer tries to self-approve; unrelated user tries to accept; customer returns without explanation; project planner updates the Stringplan after photos were captured. Guards implemented and exercised.
+
+**Verification:** `node --check stage-domain.js`, `node --check stage-domain.test.js`, `node stage-domain.test.js` locally: **15/15 PASS** for pure domain invariants. Test source was committed and a transcription syntax error in the first GitHub test commit was corrected in `26ea2b33`. These are unit tests of the isolated domain logic, **not** browser tests of the deployed GitHub version. No Safari test, no server security test, no media storage test. The domain module is not yet wired into the existing application UI.
+
+**Risks:** Stage state is currently mutable local JS and cannot establish real-world independent identity, verified AC permissions, authentic capture metadata, or legal acceptance. On accepted stages, a correction must be opened as a separate stage/change order, not mutate signed-off evidence. Stage evidence IDs must be unique across server storage in production, not merely within one local stage.
+
+**Next:** integrate stage lifecycle into the lot screen with a safe demo role switcher and durable storage; add a test for reload and corrupted stage state; then add a scoped social feed with visibility semantics. Do not claim actual uploaded media or production approvals.
