@@ -6,6 +6,7 @@ const encode = v => String(v ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":
 const money = n => Number(n || 0).toLocaleString("ru-RU");
 const uuid = () => "lot-" + Math.random().toString(36).slice(2,10);
 const tabs = [["dashboard","⌂","Главная"],["map","⌾","Карта"],["projects","▤","Проекты"],["chats","☷","Чаты"],["profile","◉","Профиль"]];
+const kinds = [["PLAN","Projektierung"],["DC","DC-Montage"],["AC","AC-Anschluss"],["REG","Anmeldung"]];
 const initial = [
   {id:"stock",title:"20 кВт DC • Stockach",city:"Stockach",client:"Демо Solarbau Süd",price:2000,kind:"DC",creator:"demo-client",parent:null,bids:[]},
   {id:"singen",title:"14,8 кВт DC • Singen",city:"Singen",client:"Демо Hegau Energie",price:1480,kind:"DC",creator:"demo-client",parent:null,bids:[{amount:1380,team:"SüdMontage (демо)"}]},
