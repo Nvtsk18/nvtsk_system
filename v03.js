@@ -61,7 +61,7 @@ const children=id=>db.projects.filter(p=>p.parentId===id);
 const owner=p=>p&&p.assignee?person(p.assignee):null;
 const totalLegacy=p=>Object.values(p.legacy||{}).reduce((a,b)=>a+Number(b||0),0);
 const scope=["dashboard","projects","market","crew","messages","profile"];
-const nav=[["dashboard","▦","Обзор"],["projects","▤","Проекты"],["market","◇","Биржа"],["crew","♙","Люди"],["messages","☷","Чаты"],["profile","◉","Профиль"]];
+const nav=[["dashboard","▦","Обзор"],["projects","▤","Проекты"],["market","◇","Биржа"],["map","⌾","Карта"],["crew","♙","Люди"],["messages","☷","Чаты"],["profile","◉","Профиль"]];
 function notify(msg){let t=Q("#toast");t.textContent=msg;t.hidden=false;clearTimeout(window._nttoast);window._nttoast=setTimeout(()=>{t.hidden=true},3100)}
 function go(screen){ui.screen=screen;render();window.scrollTo({top:0,behavior:"smooth"})}
 function selectProject(id,screen="projects"){ui.project=id;go(screen)}
@@ -107,6 +107,7 @@ function projectList(){
  '<div class="segment">'+["all","DC","AC","FULL"].map(f=>'<button data-act="filter" data-id="'+f+'" class="'+(ui.filter===f?"active":"")+'">'+({all:"Все",DC:"DC",AC:"AC",FULL:"Комплексные"})[f]+'</button>').join("")+'</div>'+
  '<div class="grid cols3">'+projectCards()+'</div>'+
  card('<h2>Дерево проектов</h2>'+db.projects.filter(p=>!p.parentId).map(p=>hierarchy(p)).join(""))+
+ card('<h2>Заказчики • демо-страницы</h2><p class="small">Это примеры интерфейса, не настоящие зарегистрированные аккаунты компаний.</p><div class="grid cols2">'+companyNames.map(n=>'<div class="step"><h3>'+enc(n)+'</h3><div class="small muted">Пример страницы заказчика</div><div style="margin-top:10px">'+btn("company","Просмотреть лоты ↗","mini",'data-name="'+enc(n)+'"')+'</div></div>').join("")+'</div>')+
  '</div>';
 }
 function getPhases(p){
@@ -132,7 +133,7 @@ function projectDetail(){
  const par=p.parentId?project(p.parentId):null,sub=children(p.id),docids=docsInherited(p);
  const bids=[...(p.bids||[])].sort((a,b)=>a.price-b.price);
  const total=sub.reduce((a,b)=>a+Number(b.budget||0),0);
- const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div><h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted">'+enc(p.client)+' • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
+ const top=card('<div class="eyebrow">LOT '+enc(p.id.toUpperCase())+'</div><h2 style="font-size:28px;margin:11px 0 8px">'+enc(p.title)+'</h2><div class="small muted"><button class="itemlink" data-act="company" data-name="'+enc(p.client)+'">'+enc(p.client)+'</button> • '+enc(p.city)+' • '+enc(p.created||"")+'</div>'+
  (par?'<div class="breadcrumb">Родитель: <button class="itemlink" data-act="open-project" data-id="'+par.id+'">'+enc(par.title)+'</button></div>':"")+
  '<div class="grid cols3" style="margin:19px 0">'+stat("Бюджет",fmt(p.budget)+" €","")+stat("Сублоты",sub.length,"На этом уровне")+stat("Исполнитель",owner(p)?idName(p.assignee):"Не выбран","")+'</div>'+
  '<div class="row">'+btn("edit-project","✎ Редактировать")+btn("split","⊞ На четыре этапа","primary",'data-id="'+p.id+'"')+btn("clone","＋ Новый сублот",'data-id="'+p.id+'"')+(p.address?'<a class="btn" href="https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.address)+'" target="_blank" rel="noopener">♧ Навигация ↗</a>':"")+'</div>'+
@@ -169,6 +170,15 @@ function feed(p){
  '<div class="divider"></div><div class="thread">'+((p.posts||[]).length?p.posts.slice().reverse().map(post=>'<div class="post"><div class="between"><strong>'+enc(post.kind)+'</strong><span class="tiny muted">'+enc(post.when)+'</span></div><div class="tiny muted">'+enc(person(post.author)?.name||"Участник")+'</div><p>'+enc(post.text)+'</p>'+(post.mediaId?'<div class="checkphoto" style="max-width:300px;max-height:220px"><img data-media="'+enc(post.mediaId)+'" alt="Фото публикации"></div>':"")+
  (post.comments||[]).map(c=>'<div class="comment"><b>'+enc(person(c.by)?.name||"Участник")+'</b> '+enc(c.text)+'</div>').join("")+
  '<form data-form="comment" data-postid="'+enc(post.id)+'" class="row" style="margin-top:10px"><input name="text" required placeholder="Комментарий" style="flex:1;min-width:120px"><button class="btn mini" type="submit">↵</button></form></div>').join(""):empty("Пока здесь тихо. Добавь первую запись."))+'</div>');
+}
+function mapScreen(){
+ const cityloc=[["Stockach",28,18],["Singen",30,62],["Gottmadingen",19,69],["Überlingen",65,35],["Bodensee",52,49]];
+ const points=db.projects.filter(p=>!p.parentId);
+ return '<div class="stack">'+card('<h2>Карта объектов</h2><p>Схематическая карта региона Bodensee. Метки не являются точными координатами. Для маршрута используй адрес в карточке объекта.</p>'+
+ '<div class="site-map"><svg viewBox="0 0 900 460" preserveAspectRatio="none" role="img" aria-label="Схема Боденского озера"><defs><linearGradient id="lake" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#315465"/><stop offset="1" stop-color="#123547"/></linearGradient></defs><rect width="900" height="460" fill="#132631"/><path d="M0 292 Q110 257 180 295 T355 320 Q450 304 525 321 T680 357 L900 370 L900 460 L0 460Z" fill="url(#lake)" stroke="#80a6b9" stroke-width="2"/><path d="M0 78 Q230 125 415 105 T900 112 M0 192 Q260 232 470 180 T900 226 M170 0 Q270 180 425 460 M680 0 Q595 175 730 460" stroke="#8499a3" stroke-dasharray="5 9" fill="none" opacity=".3"/><text x="545" y="416" fill="#b6cfdb" font-size="24" opacity=".68">BODENSEE</text></svg>'+
+ cityloc.map(([name,x,y])=>'<span class="map-city" style="left:'+x+'%;top:'+y+'%">'+enc(name)+'</span>').join("")+'</div>'+
+ '<p class="footnote">Адреса не выдумываются. Пока известен только город, ссылка откроет его поиск в Google Maps.</p>')+
+ '<div class="grid cols3">'+points.map(p=>'<div class="lot"><div class="between">'+pill(enc(p.city),"blue")+pill(enc(p.kind))+'</div><h3>'+enc(p.title)+'</h3><div class="small muted">'+enc(p.client)+'</div><div class="row">'+btn("open-project","Проект ↗","mini primary",'data-id="'+p.id+'"')+'<a class="btn mini" href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(p.address||p.city)+'" target="_blank" rel="noopener">Маршрут ↗</a></div></div>').join("")+'</div></div>';
 }
 function market(){
  const lots=db.projects.filter(p=>p.status==="published"||p.status==="progress").filter(p=>ui.filter==="all"||p.kind===ui.filter);
@@ -232,6 +242,7 @@ function currentPage(){
  if(ui.screen==="dashboard")return overview();
  if(ui.screen==="projects")return ui.projectDetail?projectDetail():projectList();
  if(ui.screen==="market")return market();
+ if(ui.screen==="map")return mapScreen();
  if(ui.screen==="crew")return crew();
  if(ui.screen==="messages")return messages();
  if(ui.screen==="profile")return profile();
@@ -274,6 +285,15 @@ function mentorModal(){
  '<div class="grid cols2">'+stat("Баланс",fmt(db.merit),"Merit")+stat("Заморожено",fmt(db.frozen),"Merit")+'</div>'+
  '<form id="mentorForm"><label>Имя новичка<input name="name" required placeholder="Имя, фамилия"></label><label>Специальность<select name="skill"><option value="DC">DC / Montage</option><option value="AC">AC • до проверки не допускается к электромонтажу</option><option value="LOG">Логистика</option></select></label><label>Резерв Merit<select name="stake"><option value="1000">1 000 Merit • обычная программа</option><option value="2500">2 500 Merit • повышенная x2</option></select></label><button type="submit" class="btn primary" style="margin-top:13px">Зарезервировать и пригласить</button></form>'+
  '<div class="divider"></div><h3>Текущие программы</h3>'+db.mentor.map(m=>'<div class="listrow"><div><b>'+enc(person(m.trainee)?.name||"Новичок")+'</b><div class="small muted">'+fmt(m.progress)+' / '+fmt(m.stake)+' учебных Merit</div></div>'+(m.finished?pill("Завершено","ok"):btn("mentor-progress","Зачесть +250","mini",'data-id="'+m.id+'"'))+'</div>').join("")+'<p class="footnote">Legacy невозможно купить или удвоить депозитом: репутация растёт только за подтверждённые результаты работы. Реальный MentorGate потребует проверку личности и защиту от фиктивных приглашений.</p>');
+}
+function companyModal(name){
+ const related=db.projects.filter(p=>p.client===name);
+ const known=companyNames.includes(name);
+ openModal('<div class="between"><h2>▣ '+enc(name)+'</h2>'+btn("close","×","mini")+'</div>'+
+ '<p class="small">Страница заказчика · демонстрационный профиль. '+(known?'Компания не подключена к NVTSK; карточка создана лишь для проверки интерфейса.':'Карточка создана из локального проекта.')+'</p>'+
+ '<div class="grid cols2">'+stat("Проектов",related.length,"В локальном демо")+stat("Активных",related.filter(p=>p.status!=="accepted").length,"В локальном демо")+'</div><div class="divider"></div><h3>Лоты заказчика</h3>'+
+ (related.length?related.map(p=>'<div class="listrow"><div><b>'+enc(p.title)+'</b><div class="small muted">'+enc(p.city)+' • '+fmt(p.budget)+' €</div></div>'+btn("open-project","Открыть","mini",'data-id="'+p.id+'"')+'</div>').join(""):empty("Лоты пока не созданы"))+
+ '<p class="footnote">Настоящие кабинеты заказчиков и верификация появятся после подключения серверной авторизации.</p>');
 }
 function inviteModal(){
  openModal('<h2>Пригласить участника</h2><p>Существующие тестовые специалисты присоединяются к твоему отряду. Для нового человека используй MentorGate.</p>'+
@@ -361,7 +381,7 @@ async function mediaUrl(id){
 async function hydrateMedia(){
  for(const el of QA("[data-media]")){
   const id=el.dataset.media;
-  try{const url=await mediaUrl(id);if(url&&el.isConnected){el.src=url}}catch(e){console.warn("media unavailable",e)}
+  try{const rec=await getMedia(id),url=await mediaUrl(id);if(url&&el.isConnected){if(rec?.type?.startsWith("video/")&&el.tagName==="IMG"){const video=document.createElement("video");video.src=url;video.controls=true;video.playsInline=true;video.setAttribute("aria-label",el.alt||"Видео");el.replaceWith(video)}else{el.src=url}}}catch(e){console.warn("media unavailable",e)}
  }
 }
 async function openPdf(id,page=1){
@@ -395,6 +415,7 @@ const appActions={
  invite:()=>inviteModal(),
  "add-member":b=>{if(!db.crew.members.includes(b.dataset.id))db.crew.members.push(b.dataset.id);persist();closeModal();render();notify("Участник добавлен в демо-отряд")},
  "team-settings":()=>teamSettings(),
+ company:b=>companyModal(b.dataset.name),
  "show-stage-pdf":b=>{const p=project(b.dataset.id),docs=docsInherited(p);if(!docs.length)return notify("Прикрепи PDF к этому проекту");const page=p.tasks[b.dataset.phase]?.pdfPage||1;openPdf(docs[0].mediaId,page)},
  pdf:b=>openPdf(b.dataset.mediaid),
  "approve-task":b=>approve(project(b.dataset.id),b.dataset.phase),
