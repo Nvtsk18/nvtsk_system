@@ -6,7 +6,8 @@ const api=window.NVTSK_API;
 if(!api){console.error("NVTSK base UI unavailable");return}
 const {db,ui,persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,totalLegacy}=api;
 const Q=s=>document.querySelector(s);
-const game=db.game||=( {registration:{complete:false,guest:false,handle:"",email:"",kind:"installer"},claims:[],starts:[],district:{},inventory:{rss:false,lift:false,laser:false,evcharger:false},worldTab:"garage",wardrobe:["graphite"],outfit:"graphite",following:[],activity:[],raids:{},season:1,awardBook:[],wantedReplies:[],guildName:"",training:[],missionView:"all"});
+const game=db.game||=( {registration:{complete:false,guest:false,handle:"",email:""},claims:[],starts:[],district:{},inventory:{rss:false,lift:false,laser:false,evcharger:false},worldTab:"garage",wardrobe:["graphite"],outfit:"graphite",following:[],activity:[],raids:{},season:1,awardBook:[],wantedReplies:[],guildName:"",training:[],missionView:"all"});
+if(game.registration&&Object.prototype.hasOwnProperty.call(game.registration,"kind"))delete game.registration.kind;
 db.social||={posts:[],notifications:[]};
 db.social.posts||=[];db.social.notifications||=[];
 if(!db.social.posts.length){
@@ -85,7 +86,7 @@ function avatar(id,big=false){
 }
 function topCard(){
  const p=person("me");
- return '<div class="card game-hero"><div class="eyebrow">NVTSK • CAREER MODE / SILVER EDITION</div><div class="char-top"><div class="char-portrait">'+avatar("me",true)+'</div><div><h2>'+ch(p.name)+'</h2><div class="small">'+ch(p.role)+'</div><div class="row" style="margin:10px 0">'+pill("LVL "+level(),"blue")+pill(missionRank(level()))+pill(game.outfit.toUpperCase())+'</div></div></div><div class="between small"><span>XP до следующего уровня</span><strong>'+xpProgress()+'%</strong></div><div class="statbar"><i style="width:'+xpProgress()+'%"></i></div><div class="row" style="margin-top:18px">'+btn("game-nav","✦ Доска миссий","primary",'data-screen="missions"')+btn("game-nav","◈ Кошелёк","",'data-screen="wallet"')+'</div></div>';
+ return '<div class="card game-hero"><div class="eyebrow">NVTSK • CAREER MODE / SILVER EDITION</div><div class="char-top"><div class="char-portrait">'+avatar("me",true)+'</div><div><h2>'+ch(p.name)+'</h2><div class="small">'+ch(api.skillText(p))+'</div><div class="row" style="margin:10px 0">'+pill("LVL "+level(),"blue")+pill(missionRank(level()))+pill(game.outfit.toUpperCase())+'</div></div></div><div class="between small"><span>XP до следующего уровня</span><strong>'+xpProgress()+'%</strong></div><div class="statbar"><i style="width:'+xpProgress()+'%"></i></div><div class="row" style="margin-top:18px">'+btn("game-nav","✦ Доска миссий","primary",'data-screen="missions"')+btn("game-nav","◈ Кошелёк","",'data-screen="wallet"')+'</div></div>';
 }
 function missionCard(p){
  const step=compactProgress(p),done=game.claims.includes(p.id),started=game.starts.includes(p.id),access=requirements(p);
@@ -238,13 +239,13 @@ function social(){
  '<div class="row"><button class="btn mini '+(liked?"primary":"")+'" data-game="like" data-id="'+post.id+'">♥ '+(post.likes||[]).length+'</button>'+pill("☏ "+(post.comments||[]).length+" комментариев")+ (post.projectId?btn("game-open","Открыть миссию","mini",'data-id="'+post.projectId+'"'):"")+'</div>'+
  '<div class="social-comments">'+(post.comments||[]).map(c=>'<div class="comment"><b>'+userName(c.by)+':</b> '+ch(c.text)+'</div>').join("")+'</div><form data-gameform="social-comment" data-post="'+post.id+'" class="row"><input name="text" maxlength="320" required placeholder="Написать комментарий…" style="flex:1;min-width:125px"><button type="submit" class="btn mini">Отправить</button></form></article>';
  }).join("")+'</div>'+
- '<div class="stack">'+card('<h2>Подписки и связи</h2>'+db.users.filter(p=>p.id!=="me").map(p=>'<div class="listrow"><div class="person">'+avatar(p.id)+'<div><b>'+ch(p.name)+'</b><div class="tiny muted">'+ch(p.role)+'</div></div></div>'+btn("follow",game.following.includes(p.id)?"✓ Вы подписаны":"＋ Следить","mini",'data-id="'+p.id+'"')+'</div>').join(""))+
+ '<div class="stack">'+card('<h2>Подписки и связи</h2>'+db.users.filter(p=>p.id!=="me").map(p=>'<div class="listrow"><div class="person">'+avatar(p.id)+'<div><b>'+ch(p.name)+'</b><div class="tiny muted">'+ch(api.skillText(p))+'</div></div></div>'+btn("follow",game.following.includes(p.id)?"✓ Вы подписаны":"＋ Следить","mini",'data-id="'+p.id+'"')+'</div>').join(""))+
  card('<h2>Уведомления</h2>'+(db.social.notifications.length?db.social.notifications.slice(0,8).map(n=>'<div class="listrow small">'+ch(n.text)+'<span class="tiny muted">'+ch(n.when)+'</span></div>').join(""):empty("Новых уведомлений нет")))+'</div></div></div>';
 }
 function registrationModal(){
  if(game.registration.complete||game.registration.guest)return;
- openModal('<div class="eyebrow">NVTSK SYSTEM • REGISTRATION</div><h2 style="font-size:27px;margin:8px 0">Создай своего персонажа</h2><p>Старт карьеры. Укажи роль и позывной, чтобы войти в демоверсию NVTSK. Настоящая регистрация и вход с другого телефона появятся после подключения сервера.</p>'+
- '<form id="gameRegisterForm"><label>Имя персонажа<input name="handle" minlength="2" maxlength="45" placeholder="Например, Serhii PV" required></label><label>Кто ты?<select name="kind"><option value="installer">Монтажник / Installer</option><option value="captain">Капитан / Crew Leader</option><option value="client">Заказчик / Auftraggeber</option><option value="broker">Посредник / Dienstleister</option></select></label><label>Город / регион<input name="city" placeholder="Например, Stockach"></label><button type="submit" class="btn primary full" style="margin-top:12px">Начать карьеру →</button></form><div class="divider"></div>'+btn("game-guest","Продолжить без регистрации","mini ghost full")+
+ openModal('<div class="eyebrow">NVTSK SYSTEM • REGISTRATION</div><h2 style="font-size:27px;margin:8px 0">Создай своего персонажа</h2><p>Укажи имя персонажа. Роль определяется действием в каждом лоте: создатель становится заказчиком, приглашённый участник исполнителем. Настоящая регистрация и вход с другого телефона появятся после подключения сервера.</p>'+
+ '<form id="gameRegisterForm"><label>Имя персонажа<input name="handle" minlength="2" maxlength="45" placeholder="Например, Serhii PV" required></label><label>Город / регион<input name="city" placeholder="Например, Stockach"></label><button type="submit" class="btn primary full" style="margin-top:12px">Начать карьеру →</button></form><div class="divider"></div>'+btn("game-guest","Продолжить без регистрации","mini ghost full")+
  '<p class="footnote">Не вводи пароли. Данные сохраняются только на этом устройстве. Это не система аутентификации.</p>');
 }
 function raidModal(p){
@@ -336,10 +337,9 @@ document.addEventListener("submit",e=>{
  }else if(f.id==="gameRegisterForm"){
   const handle=String(d.handle||"").trim().slice(0,45);
   if(handle.length<2)return notify("Имя должно содержать минимум 2 символа");
-  game.registration={complete:true,guest:false,handle,kind:d.kind,city:String(d.city||"").trim().slice(0,80)};
+  game.registration={complete:true,guest:false,handle,city:String(d.city||"").trim().slice(0,80)};
   const me=person("me");me.name=handle;if(d.city)me.city=game.registration.city;
-  if(d.kind==="captain")me.role="Crew Captain";else if(d.kind==="client")me.role="Auftraggeber (demo)";
-  else if(d.kind==="broker")me.role="Dienstleister (demo)";else me.role="PV Installer";
+  // The system never assigns a platform-wide role at registration.
   activity("Создан персонаж: "+handle);save();closeModal();render();notify("Добро пожаловать, "+handle+"!");
  }else if(f.id==="gameRaidForm"){
   const p=project(f.dataset.id);if(!p)return;
