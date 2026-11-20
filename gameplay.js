@@ -90,11 +90,11 @@ function topCard(){
 }
 function missionCard(p){
  const step=compactProgress(p),done=game.claims.includes(p.id),started=game.starts.includes(p.id),access=requirements(p);
- const status=done?"✓ COMPLETED":started?"● ACTIVE":access.ok?"READY":"LOCKED";
- return '<div class="lot gta-mission '+(done?"gta-completed":"")+'"><div class="mission-banner"><span>'+styleIcon(p.kind)+' '+ch(p.kind)+'</span><b>LVL '+missionLevel(p)+'</b></div><div class="between">'+pill(ch(p.city),"blue")+pill(status,done?"ok":access.ok?"blue":"warn")+'</div><div><h3>'+ch(p.title)+'</h3><div class="small muted">'+ch(p.client)+'</div></div><div class="mission-prizes"><span>⚡ '+fmt(xpReward(p))+' XP</span><span>◈ '+fmt(meritReward(p))+' Merit</span><span>★ +Legacy</span></div><div class="between small sub"><span>Фотодоказательства</span><strong>'+step.n+'/'+step.total+'</strong></div><div class="statbar"><i style="width:'+step.percent+'%"></i></div>'+
+ const role=api.roleInLot(p);const status=done?"✓ COMPLETED":started?"● ACTIVE":role.code==="client"?"МОЙ ЛОТ":access.ok?"READY":"LOCKED";
+ return '<div class="lot gta-mission '+(done?"gta-completed":"")+'"><div class="mission-banner"><span>'+styleIcon(p.kind)+' '+ch(p.kind)+'</span><b>LVL '+missionLevel(p)+'</b></div><div class="between">'+pill(ch(p.city),"blue")+pill(status,done?"ok":access.ok?"blue":"warn")+'</div><div><h3>'+ch(p.title)+'</h3><div class="small muted">'+ch(p.client)+' · '+role.label+'</div></div><div class="mission-prizes"><span>⚡ '+fmt(xpReward(p))+' XP</span><span>◈ '+fmt(meritReward(p))+' Merit</span><span>★ +Legacy</span></div><div class="between small sub"><span>Фотодоказательства</span><strong>'+step.n+'/'+step.total+'</strong></div><div class="statbar"><i style="width:'+step.percent+'%"></i></div>'+
  (!access.ok?'<div class="small caveat">'+access.reasons.map(ch).join(" • ")+'</div>':'')+
  '<div class="row">'+btn("game-open","Досье ↗","mini primary",'data-id="'+enc(p.id)+'"')+
- (!started&&!done?btn("game-start","Взять контракт","mini",'data-id="'+enc(p.id)+'" '+(!access.ok?'disabled':'')):"")+
+ (!started&&!done&&role.code!=="client"?btn("game-start","Взять контракт","mini",'data-id="'+enc(p.id)+'" '+(!access.ok?'disabled':'')):"")+
  (started&&!done?btn("game-claim","Сдать миссию","mini",'data-id="'+enc(p.id)+'" '+(!access.ok||step.n!==step.total?'disabled':'')):"")+
  '</div></div>';
 }
@@ -273,8 +273,11 @@ const gameActions={
  "game-start":b=>{
   const p=project(b.dataset.id);if(!p)return;
   const r=requirements(p);if(!r.ok)return notify("Доступ закрыт: "+r.reasons.join("; "));
+  if(p.createdBy==="me")return notify("Это твой лот: ты здесь заказчик, а не исполнитель");
   if(!game.starts.includes(p.id))game.starts.push(p.id);
-  p.status="progress";activity("Взята миссия: "+p.title);save();render();notify("MISSION STARTED • "+p.title);
+  p.members||=[];if(!p.members.includes("me"))p.members.push("me");
+  if(!p.assignee)p.assignee="me";
+  p.status="progress";activity("Взята миссия как исполнитель: "+p.title);save();render();notify("MISSION STARTED • "+p.title);
  },
  "game-claim":b=>{const p=project(b.dataset.id);if(p)finishMission(p)},
  "demo-ac-toggle":()=>{game.demoAcReady=!game.demoAcReady;save();render();notify(game.demoAcReady?"Тестовый игровой флаг AC включён":"Тестовый игровой флаг AC выключен")},
