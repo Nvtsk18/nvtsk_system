@@ -137,3 +137,21 @@ body::before{content:"";pointer-events:none;position:fixed;inset:0;z-index:-1;ba
 }
 @media(max-width:400px){.mission-grid{grid-template-columns:1fr}.game-hero h2{font-size:23px}.char-portrait{width:70px}.bottomnav button{flex-basis:62px;min-width:62px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Character progression, badges and account dashboard */
+.career-road{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;position:relative;padding:10px 0}
+.career-node{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:17px 9px 13px;border:1px solid #435a68;border-radius:14px;background:#16242e;color:#90a4b2;position:relative;min-width:0}
+.career-node.done{background:linear-gradient(155deg,#344958,#1d2a34);border-color:#91acbc;color:#edf7fa;box-shadow:inset 0 1px #d4e5ee20}
+.career-dot{display:grid;place-items:center;border-radius:50%;height:36px;width:36px;background:#253747;border:1px solid #6c8998;font-size:19px;margin-bottom:5px}
+.career-node.done .career-dot{color:#12202a;border-color:#e2eef5;background:linear-gradient(140deg,#fff,#9cb6c6)}
+.career-node strong{font-size:12px}.career-node span{font-size:10px;letter-spacing:1px;font-weight:800}
+.achievement{padding:13px 11px;border:1px solid #4b6270;border-radius:12px;text-align:center;background:#14212a;color:#869ba8}
+.achievement.achieved{border-color:#a1baca;background:linear-gradient(135deg,#3b5261,#1d2b34);color:#f3fafc}
+.achievement-icon{font-size:28px;line-height:1.5}.achievement b{display:block;font-size:11px;letter-spacing:.4px}.achievement small{display:block;margin-top:5px;font-size:10px}
+.game-hero .btn.primary{min-width:145px}
+#modalback{backdrop-filter:blur(8px)}
+#modalback .modal{background:linear-gradient(155deg,#273b4b,#111b25);box-shadow:0 27px 95px #000e;border-color:#9db4c4}
+#modalback:not([hidden]) .modal{animation:panelPop .24s cubic-bezier(.25,.7,.2,1) both}
+@keyframes panelPop{0%{opacity:0;transform:translateY(17px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:720px){.career-road{grid-template-columns:repeat(5,minmax(105px,1fr));overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}.career-node{scroll-snap-align:center}.career-node strong{font-size:11px}.career-node span{font-size:9px}}
+@media(prefers-reduced-motion:reduce){#modalback:not([hidden]) .modal{animation:none}}
