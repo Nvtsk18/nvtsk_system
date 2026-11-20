@@ -61,7 +61,7 @@ const children=id=>db.projects.filter(p=>p.parentId===id);
 const owner=p=>p&&p.assignee?person(p.assignee):null;
 const totalLegacy=p=>Object.values(p.legacy||{}).reduce((a,b)=>a+Number(b||0),0);
 const scope=["dashboard","projects","market","crew","messages","profile"];
-const nav=[["dashboard","▦","Обзор"],["projects","▤","Проекты"],["market","◇","Биржа"],["map","⌾","Карта"],["crew","♙","Люди"],["messages","☷","Чаты"],["profile","◉","Профиль"]];
+const nav=[["dashboard","▦","Обзор"],["missions","✦","Миссии"],["projects","▤","Проекты"],["market","◇","Биржа"],["map","⌾","Карта"],["social","◎","Соцсеть"],["crew","♙","Бригада"],["world","⛭","Мир"],["messages","☷","Чаты"],["wallet","◈","Кошелёк"],["profile","◉","Кабинет"]];
 function notify(msg){let t=Q("#toast");t.textContent=msg;t.hidden=false;clearTimeout(window._nttoast);window._nttoast=setTimeout(()=>{t.hidden=true},3100)}
 function go(screen){ui.screen=screen;render();window.scrollTo({top:0,behavior:"smooth"})}
 function selectProject(id,screen="projects"){ui.project=id;go(screen)}
@@ -239,6 +239,7 @@ function profile(){
  return '<div class="stack">'+header+'<div class="grid cols2">'+metrics+projects+'</div>'+history+safety+'</div>';
 }
 function currentPage(){
+ if(window.NVTSK_EXT?.screens?.[ui.screen])return window.NVTSK_EXT.screens[ui.screen]();
  if(ui.screen==="dashboard")return overview();
  if(ui.screen==="projects")return ui.projectDetail?projectDetail():projectList();
  if(ui.screen==="market")return market();
@@ -498,5 +499,6 @@ Q("#modalback").addEventListener("click",e=>{if(e.target===Q("#modalback"))close
 Q("#modeSwitch").onclick=()=>{ui.role=ui.role==="worker"?"client":"worker";render();notify("Демо-режим переключён. Роли пока не ограничивают действия.")};
 Q("#appReset").onclick=modalConfirmReset;
 document.addEventListener("DOMContentLoaded",()=>{});
+window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy};
 render();
 })();
