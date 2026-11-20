@@ -49,3 +49,23 @@ For each iteration log:
 - Whether behaviour is local demonstration only or actually multi-user/backend
 
 Only count a review toward the user's requested ≥20 when it was a **separate, documented check**; do not fabricate PASS states or claim a night of continuous background execution. Scheduled tasks may run independently according to platform capabilities, but only their actual logged outputs count.
+
+## Implementation pass #1 · 2026-11-20 evening
+
+**Repository:** `Nvtsk18/nvtsk_system`, branch `main`, isolated path `silver-command/` only.
+**Committed:** `SYSTEM_SPEC.md`, `GAP_ANALYSIS.md`, `README.md`, `style.css`, `index.html`, `app.js`.
+**Design:** mobile five-tab navigation, silver translucent layered panels with no-JS visible fallback.
+**Functionality:** local lot creation, per-lot customer role, four derived sublots, sample external bid and independent executor assignment. No server.
+
+**Smoke tests (test harness, not physical iPhone): 7/7 passed**
+1. Navigation / dashboard UI renders.
+2. New lot is attributed to current creator (= customer).
+3. Four distinct child lots generated with parent linkage.
+4. Creator bid on own lot rejected.
+5. Creator self-assignment as installer rejected.
+6. Appointment as worker on another party's lot works.
+7. Demo bid on external lot remains in local state.
+
+**Known limitations:** use of sample organisation names is explicitly marked demo; no real company membership. No actual uploaded photos or PDFs, no secure storage, no authenticated server chat or stage acceptance. No verified electronic qualifications. UI has not been manually tested in Safari on a real iPhone. Public GitHub Pages availability of the new subdirectory has not been independently confirmed. These remain **open**, not PASS.
+
+**Immediate next pass priorities:** persistent project storage and schema validation, user-scoped authentication/permission model, media/evidence lifecycle, social feed and comment model, secure backend plan, controlled MentorGate ledger events. Recheck no-JS iOS fallback in physical Safari.
