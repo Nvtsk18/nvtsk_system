@@ -63,7 +63,12 @@ const totalLegacy=p=>Object.values(p.legacy||{}).reduce((a,b)=>a+Number(b||0),0)
 const scope=["dashboard","projects","market","crew","messages","profile"];
 const nav=[["dashboard","▦","Обзор"],["missions","✦","Миссии"],["projects","▤","Проекты"],["market","◇","Биржа"],["map","⌾","Карта"],["social","◎","Соцсеть"],["crew","♙","Бригада"],["world","⛭","Мир"],["messages","☷","Чаты"],["wallet","◈","Кошелёк"],["profile","◉","Кабинет"]];
 function notify(msg){let t=Q("#toast");t.textContent=msg;t.hidden=false;clearTimeout(window._nttoast);window._nttoast=setTimeout(()=>{t.hidden=true},3100)}
-function go(screen){ui.screen=screen;render();window.scrollTo({top:0,behavior:"smooth"})}
+let lastRenderedScreen=null;
+function go(screen){
+ const current=nav.findIndex(x=>x[0]===ui.screen),target=nav.findIndex(x=>x[0]===screen);
+ if(screen!==ui.screen)ui.slideDirection=target>=current?"right":"left";
+ ui.screen=screen;render();window.scrollTo({top:0,behavior:"smooth"});
+}
 function selectProject(id,screen="projects"){ui.project=id;go(screen)}
 function openModal(content){Q("#modalbody").innerHTML=content;Q("#modalback").hidden=false}
 function closeModal(){Q("#modalback").hidden=true;Q("#modalbody").innerHTML=""}
@@ -251,12 +256,16 @@ function currentPage(){
 }
 function render(){
  navRender();
- Q("#view").innerHTML='<section class="screen">'+currentPage()+'</section>';
+ const changed=ui.screen!==lastRenderedScreen;
+ const direction=ui.slideDirection||(changed?"right":null);
+ Q("#view").innerHTML='<section class="screen'+(direction?" enter-"+direction:"")+'">'+currentPage()+'</section>';
+ lastRenderedScreen=ui.screen;ui.slideDirection=null;
  hydrateMedia();
+ if(changed){const active=Q("#bottomnav button.active");if(active?.scrollIntoView)active.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});}
  const chat=Q("#chatLog");if(chat)chat.scrollTop=chat.scrollHeight;
 }
-function listRoot(){ui.projectDetail=false;go("projects")}
-function detail(id){ui.project=id;ui.projectDetail=true;go("projects")}
+function listRoot(){ui.projectDetail=false;ui.slideDirection="left";go("projects")}
+function detail(id){ui.project=id;ui.projectDetail=true;ui.slideDirection="right";go("projects")}
 function createProjectModal(parentId=null){
  const p=project(parentId);
  openModal('<h2>'+(p?"Новый сублот на основе проекта":"Новый проект")+'</h2><p class="small">Адрес, заказчик и документы наследуются от родительского лота, но цену, исполнителя и статус можно менять отдельно.</p>'+
@@ -498,6 +507,21 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 Q("#modalback").addEventListener("click",e=>{if(e.target===Q("#modalback"))closeModal()});
 Q("#modeSwitch").onclick=()=>{ui.role=ui.role==="worker"?"client":"worker";render();notify("Демо-режим переключён. Роли пока не ограничивают действия.")};
 Q("#appReset").onclick=modalConfirmReset;
+let gestureStart=null;
+document.addEventListener("touchstart",e=>{
+ if(e.touches.length!==1||!e.target.closest("#view")||!Q("#modalback")?.hidden){gestureStart=null;return}
+ if(e.target.closest("input,textarea,select,button,a,iframe,.site-map,.chatlog,.game-tabs,.segment,.bottomnav,[contenteditable],video")){gestureStart=null;return}
+ gestureStart={x:e.touches[0].clientX,y:e.touches[0].clientY};
+},{passive:true});
+document.addEventListener("touchend",e=>{
+ if(!gestureStart||!e.changedTouches.length)return;
+ const dx=e.changedTouches[0].clientX-gestureStart.x,dy=e.changedTouches[0].clientY-gestureStart.y;
+ gestureStart=null;
+ if(Math.abs(dx)<85||Math.abs(dx)<Math.abs(dy)*1.7||Math.abs(dy)>65)return;
+ const index=nav.findIndex(n=>n[0]===ui.screen),next=index+(dx<0?1:-1);
+ if(next<0||next>=nav.length)return;
+ ui.projectDetail=false;go(nav[next][0]);
+},{passive:true});
 document.addEventListener("DOMContentLoaded",()=>{});
 window.NVTSK_API={get db(){return db},get ui(){return ui},persist,render,go,project,person,children,notify,openModal,closeModal,detail,enc,fmt,date,uid,card,stat,pill,btn,saveMedia,mediaUrl,hydrateMedia,totalLegacy};
 render();
