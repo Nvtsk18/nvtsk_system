@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#0b1016">
+ <meta name="description" content="NVTSK Silver Command: private demo prototype for solar project crews, lots, documents and collaboration">
+ <title>NVTSK SYSTEM · Silver Command 0.4</title>
+ <link rel="stylesheet" href="./style.css">
+ <script defer src="./app.js"></script>
+</head>
+<body>
+<div class="layout">
+ <aside class="sidebar">
+  <div class="brand"><div class="brandN">N</div><div><div class="brandName">NVTSK</div><div class="brandSub">SILVER COMMAND</div></div></div>
+  <nav class="snav" id="desktopNav" aria-label="Навигация">
+   <a href="#dashboard">⌂ Главная</a><a href="#map">⌾ Карта и биржа</a><a href="#projects">▤ Проекты</a><a href="#chats">☷ Чаты</a><a href="#profile">◉ Профиль</a>
+  </nav>
+  <div class="sidefoot">SYSTEM MVP 0.4 · SILVER<br>Отдельный прототип от версии 0.3<br>Фиктивные данные • локальные действия</div>
+ </aside>
+ <main class="content">
+  <header class="header"><div><div class="overline">SOLAR OPERATIONS / SILVER COMMAND</div><h1 id="screenTitle">Command Center</h1></div><div class="row"><span class="pill warn">● DEMO</span><button id="newLot" class="btn sm primary" type="button">＋ Лот</button></div></header>
+  <div id="app">
+   <section class="stack" aria-label="Начальный экран">
+    <div class="glass hero">
+     <div class="overline">NVTSK 0.4 · SILVER COMMAND</div>
+     <h2 style="font-size:29px;margin-top:12px">Ваш центр PV-проектов</h2>
+     <p>Объекты, монтажные задания, PDF-планы, команды и коммуникация в одной системе. Интерфейс доступен даже когда скрипт ещё не запустился.</p>
+    </div>
+    <div class="grid g3">
+     <div class="glass work"><div class="statlabel">Проекты</div><div class="stat">3</div><p>Демо-объекты</p></div>
+     <div class="glass work"><div class="statlabel">Команда</div><div class="stat">4</div><p>Участники</p></div>
+     <div class="glass work"><div class="statlabel">Версия</div><div class="stat">0.4</div><p>Silver Command</p></div>
+    </div>
+    <div class="glass work"><h2>Открыть раздел</h2><div class="row"><a class="btn" href="#projects">Проекты</a><a class="btn" href="#map">Карта</a><a class="btn" href="#profile">Профиль</a></div><p class="small" style="margin-top:12px">Если ссылки не реагируют, браузер блокирует JavaScript. Используйте обычный Safari/Chrome, а не предпросмотр HTML файла.</p></div>
+   </section>
+  </div>
+ </main>
+</div>
+<nav class="bottomnav" id="mobileNav" aria-label="Мобильная навигация">
+ <a href="#dashboard"><span class="ico">⌂</span>Главная</a><a href="#map"><span class="ico">⌾</span>Карта</a><a href="#projects"><span class="ico">▤</span>Проекты</a><a href="#chats"><span class="ico">☷</span>Чаты</a><a href="#profile"><span class="ico">◉</span>Профиль</a>
+</nav>
+<div class="modalback" id="dialogBackdrop" hidden><div class="modal" id="dialog" role="dialog" aria-modal="true" aria-label="Рабочее действие"></div></div>
+<div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+<noscript><div style="margin:18px;padding:14px;border-radius:12px;background:#233540;color:#e7f0f5">Для действий в приложении разрешите JavaScript. Основные статические карточки доступны выше.</div></noscript>
+</body></html>
