@@ -1,0 +1,139 @@
+
+/* NVTSK SILVER UI — GAMEPLAY + MOTION */
+:root{--hud:#0d151c;--hud-hi:#22333d;--chrome:#d5e1e8;--chrome-low:#869cab;--chrome-deep:#526775;--neon:#77cbd3}
+body{background:
+ radial-gradient(ellipse 60% 34% at 50% -13%,#455c693d,transparent 100%),
+ repeating-linear-gradient(0deg,transparent 0px,transparent 43px,#ffffff04 44px),
+ #090e13}
+body::before{content:"";pointer-events:none;position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 99% 7%,#80b7cc10,transparent 26%),radial-gradient(circle at 5% 87%,#7396ac0c,transparent 34%)}
+.sidebar{background:linear-gradient(178deg,#1c2b36 0%,#111a21 51%,#0b1014 100%);border-right-color:#9fb0ba5c;box-shadow:5px 0 33px #0005}
+.brand{margin-bottom:5px;border-bottom:1px solid #ffffff15}
+.monogram{width:53px;height:53px;border-radius:14px;position:relative;box-shadow:0 0 0 5px #ffffff05,0 0 24px #b9d2df3d}
+.monogram::after{content:"";position:absolute;inset:3px;border:1px solid #e9f5fb4a;border-radius:10px;pointer-events:none}
+.brandword{font-weight:900;letter-spacing:3.1px}
+.snav{gap:4px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#526976 transparent}
+.snav button{padding:11px 13px;position:relative;transition:background .16s ease,transform .16s ease,border-color .16s ease}
+.snav button.active{border-color:#aec1cd65;background:linear-gradient(92deg,#8fa7b533,#9bb8c608 78%);box-shadow:inset 3px 0 #dae6ec,0 2px 10px #0002}
+.snav button.active::after{content:"";position:absolute;right:12px;top:50%;width:5px;height:5px;border-radius:50%;background:#d6e8f0;transform:translateY(-50%);box-shadow:0 0 8px #a6d9ec}
+.snav button:hover{transform:translateX(3px)}
+.content{position:relative}
+.topbar{padding-bottom:18px;border-bottom:1px solid #8a9daa2e}
+.vlabel{background:linear-gradient(125deg,#354958,#182831);border-color:#8ca5b3}
+.card,.lot{box-shadow:0 5px 24px #0003;border-color:#60778459;transition:border-color .2s,box-shadow .2s,transform .2s}
+.card:hover,.lot:hover{border-color:#8ba4b464;box-shadow:0 8px 31px #0005}
+.btn{transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+.btn:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 5px 18px #0004}
+.btn:focus-visible,.segment button:focus-visible,.snav button:focus-visible{outline:2px solid #deebf3;outline-offset:3px}
+.btn.primary{background:linear-gradient(115deg,#fff,#d8e4eb 47%,#91a7b6);color:#101b23;border:1px solid #e0edf4;box-shadow:inset 0 1px #fff9,0 3px 12px #9ab0bd22}
+.btn.primary:not(:disabled):hover{box-shadow:0 3px 25px #a9bdcb50}
+.card h2,.lot h3{color:#e9f0f4}
+.card h2{font-weight:800}
+.announcement{border:1px solid #9bafbc59;background:linear-gradient(110deg,#23323e,#121a21);position:relative;overflow:hidden}
+.announcement:before{content:"";display:block;position:absolute;top:0;left:0;width:3px;height:100%;background:#d1e1eb}
+.metric{letter-spacing:-.7px}
+.metriclabel{letter-spacing:.25px}
+.tag{background:#2a3d4a;color:#e8f0f4;border-color:#758d9c85}
+.statbar{height:9px;border-radius:99px;box-shadow:inset 0 2px 4px #0003}
+.statbar i{background:linear-gradient(90deg,#607889,#b4cbd9 53%,#eff7f9);position:relative}
+.statbar i:after{content:"";position:absolute;right:0;top:0;width:7px;height:100%;background:#fff9;box-shadow:0 0 12px white}
+.game-hero,.mission-hero{min-height:230px;padding:28px;position:relative;overflow:hidden;border:1px solid #afc6d366;border-radius:21px;background:
+ radial-gradient(ellipse at 88% 9%,#e3eff026 0,transparent 35%),
+ repeating-linear-gradient(115deg,#ecf8fa04 0,#ecf8fa04 1px,transparent 1px,transparent 21px),
+ linear-gradient(127deg,#273a49,#121b24 73%)}
+.game-hero:before,.mission-hero:before{content:"N";position:absolute;right:28px;top:-95px;font-size:330px;line-height:1;color:#c1d4e514;font-weight:1000;pointer-events:none}
+.game-hero:after,.mission-hero:after{content:"";position:absolute;right:-10%;bottom:-125px;width:370px;height:240px;border-radius:50%;background:#cfe9fa12;filter:blur(75px)}
+.game-hero>* ,.mission-hero>*{position:relative;z-index:1}
+.game-hero h2,.mission-hero h2{font-size:clamp(25px,3.6vw,37px);letter-spacing:-.7px;margin:6px 0 3px}
+.char-top{display:flex;gap:20px;align-items:center;margin:19px 0 24px}
+.char-portrait{width:112px;height:116px;flex-shrink:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#92adb74a,#12212b 77%);border:1px solid #91a9b8;border-radius:21px;box-shadow:inset 0 0 22px #a8c3d41b,0 0 0 5px #cfecf015}
+.char-portrait .avatar{width:85px;height:85px;border-radius:18px;font-size:43px;background:linear-gradient(145deg,#6f8796,#20303c);box-shadow:0 10px 20px #0006}
+.mission-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.gta-mission{display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;padding:0 0 17px;min-height:330px;background:linear-gradient(180deg,#1d303d,#121c26);border-color:#506c7d}
+.gta-mission>.between,.gta-mission>.small,.gta-mission>.statbar,.gta-mission>.row,.gta-mission>.caveat,.gta-mission>.mission-prizes,.gta-mission>div:has(>h3){margin-left:17px;margin-right:17px}
+.gta-mission .row{margin-top:auto!important}
+.gta-mission.gta-completed{border-color:#498b70}
+.mission-banner{position:relative;display:flex;align-items:flex-start;justify-content:space-between;min-height:88px;padding:16px 16px;background:linear-gradient(145deg,#617c8d99,#1b3141 48%,#101920 100%);border-bottom:1px solid #7fa6ba65;overflow:hidden}
+.mission-banner:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(125deg,transparent 0 22px,#ffffff05 23px 24px);pointer-events:none}
+.mission-banner:after{content:"N";position:absolute;right:21%;top:-64px;font-size:150px;font-weight:1000;color:#e6f2ff16}
+.mission-banner span,.mission-banner b{position:relative;z-index:1;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#edf8fb}
+.mission-banner span{font-weight:900;font-size:25px}
+.mission-banner b{border:1px solid #d9ecf299;padding:5px 8px;border-radius:8px;background:#0b14199e}
+.gta-mission h3{font-size:19px;line-height:1.27;min-height:46px;margin:0 0 4px}
+.mission-prizes{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mission-prizes span{padding:5px 8px;background:#314553;border:1px solid #7692a466;border-radius:7px;font-size:10px;color:#d9e8ef;font-weight:750}
+.caveat{color:#edc088!important}
+.gta-completed .mission-banner{background:linear-gradient(145deg,#34715b,#143b32,#101920)}
+.district{background:#1c2a35;border:1px solid #456171;border-radius:14px;padding:15px}
+.district .statbar{margin-top:11px}
+.world-header{padding:26px 26px 30px;background:linear-gradient(120deg,#304351,#131c24 75%);border:1px solid #8399a8a6;border-radius:20px;position:relative;overflow:hidden}
+.world-header:after{content:"NTS";position:absolute;right:16px;bottom:-63px;font-weight:1000;font-size:166px;color:#f4ffff0a;pointer-events:none}
+.world-header h2{font-size:30px;position:relative}
+.world-header p{max-width:650px;position:relative}
+.game-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;scrollbar-color:#678091 transparent}
+.game-tabs button{white-space:nowrap;flex:0 0 auto}
+.garage-card,.skill-card,.skin-card{padding:18px;border:1px solid #506779;border-radius:17px;background:linear-gradient(145deg,#20313c,#121d25 85%);min-width:0;position:relative;overflow:hidden}
+.garage-card:before,.skill-card:before,.skin-card:before{content:"";position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,transparent,#a6c3d1,transparent);opacity:.4}
+.garage-card:hover,.skill-card:hover,.skin-card:hover{border-color:#9ab3c2;box-shadow:0 10px 30px #0004}
+.garage-card h3,.skill-card h3,.skin-card h3{margin:9px 0 5px}
+.garage-card p,.skill-card p,.skin-card p{margin:0 0 12px}
+.garage-owned{border-color:#6baf92;background:linear-gradient(145deg,#25463a,#15262a)}
+.garage-icon,.skill-icon{display:grid;place-items:center;font-size:30px;width:66px;height:66px;border-radius:16px;background:linear-gradient(145deg,#68808e,#273945);border:1px solid #aac3cc8c;color:#e9f4f9;text-shadow:0 2px 12px #b3cfe0aa}
+.garage-owned .garage-icon{background:linear-gradient(135deg,#458466,#1c4739)}
+.skill-rungs{display:grid;gap:5px}
+.skill-rung{display:flex;align-items:center;justify-content:space-between;border:1px solid #465966;padding:8px 10px;border-radius:8px;color:#879ca7;font-size:11px}
+.skill-rung.unlocked{color:#dfeef1;border-color:#89aabc;background:#42596b44}
+.persona-figure{height:180px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:100px;font-weight:900;line-height:1;text-shadow:0 10px 25px #0009;border:1px solid #7f98a8;border-radius:15px;background:radial-gradient(ellipse at 55% 40%,#839fad7d,#273c49 50%,#0e1922 90%);color:#d3e1e8}
+.persona-figure span{font-size:9px;letter-spacing:3px;font-weight:800;color:#adbfcb;text-shadow:none}
+.skin-card{display:flex;flex-direction:column}
+.skin-preview{display:grid;place-items:center;height:116px;border-radius:13px;border:1px solid #6b899a;color:#f7ffff;font-weight:1000;font-size:74px;margin-bottom:11px;background:linear-gradient(130deg,#304a5a,#131d26)}
+.skin-preview.silver{background:linear-gradient(130deg,#a8bcca,#4c6372,#1b2731)}
+.skin-preview.urban{background:linear-gradient(130deg,#424a56,#17252a,#263b49)}
+.skin-preview.carbon{background:repeating-linear-gradient(45deg,#1d252c 0 12px,#33414d 13px 24px)}
+.skin-active{border-color:#e4f0f5;box-shadow:inset 0 0 22px #abc4cf19}
+.wanted-list{display:flex;align-items:center;gap:12px;background:#192833;border:1px solid #364f5d;border-radius:13px;padding:13px;min-width:0}
+.wanted-icon{flex:0 0 45px;width:45px;height:45px;border:1px solid #819faf;background:#2c4351;border-radius:13px;display:grid;place-items:center;font-size:24px}
+.leader-row{display:flex;align-items:center;gap:12px;padding:15px;border-bottom:1px solid #435766}
+.leader-row.mine{background:#859eae29;border:1px solid #8ca9b9;border-radius:12px}
+.leader-rank{display:grid;place-items:center;background:linear-gradient(145deg,#e1eaef,#637e90);color:#12212a;border-radius:10px;height:40px;width:40px;font-size:22px;font-weight:950;flex:0 0 40px}
+.social-post{padding:19px;background:linear-gradient(150deg,#1d2a34,#131d26);border:1px solid #526b7a;border-radius:17px;display:grid;gap:12px}
+.social-post .post-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#eff5f8;margin:0}
+.social-media{overflow:hidden;border:1px solid #6c8695;border-radius:13px;max-height:340px;background:#0b151d}
+.social-media img,.social-media video{display:block;width:100%;max-height:340px;object-fit:contain}
+.social-comments{display:grid;gap:4px}
+.social-post .comment{margin-left:5px}
+.social-post .avatar{height:43px;width:43px}
+.social-post .person{min-width:0}
+.game-hero .statbar{max-width:550px}
+.game-hero .row{max-width:640px}
+.game-hero .eyebrow{color:#cbdce5}
+#view{position:relative;isolation:isolate;overflow-x:clip;min-height:350px}
+.screen{position:relative;min-width:0}
+.screen.enter-right{animation:pageEnterRight .38s cubic-bezier(.21,.74,.25,1) both}
+.screen.enter-left{animation:pageEnterLeft .38s cubic-bezier(.21,.74,.25,1) both}
+@keyframes pageEnterRight{0%{opacity:.36;transform:translate3d(46px,0,0);clip-path:inset(0 0 0 27%);filter:blur(2px)}72%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0);clip-path:inset(0 0 0 0)}}
+@keyframes pageEnterLeft{0%{opacity:.36;transform:translate3d(-46px,0,0);clip-path:inset(0 27% 0 0);filter:blur(2px)}72%{opacity:1;filter:blur(0)}100%{opacity:1;transform:translate3d(0,0,0);clip-path:inset(0 0 0 0)}}
+.screen.enter-right:before,.screen.enter-left:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:linear-gradient(180deg,transparent,#e6f7fc,transparent);opacity:0;pointer-events:none;z-index:2;animation:edgeGlow .4s ease both}
+.screen.enter-left:before{left:auto;right:0}
+@keyframes edgeGlow{0%{opacity:0}24%{opacity:.95}100%{opacity:0}}
+/* Responsive game HUD */
+@media(max-width:1180px){.mission-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.game-hero{padding:23px}}
+@media(max-width:720px){
+ .topbar{align-items:flex-start}.topbar h1{font-size:23px}
+ .game-hero,.mission-hero{padding:19px;min-height:200px}.game-hero:before,.mission-hero:before{font-size:220px;top:-57px;right:-20px}
+ .char-top{gap:11px}.char-portrait{width:82px;height:90px;border-radius:14px}.char-portrait .avatar{height:62px;width:62px;font-size:28px}
+ .char-top h2{font-size:25px}.game-hero .row{gap:5px}.game-hero .row .tag{font-size:10px}
+ .mission-grid{grid-template-columns:1fr;gap:12px}.gta-mission{min-height:0}.gta-mission h3{min-height:0}
+ .world-header{padding:19px}.world-header h2{font-size:25px}
+ .garage-card,.skill-card,.skin-card{padding:13px}
+ .garage-icon,.skill-icon{height:53px;width:53px;font-size:25px}
+ .persona-figure{height:130px;font-size:68px}
+ .social-post{padding:13px}
+ .bottomnav{display:flex;justify-content:flex-start;overflow-x:auto;gap:4px;scrollbar-width:none;scroll-snap-type:x proximity;overscroll-behavior-x:contain}
+ .bottomnav::-webkit-scrollbar{display:none}
+ .bottomnav button{flex:0 0 67px;min-width:67px;scroll-snap-align:center;border:1px solid transparent;padding:6px 4px}
+ .bottomnav button.active{border-color:#9ab4c680;background:linear-gradient(#546f8255,#263743);box-shadow:inset 0 2px #d6e7ef}
+ .bottomnav button .ic{font-size:19px}
+ .announcement{font-size:12px}
+}
+@media(max-width:400px){.mission-grid{grid-template-columns:1fr}.game-hero h2{font-size:23px}.char-portrait{width:70px}.bottomnav button{flex-basis:62px;min-width:62px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
