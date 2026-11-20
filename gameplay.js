@@ -244,8 +244,8 @@ function social(){
 }
 function registrationModal(){
  if(game.registration.complete||game.registration.guest)return;
- openModal('<div class="eyebrow">NVTSK SYSTEM • REGISTRATION</div><h2 style="font-size:27px;margin:8px 0">Создай своего персонажа</h2><p>Укажи имя персонажа. Роль определяется действием в каждом лоте: создатель становится заказчиком, приглашённый участник исполнителем. Настоящая регистрация и вход с другого телефона появятся после подключения сервера.</p>'+
- '<form id="gameRegisterForm"><label>Имя персонажа<input name="handle" minlength="2" maxlength="45" placeholder="Например, Serhii PV" required></label><label>Город / регион<input name="city" placeholder="Например, Stockach"></label><button type="submit" class="btn primary full" style="margin-top:12px">Начать карьеру →</button></form><div class="divider"></div>'+btn("game-guest","Продолжить без регистрации","mini ghost full")+
+ openModal('<div class="eyebrow">NVTSK SYSTEM • REGISTRATION</div><h2 style="font-size:27px;margin:8px 0">Регистрация</h2><p>Укажите ваше имя. Роль определяется действием в каждом лоте: создатель становится заказчиком, приглашённый участник исполнителем. Настоящая регистрация и вход с другого телефона появятся после подключения сервера.</p>'+
+ '<form id="gameRegisterForm"><label>Ваше имя<input name="handle" minlength="2" maxlength="45" placeholder="Например, Сергей" required></label><label>Город / регион<input name="city" placeholder="Например, Stockach"></label><button type="submit" class="btn primary full" style="margin-top:12px">Начать карьеру →</button></form><div class="divider"></div>'+btn("game-guest","Продолжить без регистрации","mini ghost full")+
  '<p class="footnote">Не вводи пароли. Данные сохраняются только на этом устройстве. Это не система аутентификации.</p>');
 }
 function raidModal(p){
