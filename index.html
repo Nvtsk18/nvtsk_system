@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>NVTSK SYSTEM · Интерактивная MVP 0.2</title>
+<title>NVTSK SYSTEM · 0.3</title>
 <meta name="theme-color" content="#0b1117"/>
 <style>
 :root{--bg:#090f14;--panel:#121a22;--panel2:#18232d;--line:#2d3a43;--txt:#eaf0ee;--muted:#91a09e;--gold:#e2bf75;--gold2:#ffe0a2;--mint:#77d4aa;--red:#eb8679;--blue:#80bcec;--shadow:0 15px 45px #0008}
@@ -13,14 +13,14 @@
 </head>
 <body>
 <div class="app">
-<aside class="aside"><div class="brand"><div class="mark">N</div><div><div class="brandname">NVTSK</div><div class="sublogo">SYSTEM • MVP</div></div></div><nav class="nav" id="sideNav"></nav><div class="asidefoot">Prototype 0.2 • Demo only<br/>Данные вымышлены</div></aside>
+<aside class="aside"><div class="brand"><div class="mark">N</div><div><div class="brandname">NVTSK</div><div class="sublogo">SYSTEM • MVP</div></div></div><nav class="nav" id="sideNav"></nav><div class="asidefoot">MVP 0.3 • Demo only<br/>Данные вымышлены</div></aside>
 <main class="main"><div id="bootNotice" style="background:#1b2630;color:#ffe0a2;padding:12px 14px;border:1px solid #76613b;border-radius:12px;margin:0 0 14px;line-height:1.5"><strong>Важно:</strong> предпросмотр файлов в чате может отключать JavaScript. Для интерактивной версии скачайте HTML и откройте его в обычном браузере, а не в предпросмотре файла.</div><div class="top"><div><div class="eyebrow">NVTSK • SOLAR OPERATIONS</div><h1 id="pagetitle">Лобби</h1></div><div class="flex"><span class="pill green">● DEMO</span><button class="btn sm" id="resetBtn">↺ Сброс</button></div></div>
 <section class="screen" id="home"></section><section class="screen" id="map"></section><section class="screen" id="lots"></section><section class="screen" id="crew"></section><section class="screen" id="community"></section>
 </main></div><div class="bottomnav" id="bottomNav"></div><div class="toast" id="toast"></div><div class="modalback" id="modalback"><div class="modal" id="modal"></div></div>
 <noscript><p style="margin:14px;padding:15px;background:#26313a;color:white">В этом просмотрщике JavaScript отключён. Скачайте файл и откройте его в Safari, Chrome или другом браузере, чтобы нажимать кнопки.</p></noscript>
 <script>
 (() => {
-'use strict';console.info('NVTSK MVP v0.2 — интерфейс запущен');
+'use strict';console.info('NVTSK MVP v0.3 — интерфейс запущен');
 const menus=[['home','⌂','Лобби'],['map','⌾','Карта'],['lots','▤','Лоты'],['crew','♟','Команда'],['community','♧','Сообщество']];
 const lots=[
 {id:1,city:'Stockach',lat:'47.85° N',title:'Скатная кровля · 20 кВт',kw:20,client:'Solarbau Süd GmbH',kind:'DC',price:2000,deadline:'27.11.2026',start:'01.12.2026',days:5,minimum:2,experience:10,needsTools:true,needsVehicle:true,description:'Монтаж PV на скатной кровле: Unterkonstruktion, модули, DC-кабель, маркировка стрингов. Подключение AC не входит.',pos:[30,25],bids:[{team:'Solar Crew Süd',price:1700,legacy:4300},{team:'DachSolar Team',price:1600,legacy:2000}]},
@@ -60,5 +60,253 @@ function crew(){$('#crew').innerHTML=`<div class="panel hero" style="margin-bott
 function community(){const t=st.communityTab;$('#community').innerHTML=`<div class="sectionhead"><div><h2>Профессиональное сообщество</h2><div class="muted small">Находи специалистов, собирай команду, выбирай подрядчиков</div></div><span class="pill">DEMO NETWORK</span></div><div class="tabs">${[['installers','Монтажники'],['teams','Бригады'],['clients','Заказчики'],['mediators','Медиаторы']].map(tab=>`<button data-ctab="${tab[0]}" class="${t===tab[0]?'active':''}">${tab[1]}</button>`).join('')}</div><div class="grid ${t==='installers'?'twocol':'three'}" id="communityContent"></div>`;document.querySelectorAll('[data-ctab]').forEach(b=>b.onclick=()=>{st.communityTab=b.dataset.ctab;save();community()});const target=$('#communityContent');if(t==='installers'){target.innerHTML=`<div class="panel"><h2>Найти напарника</h2><div class="stack">${people.map(p=>`<div class="listitem"><div class="person"><div class="avatar">${p.icon}</div><div><b>${p.name}</b><div class="muted tiny">${p.job} · ${p.loc}</div><div class="gold tiny">Legacy ${fmt(p.legacy)}</div></div></div><button class="btn sm ${st.team.includes(p.id)?'green':'primary'}" data-invite="${p.id}" ${st.team.includes(p.id)?'disabled':''}>${st.team.includes(p.id)?'✓ В команде':'+ В отряд'}</button></div>`).join('')}</div></div><div class="panel"><h2>Отряд на один объект</h2><p class="muted">Приглашай монтажников так же легко, как игроков в команду перед матчем. Их квалификации помогают открыть доступ к лоту.</p><div class="divider"></div><b>${esc(st.teamName)}</b><div class="small muted">${crewNames()}</div><div style="margin-top:15px"><button class="btn primary" data-nav="crew">Управлять командой →</button></div><div class="divider"></div><div class="notice">Приглашения здесь подтверждаются автоматически только для демонстрации.</div></div>`;document.querySelectorAll('[data-invite]').forEach(b=>b.onclick=()=>{const id=b.dataset.invite;if(st.team.includes(id))return;st.team.push(id);save();community();toast('Приглашение принято (демо): '+people.find(x=>x.id===id).name)})}else if(t==='teams'){target.innerHTML=[['Solar Crew Süd','12 проектов','4 300 Legacy'],['DachSolar Team','7 проектов','2 000 Legacy'],['Elektro See','18 проектов','7 000 Legacy']].map((p,i)=>`<div class="panel"><div class="pill">Бригада #${i+1}</div><h2 style="margin-top:10px">🛡 ${p[0]}</h2><div class="muted">${p[1]} • ${p[2]}</div><div class="divider"></div><button class="btn" data-teamdetail="${i}">Смотреть профиль</button></div>`).join('');document.querySelectorAll('[data-teamdetail]').forEach(b=>b.onclick=()=>toast('Профиль бригады: демонстрационный режим'))}else if(t==='clients'){target.innerHTML=['Solarbau Süd GmbH','Hegau Energie','Bodensee PV Service'].map((n,i)=>`<div class="panel"><span class="pill blue">Заказчик</span><h2 style="margin-top:13px">${n}</h2><div class="small muted">Активный лот • Боденское озеро</div><div class="divider"></div><button class="btn primary" data-clientlot="${i+1}">Посмотреть лот</button></div>`).join('');document.querySelectorAll('[data-clientlot]').forEach(b=>b.onclick=()=>openLot(+b.dataset.clientlot))}else{target.innerHTML=[['🧰','Прокат инструмента','Аренда подъёмников, инструмента и лесов'],['🚛','Логистика','Доставка модулей и материалов на объект'],['📣','Маркетинг','Контент, реклама и продвижение бригад'],['⚖️','Независимый эксперт','Проверка спорных работ по взаимному согласию'],['📚','Бухгалтерия','Документы, счета и расчёты'],['🏪','Поставщики','Материалы и предложения партнёров']].map(p=>`<div class="panel"><div style="font-size:28px">${p[0]}</div><h2 style="margin-top:8px">${p[1]}</h2><p class="muted small">${p[2]}</p><span class="pill">Категория · демо</span></div>`).join('')}bindCommon()}
 $('#resetBtn').onclick=()=>{openModal('<h2>Сбросить демонстрацию?</h2><p class="muted">Команда, тестовые ставки, покупки и награды вернутся к исходным значениям.</p><div class="actions"><button class="btn primary" id="confirmReset">Сбросить</button><button class="btn" id="cancelReset">Отмена</button></div>');$('#confirmReset').onclick=()=>{st=fresh();save();closeModal();render();toast('Демо сброшено')};$('#cancelReset').onclick=closeModal};$('#modalback').onclick=e=>{if(e.target.id==='modalback')closeModal()};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});render();
 })();
+</script>
+<script>
+
+(function(){
+"use strict";
+const K="nvtsk-mvp03-preview";
+const phases=[
+["Unterkonstruktion","Размещение Dachhaken, Schienen, Klemmen и монтажной конструкции"],
+["Dachschutz","Защита крыши, Gerüst / RSS / Sicherheitsnetz"],
+["Module","Раскладка PV-модулей и крепление"],
+["DC / Stringplan","Стринги, кабельные трассы и маркировка"],
+["Erdung","Заземление, зажимы, клеммы и уравнивание потенциалов"],
+["Dachausgang","Фото выхода кабеля с крыши"],
+["Kabelkanal","Кабель-канал и спуск в здание"],
+["Zusatzarbeiten","Дополнительные работы и проблемы"]
+];
+const empty={lots:{},posts:{},profile:{name:"Серёжа Монтажник",phone:"",role:"DC Montage",city:"Stockach"},rewards:{}};
+let data;
+try{data=Object.assign({},empty,JSON.parse(localStorage.getItem(K)||"{}"));data.lots||={};data.posts||={};data.profile||=empty.profile;data.rewards||={};}catch(_){data=JSON.parse(JSON.stringify(empty));}
+const assets={};
+const $=s=>document.querySelector(s);
+const escapeHTML=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(data));}catch(_){alert("Лимит браузерного хранилища достигнут");}};
+const getLot=id=>(data.lots[id]||={address:"",stages:{},docs:[]});
+const key=(id,n,p)=>id+"-"+n+"-"+p;
+const stage=(lot,n)=>(lot.stages[n]||={before:false,after:false,approved:false});
+function styles(){
+if($("#v03style"))return;
+let x=document.createElement("style");x.id="v03style";
+x.textContent=".v03{margin:18px 0;padding:20px;background:#12202a;border:1px solid #3b5363;border-radius:18px}.v03 h2{margin:0 0 12px}.v03grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.v03tile{padding:15px;background:#182b34;border:1px solid #30434b;border-radius:14px}.v03 small{color:#aebec3}.v03btn{background:#293e49;color:#eff4f1;border:1px solid #69838c;border-radius:9px;padding:8px 12px;cursor:pointer;margin:5px 5px 5px 0}.v03btn:focus-visible{outline:3px solid #ffcc82}.v03btn.gold{background:#d6b576;color:#142028;border:0;font-weight:bold}.v03 textarea{background:#0b1821;border:1px solid #536a71;border-radius:10px;color:white;padding:10px;width:100%;min-height:65px}.v03 input{margin:6px 0}.v03 img,.v03 video{max-width:100%;max-height:160px;border-radius:8px}.v03pdf{width:100%;height:460px;border:1px solid #586b76;border-radius:9px}.v03flag{color:#80dbab;font-weight:bold}.v03muted{font-size:12px;color:#abc1c9}.v03line{border-top:1px solid #41505b;margin:14px 0}.v03 file{display:block}.v03 .v03input{width:100%;max-width:540px}";
+document.head.appendChild(x);
+}
+function renderLot(id){
+let node=$("#v03lot");if(!node)return;
+const lot=getLot(id),posts=data.posts[id]||[],rw=data.rewards[id]||0;
+const confirmed=phases.filter((_,i)=>stage(lot,i).approved).length;
+node.innerHTML='<h2>📸 Фото-чек-лист · MVP 0.3</h2><p class="v03muted">Демо: добавленное фото «после» отправляет этап на проверку, заказчик подтверждает вручную. Медиафайлы и PDF пока хранятся только в открытой вкладке.</p>'+
+'<div><strong>'+confirmed+' / '+phases.length+' этапов подтверждено</strong></div>'+
+'<div class="v03grid">'+phases.map((p,i)=>{
+const s=stage(lot,i),a=assets[key(id,i,"before")],b=assets[key(id,i,"after")];
+const status=s.approved?"✅ Принято":s.after?"🟡 На проверке":"⚪ Ожидает";
+return '<section class="v03tile"><strong>'+(i+1)+'. '+p[0]+'</strong><p class="v03muted">'+p[1]+'</p><div>'+status+'</div>'+
+'<label class="v03muted">Фото/видео до <input type="file" accept="image/*,video/*" data-v03file="'+i+':before"></label>'+
+(a?'<div>'+preview(a)+'</div>':(s.before?'<div class="v03muted">Прикреплено в предыдущем сеансе (файл недоступен)</div>':""))+
+'<label class="v03muted">Фото/видео после <input type="file" accept="image/*,video/*" data-v03file="'+i+':after"></label>'+
+(b?'<div>'+preview(b)+'</div>':(s.after?'<div class="v03muted">Прикреплено в предыдущем сеансе (файл недоступен)</div>':""))+
+'<div><button class="v03btn" data-v03approve="'+i+'" '+(!s.after?'disabled':'')+'>'+(s.approved?"Отменить приёмку":"✓ Подтвердить этап")+'</button></div></section>';
+}).join("")+'</div>'+
+'<div class="v03line"></div><h2>📑 Документы заказчика</h2><p class="v03muted">Загрузи PDF-проект, Stringplan или чертёж. Просмотр откроется прямо здесь, без стороннего приложения.</p>'+
+'<input type="file" accept="application/pdf,.pdf" id="v03pdf" aria-label="Загрузить PDF"><div id="v03pdfwrap"></div>'+
+'<div class="v03line"></div><h2>📍 Адрес объекта</h2><input class="v03input" id="v03address" placeholder="Полный адрес от заказчика" value="'+escapeHTML(lot.address||"")+'">'+
+'<button class="v03btn" id="v03addressSave">Сохранить</button><button class="v03btn" id="v03navigate">Открыть навигацию</button>'+
+'<div class="v03line"></div><h2>💬 Лента объекта</h2>'+
+'<textarea id="v03post" placeholder="Новый пост: ход работ, проблема, допработа…"></textarea><button class="v03btn gold" id="v03addpost">Опубликовать</button>'+
+'<div>'+posts.map((p,i)=>'<div class="v03tile" style="margin-top:10px"><strong>Запись #'+(i+1)+'</strong><div>'+escapeHTML(p.text)+'</div><div class="v03muted">'+escapeHTML(p.when)+'</div><div class="v03line"></div>'+(p.comments||[]).map(c=>'<p class="v03muted">↳ '+escapeHTML(c)+'</p>').join("")+'<input placeholder="Написать комментарий" data-v03comment="'+i+'"></div>').join("")+'</div>'+
+'<div class="v03line"></div><h2>⭐ Бонус Merit от заказчика</h2><p class="v03muted">Только симуляция, без платежей. 1 Merit = 0,01 € как условный расчётный курс. 200 € = 20 000 Merit. Юридический и налоговый статус требует отдельной проверки.</p>'+
+'<div>Бонусы по этому лоту: <strong>'+rw.toLocaleString("ru-RU")+' Merit</strong></div><input id="v03tip" inputmode="decimal" type="number" min="0" max="10000" placeholder="Чаевые в € (пример: 200)"><button class="v03btn gold" id="v03reward">Начислить тестовые Merit</button>';
+node.querySelectorAll("[data-v03file]").forEach(el=>el.onchange=e=>{
+const f=e.target.files&&e.target.files[0];if(!f)return;const [iStr,p]=e.target.dataset.v03file.split(":"),i=+iStr,s=stage(lot,i);
+const kk=key(id,i,p);if(assets[kk])URL.revokeObjectURL(assets[kk].url);
+assets[kk]={url:URL.createObjectURL(f),type:f.type};
+s[p]=true;if(p==="after")s.approved=false;save();renderLot(id);
+});
+node.querySelectorAll("[data-v03approve]").forEach(el=>el.onclick=()=>{
+const s=stage(lot,+el.dataset.v03approve);if(!s.after)return;s.approved=!s.approved;save();renderLot(id);
+});
+$("#v03pdf").onchange=e=>{const f=e.target.files&&e.target.files[0];if(!f)return;if(f.type!=="application/pdf"&&!/\.pdf$/i.test(f.name)){alert("Выбери PDF");return;}
+const k=id+"-pdf";if(assets[k])URL.revokeObjectURL(assets[k].url);
+assets[k]={url:URL.createObjectURL(f),name:f.name};renderPDF(id);};
+renderPDF(id);
+$("#v03addressSave").onclick=()=>{lot.address=$("#v03address").value.trim();save();};
+$("#v03navigate").onclick=()=>{const address=$("#v03address").value.trim();if(!address){alert("Сначала добавь точный адрес");return;}lot.address=address;save();window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(address),"_blank","noopener");};
+$("#v03addpost").onclick=()=>{const v=$("#v03post").value.trim();if(!v)return;(data.posts[id]||=[]).push({text:v,when:new Date().toLocaleString("ru-RU"),comments:[]});save();renderLot(id);};
+node.querySelectorAll("[data-v03comment]").forEach(el=>el.onkeydown=e=>{if(e.key!=="Enter")return;const v=e.target.value.trim();if(!v)return;((data.posts[id]||[])[+e.target.dataset.v03comment].comments||=[]).push(v);save();renderLot(id);});
+$("#v03reward").onclick=()=>{const euros=Number($("#v03tip").value);if(!Number.isFinite(euros)||euros<=0||euros>10000)return alert("Укажи сумму от 0 до 10 000 €");data.rewards[id]=(data.rewards[id]||0)+Math.round(euros*100);save();renderLot(id);};
+}
+function preview(f){return f.type.startsWith("video/")?'<video controls src="'+f.url+'"></video>':'<img alt="Прикреплённое фото" src="'+f.url+'">';}
+function renderPDF(id){const holder=$("#v03pdfwrap");if(!holder)return;const d=assets[id+"-pdf"];holder.innerHTML=d?'<p class="v03muted">Просмотр: '+escapeHTML(d.name)+'</p><iframe class="v03pdf" title="PDF проекта" src="'+d.url+'"></iframe>':'';}
+function renderProfile(){
+const n=$("#v03profile");if(!n)return;const p=data.profile;
+n.innerHTML='<h2>👤 Мой профиль · 0.3</h2><p class="v03muted">Личные сведения сохранены локально в браузере. Без авторизации и серверной базы это только прототип.</p>'+
+'<label>Имя<input id="v03name" value="'+escapeHTML(p.name||"")+'"></label><label>Телефон<input type="tel" id="v03phone" value="'+escapeHTML(p.phone||"")+'"></label>'+
+'<label>Специализация<input id="v03role" value="'+escapeHTML(p.role||"")+'"></label><label>Город<input id="v03city" value="'+escapeHTML(p.city||"")+'"></label>'+
+'<button class="v03btn gold" id="v03saveprofile">Сохранить профиль</button>'+(p.phone?'<a class="v03btn" href="tel:'+encodeURIComponent(p.phone)+'">Позвонить</a> <a class="v03btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/'+p.phone.replace(/\D/g,"")+'">WhatsApp</a>':"")+
+'<p class="v03muted">Финансовая история и история проектов будут подтягиваться из связанных записей, когда появятся аккаунты и серверная БД. Сейчас это не реальные счета.</p>';
+$("#v03saveprofile").onclick=()=>{for(const k of ["name","phone","role","city"])p[k]=$("#v03"+k).value.trim();save();renderProfile();};
+}
+function mount(){
+styles();
+const lotRoot=$("#lots");
+if(lotRoot&&lotRoot.classList.contains("active")&&!$("#v03lot")){
+const text=(lotRoot.querySelector(".eyebrow")||{}).textContent||"";
+const m=text.match(/ЛОТ NV-0*(\d+)/);
+if(m){const node=document.createElement("section");node.id="v03lot";node.className="v03";lotRoot.appendChild(node);renderLot(Number(m[1]));}
+}
+const home=$("#home");
+if(home&&home.classList.contains("active")&&!$("#v03profile")){
+const node=document.createElement("section");node.id="v03profile";node.className="v03";home.appendChild(node);renderProfile();
+}
+}
+let scheduled=false;const observer=new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;mount();});});
+observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["class"]});
+mount();
+})();
+
+</script>
+<script>
+
+(()=>{"use strict";
+const KEY="nvtsk-sub-lots-v03-20261120";
+const TYPES=[
+ ["PLAN","01 · Projektierung","Проектирование: планы, расчёты, спецификация"],
+ ["DC","02 · DC-Montage","Монтаж конструкции, модулей, стрингов и DC-кабелей"],
+ ["AC","03 · AC-Anschluss","Инвертор, электромонтаж и подключение только квалифицированной Elektrofachkraft"],
+ ["REG","04 · Anmeldung","Документы, сетевой оператор (Netzbetreiber), регистрация и сдача"]
+];
+const seed=[
+{id:"demo-master",parentId:null,stage:null,title:"PV-проект DC + AC · пример",client:"Демонстрационный заказчик",city:"Bodensee",address:"",value:0,status:"draft",owner:"",source:"demo",notes:"Пример комплексного объекта. Разделён на 4 отдельных сублота.",docNames:[],messages:[]},
+{id:"hn17",parentId:null,stage:null,title:"HN17 · PV · проектный пример",client:"Заказчик (обезличено)",city:"Gottmadingen",address:"",value:0,status:"draft",owner:"",source:"PDF HN17",notes:"Проектные страницы не опубликованы. Прикрепи оригинальный PDF в локальном интерфейсе.",docNames:[],messages:[]},
+{id:"hn19",parentId:null,stage:null,title:"HN19 · PV · проектный пример",client:"Заказчик (обезличено)",city:"Gottmadingen",address:"",value:0,status:"draft",owner:"",source:"PDF HN19",notes:"В проектных документах есть несоответствие количества модулей: проверь титул и Stringplan перед закупкой.",docNames:[],messages:[]}
+];
+const baseline={
+"base-1":{id:"base-1",parentId:null,stage:null,title:"Скатная кровля · 20 кВт (демо)",client:"Solarbau Süd GmbH",city:"Stockach",address:"",value:2000,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Тестовый объект",docNames:[],messages:[]},
+"base-2":{id:"base-2",parentId:null,stage:null,title:"Частный дом · 14,8 кВт (демо)",client:"Hegau Energie",city:"Singen",address:"",value:1480,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Тестовый объект",docNames:[],messages:[]},
+"base-3":{id:"base-3",parentId:null,stage:null,title:"Инвертор и AC · 12 кВт (демо)",client:"Bodensee PV Service",city:"Überlingen",address:"",value:1200,status:"draft",owner:"",source:"MVP 0.2 sample",notes:"Доступ только для квалифицированных AC специалистов",docNames:[],messages:[]}
+};
+let db;try{db=JSON.parse(localStorage.getItem(KEY)||"null");if(!db||!Array.isArray(db.items))throw Error();}catch(_){db={items:JSON.parse(JSON.stringify(seed)),active:"demo-master",seq:0};}
+for(const k of Object.keys(baseline))if(!db.items.some(x=>x.id===k))db.items.push({...baseline[k]});
+const media={};
+const $=s=>document.querySelector(s);
+const clean=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){alert("Хранилище браузера заполнено: "+e.message);}};
+const find=id=>db.items.find(x=>x.id===id);
+const next=()=>("sub-"+Date.now().toString(36)+"-"+(++db.seq).toString(36));
+const children=id=>db.items.filter(x=>x.parentId===id);
+function addChild(id,stage){
+const p=find(id);if(!p)return;
+const t=TYPES.find(x=>x[0]===stage),n={...p,
+id:next(),parentId:p.id,stage:stage||"CUSTOM",
+title:t?t[1]:p.title+" · новая задача",value:0,status:"draft",owner:"",source:"Наследовано от "+p.id,
+notes:t?t[2]:p.notes,
+docNames:[...(p.docNames||[])],messages:[]};
+db.items.push(n);db.active=p.id;store();draw();
+}
+function split(id){
+const p=find(id);if(!p)return;
+let count=0;for(const t of TYPES)if(!children(id).some(c=>c.stage===t[0])){addChildQuiet(p,t);count++;}
+db.active=id;store();draw();if(!count)alert("Четыре основных сублота уже созданы");
+}
+function addChildQuiet(p,t){db.items.push({...p,id:next(),parentId:p.id,stage:t[0],title:t[1],
+value:0,status:"draft",owner:"",source:"Наследовано от "+p.id,notes:t[2],
+docNames:[...(p.docNames||[])],messages:[]});}
+function createRoot(){
+const t=$("#proj-title")?.value.trim();if(!t)return alert("Введи название проекта");
+const client=$("#proj-client")?.value.trim()||"Заказчик";
+const city=$("#proj-city")?.value.trim()||"";
+const n={id:next(),parentId:null,stage:null,title:t,client,city,address:"",
+value:0,status:"draft",owner:"",source:"Создан пользователем",notes:"",docNames:[],messages:[]};
+db.items.push(n);db.active=n.id;store();draw();
+}
+function statusText(x){return ({draft:"Черновик",open:"Опубликован (демо)",work:"В работе",review:"На проверке",accepted:"Принят"})[x]||"Черновик";}
+function crumb(id){let a=[],p=find(id),seen=new Set();while(p&&!seen.has(p.id)&&a.length<8){a.unshift(p);seen.add(p.id);p=find(p.parentId);}return a.map(x=>clean(x.title)).join(" / ");}
+function renderTree(id,depth=0){
+if(depth>7)return "";
+return children(id).map(x=>'<div class="v03node" style="margin-left:'+Math.min(depth,3)*12+'px"><div class="v03row"><button class="v03btn" data-pick="'+clean(x.id)+'">'+clean(x.title)+'</button><span>'+clean(statusText(x.status))+'</span><span class="v03muted">'+Number(x.value||0).toLocaleString("ru-RU")+' €</span></div>'+renderTree(x.id,depth+1)+'</div>').join("");
+}
+function docsFor(item){
+let p=item,seen=new Set(),ret=[];
+while(p&&!seen.has(p.id)){seen.add(p.id);for(const f of p.docNames||[])if(!ret.includes(f))ret.push(f);p=find(p.parentId);}
+return ret;
+}
+function draw(){
+const host=$("#projectRoot");if(!host)return;
+const current=find(db.active)||db.items[0];if(!current)return;db.active=current.id;
+const roots=db.items.filter(x=>!x.parentId);
+const others=db.items.filter(x=>x.parentId);
+const direct=children(current.id),total=direct.reduce((a,b)=>a+Math.max(0,Number(b.value)||0),0);
+const budget=Math.max(0,Number(current.value)||0);
+const pdf=media[current.id+"-pdf"];
+const photo=media[current.id+"-post"];
+const parentDocs=docsFor(current);
+host.innerHTML='<div class="v03head"><h2>🏗️ Объекты, лоты и сублоты</h2><p class="v03muted">MVP 0.3 • локальное демо. Проект → отдельные лоты → сублоты, без повторного ввода адреса, заказчика и документов.</p></div>'+
+'<div class="v03grid"><div class="v03tile"><h3>Создать проект</h3><input id="proj-title" placeholder="Название проекта"><input id="proj-client" list="company-examples" placeholder="Заказчик"><datalist id="company-examples"><option value="Sanpower"><option value="5-Sterne-Solar"><option value="Solan Plus GmbH"><option value="Kempter GmbH"></datalist><input id="proj-city" placeholder="Город"><button class="v03btn gold" id="proj-create">+ Новый проект</button><div class="v03muted">Названия компаний здесь лишь варианты ввода, не подключённые аккаунты.</div></div>'+
+'<div class="v03tile"><h3>Все проекты</h3>'+roots.map(x=>'<div class="v03row"><button class="v03btn" data-pick="'+clean(x.id)+'">'+clean(x.title)+'</button><span class="v03muted">'+children(x.id).length+' сублотов</span></div>'+renderTree(x.id)).join("")+'</div></div>'+
+'<div class="v03line"></div><div class="v03tile"><div class="v03muted">Путь: '+crumb(current.id)+'</div><h2>📁 '+clean(current.title)+'</h2><div class="v03grid">'+
+'<label>Название<input data-edit="title" value="'+clean(current.title)+'"></label>'+
+'<label>Заказчик<input data-edit="client" value="'+clean(current.client)+'"></label>'+
+'<label>Город<input data-edit="city" value="'+clean(current.city)+'"></label>'+
+'<label>Адрес объекта<input data-edit="address" value="'+clean(current.address||"")+'" placeholder="Не публикуется в коде GitHub"></label>'+
+'<label>Бюджет лота, €<input type="number" min="0" step=".01" data-edit="value" value="'+(Number(current.value)||0)+'"></label>'+
+'<label>Исполнитель<input data-edit="owner" value="'+clean(current.owner||"")+'" placeholder="Бригада / Elektrofachbetrieb"></label>'+
+'<label>Статус<select data-edit="status">'+[["draft","Черновик"],["open","Опубликован"],["work","В работе"],["review","На проверке"],["accepted","Принят"]].map(([v,t])=>'<option value="'+v+'" '+(current.status===v?"selected":"")+'>'+t+'</option>').join("")+'</select></label>'+
+'</div><label>Описание / условия<textarea data-edit="notes">'+clean(current.notes||"")+'</textarea></label>'+
+'<button class="v03btn gold" id="proj-save">💾 Сохранить изменения</button>'+
+(current.address?'<button class="v03btn" id="proj-nav">🧭 Навигация</button>':"")+
+'<div class="v03line"></div><div class="v03row"><button class="v03btn gold" id="proj-split">🔀 Разбить на 4 этапа</button><button class="v03btn" id="proj-copy">+ Новый сублот на основе этого</button></div>'+
+'<p class="v03muted">Projektierung · DC-Montage · AC-Anschluss · Anmeldung. Роли, суммы и сроки независимы. Бюджеты сублотов по умолчанию нулевые, пока заказчик не установит их самостоятельно.</p>'+
+'<strong>Сублотов: '+direct.length+'. Сумма бюджетов: '+total.toLocaleString("ru-RU")+' €'+(budget?' из '+budget.toLocaleString("ru-RU")+' € родительского лота.':'.')+'</strong>'+
+(direct.length?'<div class="v03grid">'+direct.map(x=>'<div class="v03tile"><div class="v03muted">'+clean(x.stage||"")+'</div><strong>'+clean(x.title)+'</strong><div>'+clean(statusText(x.status))+' • '+Number(x.value||0).toLocaleString("ru-RU")+' €</div><button class="v03btn" data-pick="'+clean(x.id)+'">Открыть сублот →</button></div>').join("")+'</div>':"")+
+'<div class="v03line"></div><h3>📑 Документы проекта и наследование</h3><p class="v03muted">Документы и файлы хранятся только в текущей вкладке. Имя файла наследуется сублотами, но после перезагрузки файл нужно прикрепить повторно до подключения серверного хранилища.</p>'+
+'<input id="proj-pdf" type="file" accept=".pdf,application/pdf"><div class="v03muted">'+(parentDocs.length?parentDocs.map(x=>clean(x)).join(", "):"Документов пока нет")+'</div>'+
+(pdf?'<iframe title="Просмотр PDF внутри приложения" class="v03pdf" src="'+pdf.url+'"></iframe>':"")+
+'<div class="v03line"></div><h3>💬 Коммуникация по лоту</h3><p class="v03muted">Тестовая локальная лента, без синхронизации между заказчиком и монтажником.</p>'+
+'<div>'+((current.messages||[]).map((x,i)=>'<div class="v03tile" style="margin-top:7px"><strong>'+clean(x.from||"Участник")+'</strong><p>'+clean(x.text||"")+'</p><small>'+clean(x.when||"")+'</small>'+(x.comments||[]).map(c=>'<div class="v03muted">↳ '+clean(c)+'</div>').join("")+'<input data-comment="'+i+'" placeholder="Комментарий ↵"></div>').join(""))+'</div>'+
+'<input id="proj-sender" placeholder="Заказчик / монтажник" value="Участник"><textarea id="proj-post" placeholder="Напиши сообщение, замечание или вопрос по объекту"></textarea><input id="proj-photo" type="file" accept="image/*,video/*">'+(photo?'<span class="v03muted">Медиа добавлено для этого сеанса</span>':"")+'<button class="v03btn gold" id="proj-message">Опубликовать</button>'+
+'<div class="v03line"></div><p class="v03muted">Электрические подключения AC и процедуры Netzbetreiber выполняют специалисты с соответствующими полномочиями; этот интерфейс не подтверждает квалификацию.</p></div>';
+$("#proj-create").onclick=createRoot;
+host.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{db.active=b.dataset.pick;store();draw();});
+$("#proj-save").onclick=()=>{
+host.querySelectorAll("[data-edit]").forEach(el=>{let k=el.dataset.edit;current[k]=k==="value"?Math.max(0,Number(el.value)||0):el.value.trim();});store();draw();};
+$("#proj-copy").onclick=()=>addChild(current.id,null);
+$("#proj-split").onclick=()=>split(current.id);
+if($("#proj-nav"))$("#proj-nav").onclick=()=>window.open("https://www.google.com/maps/dir/?api=1&destination="+encodeURIComponent(current.address),"_blank","noopener");
+$("#proj-pdf").onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(f.type!=="application/pdf"&&!/\.pdf$/i.test(f.name))return alert("Выбери PDF");const k=current.id+"-pdf";if(media[k])URL.revokeObjectURL(media[k].url);media[k]={url:URL.createObjectURL(f),filename:f.name};current.docNames||=[];if(!current.docNames.includes(f.name))current.docNames.push(f.name);store();draw();};
+$("#proj-photo").onchange=e=>{const f=e.target.files?.[0];if(f)media[current.id+"-post"]={url:URL.createObjectURL(f),type:f.type,name:f.name};};
+$("#proj-message").onclick=()=>{const v=$("#proj-post").value.trim();if(!v)return;current.messages||=[];const m={from:$("#proj-sender").value.trim()||"Участник",text:v,when:new Date().toLocaleString("ru-RU"),comments:[]};if(media[current.id+"-post"]){m.text+="\n[Медиа в текущем сеансе: "+media[current.id+"-post"].name+"]";delete media[current.id+"-post"];}current.messages.push(m);store();draw();};
+host.querySelectorAll("[data-comment]").forEach(el=>el.onkeydown=e=>{if(e.key!=="Enter")return;const v=el.value.trim();if(!v)return;const msg=current.messages[Number(el.dataset.comment)];msg.comments||=[];msg.comments.push(v);store();draw();});
+}
+function show(){
+const host=$("#projects");if(!host)return;
+document.querySelectorAll(".screen").forEach(n=>n.classList.toggle("active",n.id==="projects"));
+if($("#pagetitle"))$("#pagetitle").textContent="Проекты и сублоты";
+document.querySelectorAll("#sideNav button,#bottomNav button").forEach(b=>b.classList.toggle("active",b.dataset.v03nav==="projects"));
+draw();window.scrollTo({top:0,behavior:"smooth"});
+}
+function mount(){
+if(!$("#projects")){
+const host=document.createElement("section");host.className="screen";host.id="projects";host.innerHTML='<div class="v03" id="projectRoot"></div>';
+const base=$("#community");if(base)base.after(host);
+}
+for(const nav of ["#sideNav","#bottomNav"]){const n=$(nav);if(n&&!n.querySelector('[data-v03nav="projects"]')){
+const b=document.createElement("button");b.dataset.v03nav="projects";b.textContent=nav==="#bottomNav"?"▦ Проекты":"▦   Проекты 0.3";b.onclick=show;n.appendChild(b);}}
+const root=$("#lots");
+if(root?.classList.contains("active")&&!$("#projectsEntry")){
+const bar=document.createElement("div");bar.id="projectsEntry";bar.className="v03tile";
+const currentLot=(root.querySelector(".eyebrow")?.textContent||"").match(/ЛОТ NV-0*(\d+)/);
+bar.innerHTML='<strong>🧩 Разбивка объекта на сублоты</strong> <button class="v03btn gold" id="proj-link">'+(currentLot?"Создать сублоты этого лота":"Открыть проекты / сублоты")+'</button>';
+root.prepend(bar);$("#proj-link").onclick=()=>{if(currentLot){db.active="base-"+Number(currentLot[1]);store();}show();};}
+}
+const style=document.createElement("style");style.id="projectCss03";
+style.textContent='#projects{display:none}#projects.active{display:block}.v03row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between}.v03node{padding:3px 0 3px 8px;border-left:1px solid #6a7c7e}.v03tile{min-width:0}.v03tile select{background:#0e161e;color:#eaf0ee;border:1px solid #506472;padding:10px;border-radius:9px;width:100%}.v03tile label{display:block;color:#b8c8ce;font-size:12px}.v03tile textarea{min-height:90px}.v03tile button{max-width:100%}#proj-pdf{max-width:100%}#projectsEntry{margin-bottom:15px}';
+document.head.appendChild(style);
+if(!children("demo-master").length){for(const type of TYPES)addChildQuiet(find("demo-master"),type);store();}
+let pending=false;const watcher=new MutationObserver(()=>{if(pending)return;pending=true;queueMicrotask(()=>{pending=false;mount();});});
+watcher.observe(document.body,{childList:true,subtree:true});
+mount();
+})();
+
 </script>
 </body></html>
