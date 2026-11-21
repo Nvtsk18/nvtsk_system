@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict');const S=require('./social-domain.js');let count=0;
+function check(name,fn){fn();count++;console.log('PASS '+name);}
+const own={id:'a',creator:'client',assignee:'worker',members:['captain']};
+const other={id:'b',creator:'other',assignee:'stranger',members:[]};
+check('client member',()=>assert.equal(S.member(own,'client'),true));
+check('worker member',()=>assert.equal(S.member(own,'worker'),true));
+check('captain member',()=>assert.equal(S.member(own,'captain'),true));
+check('outsider denied',()=>assert.equal(S.member(own,'other'),false));
+check('outsider cannot create',()=>assert.throws(()=>S.create({lot:own,actor:'other',body:'hi'})));
+check('blank post rejected',()=>assert.throws(()=>S.create({lot:own,actor:'client',body:'   '})));
+const p=S.create({lot:own,actor:'worker',body:'DC completed'});
+check('valid post',()=>assert.ok(S.valid(p)));
+check('lot scope read',()=>assert.equal(S.canRead(p,own,'client'),true));
+check('cross lot blocked',()=>assert.equal(S.canRead(p,other,'stranger'),false));
+check('outsider comment blocked',()=>assert.throws(()=>S.comment(p,{lot:own,actor:'other',body:'hello'})));
+check('cross lot comment blocked',()=>assert.throws(()=>S.comment(p,{lot:other,actor:'stranger',body:'hello'})));
+check('member comment',()=>assert.equal(S.comment(p,{lot:own,actor:'captain',body:'OK'}).authorId,'captain'));
+check('blank comment rejected',()=>assert.throws(()=>S.comment(p,{lot:own,actor:'client',body:' '})));
+check('invalid visibility rejected',()=>assert.equal(S.valid({...p,visibility:'public'}),false));
+console.log(count+' / '+count+' passed');
