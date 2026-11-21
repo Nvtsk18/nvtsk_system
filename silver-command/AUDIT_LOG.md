@@ -136,3 +136,23 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Critical remaining risks:** no server-side permissions or authentication; demo actor switcher is not a security boundary; no actual media bytes, independent qualification, shared chat or immutable evidence. Stage schema validation is permissive for nested history contents, and invalid stored stage records are dropped without per-record recovery. UI must gain version-change controls, a formal actor/organisation permission model and automated integration tests before a real pilot. Never store real customer data in this demo.
 
 **Next:** implement a structured scoped social feed (local-only), clarify visibility defaults and add automated tests for cross-lot access; then improve evidence metadata persistence/revision controls and test mobile Safari.
+
+
+## Implementation pass #5 · 2026-11-21 ~02:00 CET
+
+**Scope:** only `silver-command/social-domain.js`, `social-domain.test.js`, `index.html`, `app.js`, and this log. Root 0.3 remains unchanged.
+**Code commits:** `53ca5116`, `58ba2410`, `080a6d3a`, `47d6f521`.
+
+**Priorities (4):**
+1. Introduce a separate pure local social-domain model: membership, lot-scoped post creation, comment creation and schema validation.
+2. Add a concrete local feed and comments UI to each lot, using the existing demo actor switcher and HTML-escaping all displayed user text.
+3. Persist bounded social data in the local demo state and user-triggered JSON backup; validate and filter post records on reload.
+4. Add 14 explicit Node unit test cases for outsider/cross-lot denial, membership, empty input, invalid visibility, comments and basic schema.
+
+**Role and conflict analysis:** customer/creator can post on own lot; appointed DC installer can post and comment; invited captain/member can comment; unrelated outsider cannot post or comment; someone who belongs to a different lot cannot read or comment on this one. Local UI shows only posts passing the same membership filter. Cross-lot post reuse is denied by post.lotId equality. Tests are committed but NOT executed in this run.
+
+**Verification:** re-fetched all four code files from GitHub after commits. **10/10 static source/integration assertions PASS**, covering script order, post initialisation, reload validation, render wiring, event dispatch, outsider guards, cross-lot guard and test file presence. This is source inspection, **not syntax execution, browser testing or proof of security**. No Node runtime test executed in this run; 14/14 is NOT claimed.
+
+**Critical limitations and findings:** all data remains in browser localStorage, and actor identity can be changed in the UI. No authentication, server ACL, encrypted media, cross-device chat, moderation, blocking, notification delivery or GDPR-grade deletion. In fact, `posts` are stored in one local state object and filtered for display only: this is NOT secure isolation for actual users. Post bodies are plain text only, no photo/video uploads. Local data loss is still possible; backup export is manual. No real client data should be entered. The app still contains UI placeholder text about upcoming photo workflow that should be updated. Revisit duplicate IDs and robust nested comment validation in a later pass.
+
+**Next pass:** run actual syntax and unit tests in a Node-capable runtime, improve corrupted state recovery and saved-state regression tests, then design authenticated server-side ACL for social content before any real-user deployment. Extend the independent audit to moderation/appeals, data retention and crew offboarding.
