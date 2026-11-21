@@ -245,3 +245,18 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Verification:** fetched committed domain and test sources back from GitHub. V8 `new Function` syntax parse passed for both after repairing pre-existing malformed test closures. Executed the committed test script in a V8 harness with Node assert-compatible shims: **20/20 tests PASS**. This is an executable domain test, **not** the Node CLI test runner, actual DOM test, localStorage reload, iPhone Safari or end-to-end integration. No private data used.
 
 **Remaining:** persisted state can still be manually tampered with; no backend ACL, real media evidence, qualified AC sign-off, authenticated revision authority, guaranteed recovery, GDPR compliance, or real payments. Critical next milestone: executable browser persistence/import/reload tests and mobile navigation validation. Defer new social features until MVP workflow passes.
+
+
+## Implementation pass #11 · 2026-11-21 (Local First / Command + Field)
+**Scope:** `silver-command/app.js`, `style.css`, and this audit only. Root 0.3 unchanged. Code commits: `c58cd145b58ae9675ffb5807f54019a69242207e`, `120f22141487f5cc736e393614c0ce72740dc8a4`.
+
+**Three priorities implemented:**
+1. Added **Project Pulse** to project cards and lot workspace. It counts only independently accepted local demo stages, not submitted work or physical percentage installed. The status includes pending review and returned-for-correction warnings. Accessible progressbar and responsive industrial/silver styling.
+2. Fixed stage creation privilege: previously a customer could create a stage in their lot and assign ownership to the executor without being that executor. Now only the **assigned, independent performer** can create a stage through the demo UI and action guard. The reviewer remains the creator under the existing demo model.
+3. Replaced obsolete checklist copy claiming photo stages were still future functionality; explicitly states that evidence consists of **descriptions/references, not uploaded photo/PDF bytes**. Reject nonfinite/oversized demo bids.
+
+**Roles and conflicts checked:** customer vs DC installer: creator cannot impersonate the assignee to create stage using their own demo actor; assigned installer may create stage; unrelated outsider cannot create it. AC/Anmeldung remain blocked from unverified assignment. Reviewer acceptance is deliberately excluded from Project Pulse until stage status is `accepted`. Caveat: demo actor switcher is spoofable and is not authentication.
+
+**Verification:** re-fetched committed `app.js` and `style.css`. V8 JavaScript syntax parse PASS; 9/9 targeted checks PASS, including four executable pure pulse cases (empty, accepted+submitted, returned, cross-lot isolation) and five static source/style invariants. These are **not** full browser tests, iPhone Safari, DOM click tests, localStorage reload or import end-to-end tests. No private client data used.
+
+**Open blockers:** highest priority remains a real browser DOM persistence/import/reload harness and a tested iPhone field workflow. UI has only text evidence references, no photo upload, PDF viewer integration or real financial ledger. Demo identity and acceptance are not secure. Future: explicit Command/Field navigation, safety checklists and reliable offline backups; keep social/network work deferred until browser MVP passes.
