@@ -323,3 +323,14 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Three roles/conflicts:** (1) DC installer cannot import a doubled consumption entry; (2) customer cannot forge a lower cost or wrong installed quantity in imported usage; (3) external contractor/custodian cannot relabel a transfer as consumption without corresponding consistent ledger. These are integrity checks only, not authenticated role enforcement; client-side actor switching and direct JS calls remain spoofable.
 
 **Limitations and next:** separate project/Garage storage keys; no atomic combined backup, no authenticated roles, no server ledger or tamper-proof history. A fully internally consistent fabricated backup cannot be detected cryptographically. Actual browser click/reload tests and mobile Field Mode remain highest priority. Project-linked expense is demo-only, no accounting or Bautagebuch posting.
+
+
+## Implementation pass #17 · 2026-11-21 · Garage local actor/lot guard
+
+**Scope:** only silver-command/garage.js, app.js and AUDIT_LOG.md. Root 0.3 unchanged. Code commits: `26e0359586b3a00dcdb2f9be2e1de8af903c03d7`, `4e8e8888b21ccfa1c05317a96edf00616b24bd7e`.
+
+**Changes:** Garage consumption now checks the *current lot's* assignee, creator and kind against the current demo actor at the transaction boundary. Only the assigned independent performer of DC or Projektierung may confirm consumption in the local demo. AC/Anmeldung consumption blocked pending real qualification verification. The app passes live lot metadata and demo actor through provider functions rather than capturing stale data. Receipt and custody transfers remain local demo actions without role authorization.
+
+**Verification:** fetched committed code back. V8 new Function syntax PASS 2/2; executable assertions PASS 9/9: assigned installer DC allowed; customer attempting installer consumption rejected; outsider rejected; AC consumption rejected; self-assignment rejected; reinitialization from persisted mock storage retains usage; valid backup preview; invalid backup rejected; app-to-Garage provider wiring present. No actual DOM click, real Safari/iPhone, physical file import, storage quota or concurrency test. The mock actor is freely switchable and localStorage editable: **not secure authentication**.
+
+**Conflicts:** customer cannot consume installer stock while selected as customer; unrelated outsider cannot consume; AC installer cannot claim qualified AC material posting. These are local UI/domain checks only. **Next:** integrate per-lot Field Mode workflow, real browser DOM smoke testing, Garage/project combined backup, and explicit garage admin permissions for receipt/transfer. No private client data used.
