@@ -406,3 +406,17 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Three roles/conflicts:** demo-client can transfer but not consume DC material; outsider cannot transfer; assigned DC installer can consume their assigned DC lot. These checks were executed in the V8 mock harness, not via actual UI clicks.
 
 **Remaining:** combined project/Garage backup, real browser import/reload and mobile Field Mode; current backup is split across two localStorage keys. No backend, authentication, genuine payments, or production ledger. Next pass should prioritise an executable browser harness and safe paired backup rather than more social/Merit functionality.
+
+
+## Implementation pass #24 · 2026-11-21 ~21:00 CET · Garage operator identity mismatch
+
+**Scope:** only silver-command/app.js, garage-actor.test.js and AUDIT_LOG.md; root 0.3 untouched.
+**Code commits:** `62f8582aa075bbfbd6b7370b931a693d51c88e37`, `26edcb30762799b64dfe606c0a8993f1099e75c1`.
+
+**Bug fixed:** Garage receipt/transfer required `demo-client`, but the application's actor switcher only provided `me`, `roman`, `denis`, `olena`. Consequently the warehouse operator could never submit a receipt or transfer through the integrated UI. The actor provider now maps only `me` to the Garage demo operator `demo-client`; other actors retain their IDs. This is local-demo compatibility mapping, not authentication.
+
+**Three-role conflict cases:** project owner `me` can act as Garage operator but cannot consume DC stock as an assigned installer; `roman` stays distinct and may consume only when assigned to an eligible DC/PLAN lot, not receive/transfer; `denis` unassigned cannot receive/transfer or consume. AC/REG remains blocked by the existing Garage guard.
+
+**Verification:** GitHub writes returned commit SHAs. New source-linked Node regression test committed with seven assertions, but **the committed test was not executed** against fetched repository files in this pass. A local syntax check of an equivalent test draft succeeded; attempted local execution failed because the repository app.js/garage.js files were not present in that container, not because an assertion failed. No integrated browser click, import/reload, iPhone Safari, or end-to-end security test. Do not count the seven assertions as passed.
+
+**Remaining:** execute committed test in a checkout, run real browser persistence/import/reload test, implement safe paired project/Garage backup, and improve Field Mode on iPhone. Demo role switching is spoofable; no backend or secure access control. No client records committed.
