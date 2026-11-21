@@ -5,7 +5,7 @@ const $ = s => document.querySelector(s);
 const encode = v => String(v ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const money = n => Number(n || 0).toLocaleString("ru-RU");
 const uuid = () => "lot-" + Math.random().toString(36).slice(2,10);
-const tabs = [["dashboard","⌂","Главная"],["map","⌾","Карта"],["projects","▤","Проекты"],["chats","☷","Чаты"],["profile","◉","Профиль"]];
+const tabs = [["dashboard","⌂","Главная"],["map","⌾","Карта"],["projects","▤","Проекты"],["garage","▦","Склад"],["chats","☷","Чаты"],["profile","◉","Профиль"]];
 const kinds = [["PLAN","Projektierung"],["DC","DC-Montage"],["AC","AC-Anschluss"],["REG","Anmeldung"]];
 const initial = [
   {id:"stock",title:"20 кВт DC • Stockach",city:"Stockach",client:"Демо Solarbau Süd",price:2000,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[]},
@@ -190,9 +190,10 @@ function render() {
    $(sel).innerHTML = tabs.map(t=>'<a href="#'+t[0]+'" data-screen="'+t[0]+'" class="'+(screen===t[0]?"active":"")+'"><span class="ico">'+t[1]+'</span>'+t[2]+'</a>').join("");
  }
  $("#screenTitle").textContent = tabs.find(t=>t[0]===screen)?.[2] || "Лот";
- const view = screen==="dashboard"?overview():screen==="map"?market():screen==="projects"?projects():screen==="chats"?chat():screen==="profile"?profile():lotScreen();
+ const view = screen==="dashboard"?overview():screen==="map"?market():screen==="projects"?projects():screen==="chats"?chat():screen==="profile"?profile():screen==="garage"?(window.NVTSK_GARAGE?.render()||"<p>Склад недоступен</p>"):lotScreen();
  $("#app").innerHTML=view;
 }
+window.NVTSK_GARAGE_REFRESH=()=>{if(screen==="garage")render()};
 function go(s){screen=s;render();window.scrollTo({top:0,behavior:"smooth"})}
 function modal(html){$("#dialog").innerHTML=html;$("#dialogBackdrop").hidden=false}
 function close(){$("#dialogBackdrop").hidden=true}
