@@ -26,6 +26,8 @@ function normalize(raw) {
    const lot=raw.lots.find(l=>l.id===s.lotId);
    if(!s.ownerId||typeof s.ownerId!=="string"||!s.ownerId.trim()||s.ownerId===lot.creator)return false;
    if(s.evidence.some(e=>!e.id.trim())||new Set(s.evidence.map(e=>e.id)).size!==s.evidence.length)return false;
+   if(["AC","REG"].includes(lot.kind))return false;
+   if(s.ownerId!==lot.assignee)return false;
    if(s.status==="accepted"&&(s.reviewerId!==lot.creator||s.reviewerId===s.ownerId))return false;
    seenStages.add(s.id);return true;
  }).slice(0,500):[];
