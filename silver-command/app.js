@@ -12,7 +12,7 @@ const initial = [
   {id:"singen",title:"14,8 кВт DC • Singen",city:"Singen",client:"Демо Hegau Energie",price:1480,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[{amount:1380,team:"SüdMontage (демо)"}]},
   {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,members:[],bids:[]}
 ];
-const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),name:"Участник",merit:3000,crew:["Участник","Роман","Денис","Олена"],stages:[],audit:[]});
+const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),name:"Участник",merit:3000,crew:["Участник","Роман","Денис","Олена"],stages:[],posts:[],audit:[]});
 const validLot = l => l && typeof l.id==="string" && typeof l.title==="string" && typeof l.creator==="string" && (l.parent===null || typeof l.parent==="string") && Array.isArray(l.members) && Array.isArray(l.bids) && Number.isFinite(l.price) && l.price>=0;
 function normalize(raw) {
  if(!raw || !Array.isArray(raw.lots) || raw.lots.length>2000 || !raw.lots.every(validLot)) throw Error("Invalid saved lot data");
@@ -21,7 +21,9 @@ function normalize(raw) {
  for(const l of raw.lots){const seen=new Set([l.id]);let p=l.parent;while(p!==null){if(seen.has(p))throw Error("Cyclic lot hierarchy");seen.add(p);p=raw.lots.find(x=>x.id===p).parent;}}
  const stageApi=window.NVTSK_STAGE;
  const stages=Array.isArray(raw.stages)&&stageApi?raw.stages.filter(s=>stageApi.validStage(s)&&ids.has(s.lotId)&&s.history.length<=300&&s.evidence.length<=100).slice(0,500):[];
- return {...fresh(),...raw,stages,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
+ const socialApi=window.NVTSK_SOCIAL;
+ const posts=Array.isArray(raw.posts)&&socialApi?raw.posts.filter(p=>socialApi.valid(p)&&ids.has(p.lotId)).slice(-500):[];
+ return {...fresh(),...raw,stages,posts,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
 }
 let state,storageError="";
 try {const saved=localStorage.getItem(KEY);state=saved?normalize(JSON.parse(saved)):fresh();}
@@ -101,13 +103,41 @@ function stageAction(act,id){
   log(act,lot.id,stage.id);save();render();
  }catch(err){notify("Этап не изменён: "+err.message)}
 }
+function socialPanel(l){
+ const api=window.NVTSK_SOCIAL;
+ if(!api)return panel('<h2>Лента лота</h2><p>Модуль недоступен.</p>');
+ const posts=state.posts.filter(p=>api.canRead(p,l,demoActor));
+ let html='<h2>Лента лота · локальная демоверсия</h2><p class="small">Только участники лота. Переключатель персонажа в разделе фотоэтапов имитирует роль, но не защищает данные.</p>';
+ if(api.member(l,demoActor))html+='<label>Новая запись<textarea id="postBody" maxlength="1000" rows="3" placeholder="Обновление по объекту"></textarea></label>'+button("post-add","Опубликовать (демо)",l.id);
+ else html+='<p class="small">Для записи требуется участие в лоте.</p>';
+ for(const p of posts){html+='<div class="tile"><b>'+encode(p.authorId)+'</b><p>'+encode(p.body)+'</p>';
+ for(const c of p.comments)html+='<div class="small">↳ '+encode(c.authorId)+': '+encode(c.body)+'</div>';
+ html+='<label>Комментарий<input id="comment-'+encode(p.id)+'" maxlength="500" placeholder="Ответить"></label>'+button("post-comment","Отправить",p.id)+'</div>';}
+ return panel(html);
+}
+function socialAction(act,id){
+ const api=window.NVTSK_SOCIAL;if(!api)return;
+ try{
+ if(act==="post-add"){
+  const l=find(id);if(!l)return;
+  if(state.posts.length>=500)throw Error("Лимит записей демоверсии");
+  const body=$("#postBody")?.value;
+  state.posts.push(api.create({lot:l,actor:demoActor,body}));log("post_created",id);
+ }else if(act==="post-comment"){
+  const p=state.posts.find(x=>x.id===id);if(!p)return;
+  const l=find(p.lotId),body=document.getElementById("comment-"+id)?.value;
+  api.comment(p,{lot:l,actor:demoActor,body});log("comment_created",p.lotId);
+ }
+ save();render();
+ }catch(err){notify("Лента: "+err.message)}
+}
 function lotScreen() {
  const l = find(selected); if (!l) return projects();
  const subs = state.lots.filter(x=>x.parent===l.id);
  let sublist = subs.length ? subs.map(x=>'<div class="listrow"><span>'+encode(x.title)+'</span>'+button("lot","Открыть",x.id)+'</div>').join("") : '<p>Сублотов пока нет.</p>';
  let bidlist = (l.bids||[]).map(b=>'<div class="listrow"><span>'+encode(b.team)+'</span><b>'+money(b.amount)+' €</b></div>').join("");
  return '<div class="stack">'+panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
- stagePanel(l)+'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фото до/после, PDF, Stringplan, Erdung и подтверждение заказчиком станут следующими подключаемыми модулями. Фото само по себе не означает принятия работ.</p>') +
+ stagePanel(l)+socialPanel(l)+'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фото до/после, PDF, Stringplan, Erdung и подтверждение заказчиком станут следующими подключаемыми модулями. Фото само по себе не означает принятия работ.</p>') +
  panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div></div>';
 }
 function chat() {
@@ -144,6 +174,7 @@ function split(l) {
 document.addEventListener("click",e=>{
  const n=e.target.closest("[data-screen]"); if(n){e.preventDefault();go(n.dataset.screen);return;}
  const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();
+ if(b.dataset.act.startsWith("post-")){socialAction(b.dataset.act,b.dataset.id);return;}
  if(b.dataset.act.startsWith("stage-")){stageAction(b.dataset.act,b.dataset.id);return;}
  if(b.dataset.act==="lot"){selected=b.dataset.id;go("lot");}
  if(b.dataset.act==="projects")go("projects");
