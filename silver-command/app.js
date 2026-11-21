@@ -16,6 +16,9 @@ const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),n
 const validLot = l => l && typeof l.id==="string" && !!l.id.trim() && l.id.length<=100 && typeof l.title==="string" && !!l.title.trim() && l.title.length<=300 && typeof l.creator==="string" && !!l.creator.trim() && l.creator.length<=100 && (l.parent===null || (typeof l.parent==="string" && !!l.parent.trim())) && (l.assignee==null || (typeof l.assignee==="string" && !!l.assignee.trim() && l.assignee!==l.creator)) && Array.isArray(l.members) && l.members.length<=100 && l.members.every(m=>typeof m==="string" && !!m.trim()) && new Set(l.members).size===l.members.length && Array.isArray(l.bids) && l.bids.length<=100 && l.bids.every(b=>b && typeof b.team==="string" && !!b.team.trim() && Number.isFinite(b.amount) && b.amount>0 && b.amount<=100000000 && (b.mine===undefined || typeof b.mine==="boolean")) && Number.isFinite(l.price) && l.price>=0 && l.price<=100000000;
 function normalize(raw) {
  if(!raw || !Array.isArray(raw.lots) || raw.lots.length>2000 || !raw.lots.every(validLot)) throw Error("Invalid saved lot data");
+ if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.crew)||!Array.isArray(raw.audit))throw Error("Invalid saved collections");
+ if(raw.crew.length>100||raw.crew.some(x=>typeof x!=="string"||!x.trim()||x.length>100)||new Set(raw.crew).size!==raw.crew.length)throw Error("Invalid crew");
+ if(raw.audit.length>3000||raw.audit.some(x=>!x||typeof x!=="object"||typeof x.action!=="string"||typeof x.at!=="string"))throw Error("Invalid audit");
  const ids=new Set(raw.lots.map(l=>l.id));
  if(ids.size!==raw.lots.length || raw.lots.some(l=>l.parent!==null && (!ids.has(l.parent)||l.parent===l.id)))throw Error("Invalid lot references");
  for(const l of raw.lots){const seen=new Set([l.id]);let p=l.parent;while(p!==null){if(seen.has(p))throw Error("Cyclic lot hierarchy");seen.add(p);p=raw.lots.find(x=>x.id===p).parent;}}
