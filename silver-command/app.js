@@ -20,21 +20,42 @@ function normalize(raw) {
  if(ids.size!==raw.lots.length || raw.lots.some(l=>l.parent!==null && (!ids.has(l.parent)||l.parent===l.id)))throw Error("Invalid lot references");
  for(const l of raw.lots){const seen=new Set([l.id]);let p=l.parent;while(p!==null){if(seen.has(p))throw Error("Cyclic lot hierarchy");seen.add(p);p=raw.lots.find(x=>x.id===p).parent;}}
  const stageApi=window.NVTSK_STAGE;
- const stages=Array.isArray(raw.stages)&&stageApi?raw.stages.filter(s=>stageApi.validStage(s)&&ids.has(s.lotId)&&s.history.length<=300&&s.evidence.length<=100).slice(0,500):[];
+ const seenStages=new Set();
+ const stages=Array.isArray(raw.stages)&&stageApi?raw.stages.filter(s=>{
+   if(!stageApi.validStage(s)||!ids.has(s.lotId)||!s.id.trim()||seenStages.has(s.id)||s.history.length>300||s.evidence.length>100)return false;
+   const lot=raw.lots.find(l=>l.id===s.lotId);
+   if(!s.ownerId||typeof s.ownerId!=="string"||!s.ownerId.trim()||s.ownerId===lot.creator)return false;
+   if(s.evidence.some(e=>!e.id.trim())||new Set(s.evidence.map(e=>e.id)).size!==s.evidence.length)return false;
+   if(s.status==="accepted"&&(s.reviewerId!==lot.creator||s.reviewerId===s.ownerId))return false;
+   seenStages.add(s.id);return true;
+ }).slice(0,500):[];
  const socialApi=window.NVTSK_SOCIAL;
  const seenPosts=new Set();
  const posts=Array.isArray(raw.posts)&&socialApi?raw.posts.filter(p=>{if(!socialApi.valid(p)||!ids.has(p.lotId)||seenPosts.has(p.id))return false;seenPosts.add(p.id);return true;}).slice(-500):[];
- return {...fresh(),...raw,stages,posts,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
+ const warnings=[];
+ if(Array.isArray(raw.stages)&&raw.stages.length!==stages.length)warnings.push("Фотоэтапы: отклонено или ограничено записей "+(raw.stages.length-stages.length));
+ if(Array.isArray(raw.posts)&&raw.posts.length!==posts.length)warnings.push("Лента: отклонено или ограничено записей "+(raw.posts.length-posts.length));
+ return {...fresh(),...raw,stages,posts,recoveryWarnings:warnings,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
 }
 let state,storageError="";
 try {const saved=localStorage.getItem(KEY);state=saved?normalize(JSON.parse(saved)):fresh();}
-catch (err) {state=fresh();storageError="Локальные данные не удалось прочитать. Изменения в этой сессии могут не сохраниться.";console.warn("NVTSK storage recovery:",err);}
+catch (err) {
+ state=fresh();storageError="Сохранённые данные повреждены или недоступны. Исходная запись не перезаписана; экспортируйте её перед созданием новых данных.";
+ console.warn("NVTSK storage recovery:",err);
+}
+if(state.recoveryWarnings?.length)storageError="При загрузке отклонены некорректные записи: "+state.recoveryWarnings.join("; ")+". Перед продолжением сохраните исходную копию.";
 const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOString(),action,lotId,actor:"me",details});state.audit=state.audit.slice(-300)};
 
 let screen = "dashboard";
 let selected = "singen";
 let demoActor = "me"; // local stage simulation only, never authentication
-const save = () => {try{localStorage.setItem(KEY,JSON.stringify(state));storageError="";return true;}catch(err){storageError="Не удалось сохранить данные на устройстве. Освободите место или экспортируйте демоданные.";console.error(err);return false;}};
+const save = () => {try{
+ if(storageError && !sessionStorage.getItem("nvtsk04_original_saved")){
+   const original=localStorage.getItem(KEY);
+   if(original!==null)sessionStorage.setItem("nvtsk04_original_saved",original);
+ }
+ localStorage.setItem(KEY,JSON.stringify(state));storageError="";return true;
+ }catch(err){storageError="Не удалось сохранить данные на устройстве. Освободите место или экспортируйте демоданные.";console.error(err);return false;}};
 const notify = msg => {window.alert(msg)};
 
 const find = id => state.lots.find(l => l.id === id);
@@ -46,7 +67,7 @@ function item(l) {
   return panel(badge(l.kind) + '<h3 style="font-size:19px;margin-top:12px">' + encode(l.title) + '</h3><p>' + encode(l.client) + '</p><div class="stat" style="margin:10px 0">' + money(l.price) + ' €</div><div class="small muted">' + role(l) + '</div><div style="margin-top:12px">' + button("lot","Открыть лот",l.id) + '</div>');
 }
 function overview() {
-  return '<div class="stack">' + (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong>'):"") + '<section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
+  return '<div class="stack">' + (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong><p class="small">Исходные данные доступны для экспорта, если браузер разрешает чтение.</p>'+button("export-raw","↓ Сохранить исходную запись")):"") + '<section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
   panel('<div class="statlabel">Проекты</div><div class="stat">'+state.lots.length+'</div>') +
   panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>') +
   panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>') +
@@ -181,6 +202,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="projects")go("projects");
  if(b.dataset.act==="new")create();
  if(b.dataset.act==="split")split(find(b.dataset.id));
+ if(b.dataset.act==="export-raw"){try{const raw=sessionStorage.getItem("nvtsk04_original_saved")??localStorage.getItem(KEY);if(raw===null)throw Error("Нет исходной записи");const blob=new Blob([raw],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-original-recovery.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){notify("Не удалось экспортировать: "+err.message)}return;}
  if(b.dataset.act==="export"){const payload=JSON.stringify({exportedAt:new Date().toISOString(),data:state},null,2);const blob=new Blob([payload],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-silver-demo-backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
  if(b.dataset.act==="edit-name")modal('<h2>Ваше имя</h2><form id="nameForm"><label>Ваше имя<input name="name" value="'+encode(state.name)+'" required></label><button class="btn primary" type="submit">Сохранить</button></form>');
  if(b.dataset.act==="assign"){const l=find(selected),who=$("#assignee").value;
