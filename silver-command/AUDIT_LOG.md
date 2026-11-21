@@ -196,3 +196,26 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Verification:** re-fetched `app.js` after GitHub commit. JavaScript `new Function(source)` parse **PASS** in V8; **9/9 static source assertions PASS** (stage duplicate guard, reviewer conflict, owner conflict, evidence dedup, social drop count, recovery warning and raw export). Attempted a mock-DOM execution harness for persistence and rendering; the harness failed with `ReferenceError: console is not defined` before any assertions could be established. **0/4 DOM integration scenarios verified**; do not count these as app failures or as passed tests. No real browser, localStorage reload, iPhone Safari, media upload, server permissions or cloud backup verified.
 
 **Important remaining limitations:** browser storage is untrusted and can be altered; raw recovery export is not encrypted and may contain sensitive data if users disregard the demo warning. A sessionStorage backup may fail on quota, private browsing or crash, and a malformed record may already be lost from earlier runs. Stage validation still does not verify complete history authenticity or cryptographic evidence. Do not put real customer data into this public demo. The next pass should use a working browser/DOM harness and add a safe import-and-restore flow with preview and validation, plus explicit offboarding and organisation-scoped permissions.
+
+
+## Implementation pass #8 · 2026-11-21 ~05:00 CET
+
+**Scope:** `silver-command/app.js` and this audit log only. Root 0.3 untouched.
+**Code commit:** `b29e2e940159eed866e0bc0d2f97255d03c28d5e`.
+
+**Priorities implemented (3):**
+1. Added a manual JSON restore path in Profile: paste an exported backup, enforce 1.5 MB input bound, require schema version 2 and required data sections, normalize lot references and stage/social records, reject any recovery warnings, show counts and request explicit confirmation before replacing local demo state.
+2. Added a fail-closed recovery lock for malformed original JSON or unavailable localStorage on initial load. Ordinary actions no longer silently overwrite the unreadable original. Export of original raw data remains available in the warning panel. A successful validated import can release the lock.
+3. Preserved existing safeguards against duplicate IDs, self-approval of stages and cross-lot social posts in the normalizer. Did not rewrite domain modules.
+
+**Three stakeholder views and conflicting cases:**
+- **Project customer** restores a stale or corrupt backup: invalid schema, missing sections or dangling lot parent must be rejected before overwriting current data.
+- **DC installer** restores stages that appear self-approved by the same person who performed the work: stage validator rejects them rather than treating them as accepted.
+- **Crew captain / outsider** attempts to restore posts with invalid lot reference or duplicate IDs: normalization drops these records; import rejects the entire backup if any record was dropped.
+- **Administrator / operator** considers a corrupted startup record: new recoveryLock prevents automatic overwrite by subsequent ordinary UI actions; original raw export is best-effort only.
+
+**Verification:** re-fetched actual committed `app.js`, `stage-domain.js`, and `social-domain.js` through GitHub connector. JavaScript `new Function(source)` parse **PASS 3/3**. Static integration assertions **PASS 8/8** for import UI, schema check, confirmation, normalizer, recovery lock, export, reviewer constraint and post dedup. These are syntax/static checks, **not** an executed import workflow, DOM persistence test, Node CLI or physical Safari test. No live client data used.
+
+**Newly noticed caveats / next pass:** the import JSON input limit is a UI and code bound, not a secure server limit. Imported data is untrusted local demo data and cannot establish identity or acceptance. The current normalizer still accepts some malformed nested fields in lots, bids, crew and audit; its whitelist/schema validation needs strengthening. The recovery lock covers parse failures, but partially valid data with filtered records can still be saved after a best-effort sessionStorage backup. Improve the workflow with a real executable DOM integration harness, negative-case tests for partial data, and a mandatory full export before any destructive restore. Manual backup import has no encryption or cloud recovery and should never be used for real customer records.
+
+**Remaining product gaps:** no backend, authenticated role enforcement, verified qualification, actual photo uploads, real-time messaging, money transfers, regulated Merit, privacy-compliant retention, legally binding acceptance or reliable cross-device sync.
