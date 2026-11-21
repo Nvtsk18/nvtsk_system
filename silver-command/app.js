@@ -67,7 +67,7 @@ const notify = msg => {window.alert(msg)};
 
 const find = id => state.lots.find(l => l.id === id);
 window.NVTSK_GARAGE?.setProjects(()=>state.lots.map(l=>({id:l.id,title:l.title,assignee:l.assignee,creator:l.creator,kind:l.kind})));
-window.NVTSK_GARAGE?.setActor(()=>demoActor);
+window.NVTSK_GARAGE?.setActor(()=>demoActor === "me" ? "demo-client" : demoActor);
 const garageCost = id => (window.NVTSK_GARAGE?.usageForProject(id)||[]).reduce((sum,u)=>sum+u.cost,0);
 const pulse = (lot, stages) => {
  const relevant=stages.filter(s=>s.lotId===lot.id);
