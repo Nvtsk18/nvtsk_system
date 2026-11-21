@@ -358,3 +358,16 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Verification:** fetched committed app source; V8 `new Function` syntax PASS, four targeted source assertions PASS (stage action guard, UI guard, actor allowlist, backup warning). No DOM click, real Safari/iPhone, reload or import end-to-end test. Existing stage records on regulated lots are not automatically removed, and the app remains locally spoofable.
 
 **Open:** real browser persistence/import/reload test; atomic paired backup for project+Garage; stage validation against lot kind on restore; Field Mode usability; secure server ACL and actual media storage. No production claims.
+
+
+## Implementation pass #20 · 2026-11-21 ~17:05 CET · Restore stage ownership
+
+**Scope:** silver-command/app.js and AUDIT_LOG.md only; root 0.3 unchanged. Code commit: `aafd8ac7c696c4158e5f40443ffb534afd647cde`.
+
+**Critical restore checks:** reject persisted stage metadata on AC/Anmeldung lots (previously blocked only for new stage creation); reject stages whose owner differs from the lot's currently assigned performer. This closes a path where imported legacy/forged stage data could appear under an unqualified or unassigned actor. Previously accepted independent-review guard remains.
+
+**Three actor/conflict scenarios (source-path review, not executed):** DC assignee's matching stage remains eligible for further validation; unrelated outsider's stage owner is rejected; AC/Anmeldung performer stage is rejected even if assigned. A customer trying to be both stage owner and reviewer remains blocked by earlier guard. Changes were made against the fetched current file and the GitHub write returned a commit SHA. **No executable syntax test, actual browser test, import/reload test or iPhone Safari test in this pass.** Do not claim these scenarios PASS until executed.
+
+**Risk:** restoring an older stage with an owner no longer assigned now drops that record and emits the existing recovery warning; raw-data export should be used before any subsequent save. This is deliberate fail-closed behavior but lacks an explicit historical reassignment workflow. Demo actors remain spoofable and this is not authenticated access control.
+
+**Next:** implement executable import/reload integration harness and historical stage reassignment/revision rules; prioritise Field Mode and paired Garage/project backups. Defer network/Merit/social expansion.
