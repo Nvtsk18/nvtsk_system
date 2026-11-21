@@ -442,3 +442,14 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Verification:** arithmetic manually rechecked: 1000+10+250=1260; 1000×0.01=10; 250×0.012=3; 10+3=13. GitHub returned the spec commit SHA. **No application JS changed; no syntax, three-role execution, import/reload or browser/iPhone test was performed this pass.** The old #25 audit is intentionally retained as history, not as current requirements.
 
 **Critical open items for next run:** unified Case/Shard/Garage backup and rollback, browser integration tests, project-only horizontal swipe navigation and top-of-screen screen replacement. Existing MVP remains local demo with spoofable actors; no production-ready claim.
+
+
+## Implementation pass · 2026-11-21 23:00 CET
+
+**Scope:** silver-command/app.js only; root 0.3 unchanged. Commits: `e290656a9edf79b902653a5d2e0cff340234753e` and syntax correction `0dea2c5fc0032eeb1ca94ce833801d3e4d8c8004`.
+
+**Implemented:** Project workspace now renders one selected screen rather than stacking overview, stages, feed and sublots. Four project page buttons; swipe right advances and swipe left goes back, scoped only to the open project. 75px horizontal threshold and 1.7x direction ratio reduce conflicts with vertical scroll; interactive form elements excluded. Each page transition resets scroll to top. Main navigation remains button-based.
+
+**Verification:** JavaScript parsed successfully using Function constructor on the complete updated app.js source after correction. First commit had a syntax error and was promptly fixed in second commit. No actual browser, iPhone Safari, reload, history or end-to-end testing performed in this pass. Static source presence checks only; do not mark touch behaviour PASS. Browser back/forward history and Garage unified backup remain open, as do secure roles and cross-component tests. Existing per-project stage, social and assignment code reused, not revalidated at runtime.
+
+**Next:** browser smoke test of all four screens, role conflicts, stage submission/acceptance, persistence and touch gestures. Add history support and one atomic Case/Shard/Garage export/import without data loss. Verify that Garage state is included before claiming complete backup.
