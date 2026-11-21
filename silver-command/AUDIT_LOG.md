@@ -179,3 +179,20 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Open limitations:** saved posts still reside in one localStorage object and are not cryptographically isolated. The demo actor switcher is impersonation by design. There is no authenticated server, ACL, moderation backend, real-time messaging, photo bytes, GDPR workflow or guaranteed data recovery. Invalid social records are silently dropped rather than individually recoverable; further work should expose recovery warnings and export the original corrupt state before reset. Duplicate lot and stage IDs need a broader integrity test. UI rendering and persistence across reload remain unverified on iPhone/Safari.
 
 **Next:** test saved-state recovery with a reproducible DOM harness; implement an explicit warning when records are dropped; review stage-owner/creator conflict under role switching; then design authenticated social moderation and message retention.
+
+
+## Implementation pass #7 · 2026-11-21 ~04:00 CET
+
+**Scope:** `silver-command/app.js` and this log only. Root 0.3 unchanged.
+**Code commit:** `5a3dd9dd046430103011fd8e8d3b01e529648e71`.
+
+**Priorities (3):**
+1. Strengthen restored photo-stage records: unique nonblank stage IDs, unique nonblank evidence IDs, nonempty owner, no stage owner equal to lot creator, and accepted reviewer must equal lot creator and differ from stage owner. This catches malformed or self-approved persisted stage metadata before display.
+2. Make dropped/limited saved posts and stages visible in the dashboard via explicit warnings, instead of silently discarding them.
+3. Add a user-triggered **raw local-data recovery export** to the warning panel. Before overwriting the current stored record on a later save, attempt to retain the original in sessionStorage for the current tab. This is a best-effort recovery aid, not a reliable backup or a guarantee that corrupted state survives device/browser failure.
+
+**Stakeholders and conflict scenarios:** customer attempts to restore an independently 'accepted' stage with themselves as stage owner; DC installer supplies duplicated evidence IDs to confuse audit; outsider inserts a stage with no owner or invalid reference. These records are now rejected by the local restore filter. Customer/project manager sees warnings and can export raw local state before further edits. A separate, authorised AC specialist still cannot be genuinely verified in this local prototype.
+
+**Verification:** re-fetched `app.js` after GitHub commit. JavaScript `new Function(source)` parse **PASS** in V8; **9/9 static source assertions PASS** (stage duplicate guard, reviewer conflict, owner conflict, evidence dedup, social drop count, recovery warning and raw export). Attempted a mock-DOM execution harness for persistence and rendering; the harness failed with `ReferenceError: console is not defined` before any assertions could be established. **0/4 DOM integration scenarios verified**; do not count these as app failures or as passed tests. No real browser, localStorage reload, iPhone Safari, media upload, server permissions or cloud backup verified.
+
+**Important remaining limitations:** browser storage is untrusted and can be altered; raw recovery export is not encrypted and may contain sensitive data if users disregard the demo warning. A sessionStorage backup may fail on quota, private browsing or crash, and a malformed record may already be lost from earlier runs. Stage validation still does not verify complete history authenticity or cryptographic evidence. Do not put real customer data into this public demo. The next pass should use a working browser/DOM harness and add a safe import-and-restore flow with preview and validation, plus explicit offboarding and organisation-scoped permissions.
