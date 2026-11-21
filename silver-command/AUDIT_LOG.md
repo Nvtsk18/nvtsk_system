@@ -334,3 +334,14 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Verification:** fetched committed code back. V8 new Function syntax PASS 2/2; executable assertions PASS 9/9: assigned installer DC allowed; customer attempting installer consumption rejected; outsider rejected; AC consumption rejected; self-assignment rejected; reinitialization from persisted mock storage retains usage; valid backup preview; invalid backup rejected; app-to-Garage provider wiring present. No actual DOM click, real Safari/iPhone, physical file import, storage quota or concurrency test. The mock actor is freely switchable and localStorage editable: **not secure authentication**.
 
 **Conflicts:** customer cannot consume installer stock while selected as customer; unrelated outsider cannot consume; AC installer cannot claim qualified AC material posting. These are local UI/domain checks only. **Next:** integrate per-lot Field Mode workflow, real browser DOM smoke testing, Garage/project combined backup, and explicit garage admin permissions for receipt/transfer. No private client data used.
+
+
+## Implementation pass #18 · 2026-11-21 · Garage ledger/balance consistency
+
+**Scope:** silver-command/garage.js and AUDIT_LOG.md only; root 0.3 unchanged. Code commit: `f246b21c9bffda801729d0faabc81ac33d59b9a3`.
+
+**Critical fix:** validate Garage imported/persisted balance totals by replaying each movement in order from the known local demo opening stock. Reject a forged balance, a movement overdraft, and balance/movement divergence, including attempted alteration of quantities in prior movements. Existing demo records from the original seed remain compatible. Receipt/transfer/consumption now undergo the same replay validation before persistence. No real inventory ownership verification or cryptographic audit.
+
+**Executable JS V8 checks:** syntax PASS; 12/12 assertions PASS: transfer, consumption cost, insufficient stock, three demo actor scenarios (customer, outsider, AC performer), valid history, forged balance, forged movement quantity, backup preview, corrupted backup rejection, and module reload from mock localStorage. The three actor checks are NOT secure authentication. No real browser DOM/Safari test; no actual download/import through UI was tested.
+
+**Known issues:** opening stock is hardcoded to original demo seed; real inventory onboarding requires versioned opening snapshots and signed adjustments. Project and Garage backups remain separate. Garage local actor is spoofable; receipt and transfer lack garage captain/admin authorization. No backend, true Bautagebuch, or real accounting. Next: mobile Field Mode end-to-end, combined backup or explicit paired backup safety, and browser tests.
