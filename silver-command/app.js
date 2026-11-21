@@ -204,8 +204,18 @@ function render() {
  $("#app").innerHTML=view;
 }
 window.NVTSK_GARAGE_REFRESH=()=>{if(screen==="garage")render()};
-function go(s){if(s==="lot" && screen!=="lot")projectPage=0;screen=s;render();window.scrollTo(0,0)}
-function setProjectPage(n){if(screen!=="lot"||!Number.isInteger(n)||n<0||n>=projectPages.length)return;projectPage=n;render();window.scrollTo(0,0)}
+function routeHash(){return screen==="lot"?"#lot/"+encodeURIComponent(selected)+"/"+projectPage:"#"+screen}
+function syncRoute(replace=false){const h=routeHash();if(location.hash!==h)history[replace?"replaceState":"pushState"]({nvtsk:true},"",h)}
+function go(s){if(s==="lot" && screen!=="lot")projectPage=0;screen=s;render();window.scrollTo(0,0);syncRoute()}
+function setProjectPage(n){if(screen!=="lot"||!Number.isInteger(n)||n<0||n>=projectPages.length)return;projectPage=n;render();window.scrollTo(0,0);syncRoute()}
+function restoreRoute(){
+ const h=decodeURIComponent(location.hash.slice(1));
+ const m=/^lot\/([^/]+)\/(\d+)$/.exec(h);
+ if(m&&state.lots.some(l=>l.id===m[1])&&Number(m[2])<projectPages.length){selected=m[1];projectPage=Number(m[2]);screen="lot";}
+ else if(tabs.some(t=>t[0]===h)){screen=h;}
+ else {screen="dashboard";}
+ render();window.scrollTo(0,0);
+}
 let touchStart=null;
 document.addEventListener("touchstart",e=>{if(screen!=="lot"||e.touches.length!==1||e.target.closest("input,textarea,select,[contenteditable],.project-pages")){touchStart=null;return;}const t=e.touches[0];touchStart={x:t.clientX,y:t.clientY};},{passive:true});
 document.addEventListener("touchend",e=>{if(!touchStart||screen!=="lot"||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.abs(dx)<75||Math.abs(dx)<Math.abs(dy)*1.7)return;setProjectPage(projectPage+(dx>0?1:-1));},{passive:true});
@@ -284,6 +294,7 @@ document.addEventListener("submit",e=>{
 });
 $("#newLot").onclick=create;
 $("#dialogBackdrop").onclick=e=>{if(e.target.id==="dialogBackdrop")close()};
-window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(tabs.some(t=>t[0]===h))go(h)});
-render();
+window.addEventListener("hashchange",restoreRoute);
+window.addEventListener("popstate",restoreRoute);
+restoreRoute();
 })();
