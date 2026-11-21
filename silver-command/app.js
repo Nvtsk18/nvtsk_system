@@ -104,7 +104,7 @@ function stagePanel(l){
  if(!d)return panel('<h2>Фотоэтапы</h2><p>Модуль недоступен. Обновите страницу.</p>');
  const stages=state.stages.filter(s=>s.lotId===l.id);
  let content='<h2>Фотоэтапы · демонстрация</h2><p class="small">Переключение персонажа только для теста, не авторизация. Файлы не загружаются.</p><label>Персонаж для проверки <select id="demoActor"><option value="me"'+(demoActor==="me"?" selected":"")+'>Автор / я</option><option value="roman"'+(demoActor==="roman"?" selected":"")+'>Роман</option><option value="denis"'+(demoActor==="denis"?" selected":"")+'>Денис</option><option value="olena"'+(demoActor==="olena"?" selected":"")+'>Олена</option></select></label>';
- if(l.assignee===demoActor && l.assignee!==l.creator)content+=button("stage-new","＋ Новый этап",l.id);
+ if(l.assignee===demoActor && l.assignee!==l.creator && ["DC","PLAN"].includes(l.kind))content+=button("stage-new","＋ Новый этап",l.id);
  for(const s of stages){
   content+='<div class="tile"><b>'+encode(s.title)+'</b> · '+badge(s.status)+'<p class="small">План рев. '+s.revision+' · '+s.evidence.length+' записей</p>';
   for(const ev of s.evidence)content+='<div class="small">'+encode(ev.type)+': '+encode(ev.note)+(ev.pdfPage?' · PDF стр. '+ev.pdfPage:'')+'</div>';
@@ -118,7 +118,7 @@ function stageAction(act,id){
  const d=window.NVTSK_STAGE;if(!d)return;
  const stage=state.stages.find(s=>s.id===id);
  if(act==="stage-new"){
-  const l=find(id);if(!l||l.assignee!==demoActor||l.assignee===l.creator)return notify("Создать этап может только назначенный независимый исполнитель.");
+  const l=find(id);if(!l||l.assignee!==demoActor||l.assignee===l.creator||!["DC","PLAN"].includes(l.kind))return notify("Создать этап может только назначенный независимый исполнитель DC/Projektierung. AC/Anmeldung заблокированы.");
   const ownerId=l.assignee;if(ownerId===l.creator)return notify("Сначала назначьте независимого исполнителя.");
   const title=prompt("Название этапа (демо):","Монтаж DC");if(!title?.trim())return;
   state.stages.push(d.createStage({id:uuid(),lotId:id,title,ownerId,planRevision:1}));
@@ -185,7 +185,7 @@ function chat() {
 }
 function profile() {
  return '<div class="stack">'+panel('<div class="row"><div class="avatar big">'+encode(state.name[0])+'</div><div><h2>'+encode(state.name)+'</h2><p>Ваше имя, без выбора роли при регистрации</p></div></div><div style="margin-top:14px">'+button("edit-name","✎ Изменить имя")+'</div>')+
- '<div style="margin:12px 0" class="row">'+button("export","↓ Экспорт демоданных")+button("import","↑ Импорт копии")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
+ '<p class="small">⚠ Проекты и Garage хранятся отдельно. Для полной копии отдельно экспортируйте Garage во вкладке «Склад». Импорт проектов не восстанавливает склад.</p><div style="margin:12px 0" class="row">'+button("export","↓ Экспорт проектов (без Garage)")+button("import","↑ Импорт проектов")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
  panel('<h2>Команда и MentorGate</h2><p>Здесь будут навыки, Merit, финансовая история, капитан и администраторы бригад, наставничество и личные проекты.</p><div class="tile">'+state.crew.map(encode).join(" • ")+'</div>')+'</div>';
 }
 function render() {
@@ -239,7 +239,7 @@ document.addEventListener("click",e=>{
   l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);save();render();
  }
 });
-document.addEventListener("change",e=>{if(e.target?.id==="demoActor"){demoActor=e.target.value;render();}});
+document.addEventListener("change",e=>{if(e.target?.id==="demoActor"){const allowed=["me","roman","denis","olena"];if(!allowed.includes(e.target.value)){notify("Неизвестный демоперсонаж");render();return;}demoActor=e.target.value;render();}});
 document.addEventListener("submit",e=>{
  const f=e.target;if(!(f instanceof HTMLFormElement))return;e.preventDefault();
  const data=Object.fromEntries(new FormData(f));
