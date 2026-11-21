@@ -19,4 +19,9 @@ test('revision invalidates old evidence',()=>{const s=fresh();before(s);after(s)
 test('duplicate evidence id rejected',()=>{const s=fresh();before(s);assert.throws(()=>before(s),/Duplicate/)});
 test('invalid PDF page rejected',()=>assert.throws(()=>d.addEvidence(fresh(),{id:'e',actor:'installer',type:'document',note:'x',planRevision:1,pdfPage:0}),/PDF/));
 test('audit trail retains actor and actions',()=>{const s=fresh();before(s);after(s);d.submit(s,'installer');assert.deepEqual(s.history.map(h=>h.action),['evidence_added','evidence_added','submitted'])});
+test('restored submitted stage needs before and after',()=>{const s=fresh();s.status='submitted';assert.equal(d.validStage(s),false)});
+test('restored accepted stage rejects stale evidence',()=>{const s=fresh();before(s);after(s);s.status='accepted';s.reviewerId='client';s.revision=2;assert.equal(d.validStage(s),false)});
+test('whitespace evidence ID duplicates rejected',()=>{const s=fresh();before(s);assert.throws(()=>d.addEvidence(s,{id:' e1 ',actor:'installer',type:'after',note:'x',planRevision:1}),/Duplicate/)});
+test('outsider cannot revise plan',()=>assert.throws(()=>d.revisePlan(fresh(),{actor:'outsider',revision:2}),/Revision|Invalid/));
+test('owner can revise plan',()=>{const s=fresh();d.revisePlan(s,{actor:'installer',revision:2});assert.equal(s.revision,2)});
 console.log('TOTAL',count,'PASS');
