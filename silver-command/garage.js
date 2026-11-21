@@ -18,13 +18,19 @@ function validate(s){
  return s;
 }
 let data,locked=false;
+let projectProvider=()=>[];
+function projects(){const list=projectProvider();return Array.isArray(list)?list.filter(p=>p&&typeof p.id==="string"&&p.id.trim()&&typeof p.title==="string").slice(0,2000):[];}
+function projectExists(id){return projects().some(p=>p.id===id);}
+function setProjects(provider){if(typeof provider!=="function")throw Error("Invalid project provider");projectProvider=provider;}
+function usageForProject(id){return data.usage.filter(u=>u.project===id).map(u=>({...u}));}
+
 try{const raw=localStorage.getItem(KEY);data=raw?validate(JSON.parse(raw)):sample();}catch(e){data=sample();locked=true;}
 function transact(type,item,from,to,qty,project){
  if(locked)throw Error("Склад заблокирован: повреждённые данные. Нельзя перезаписывать исходную запись.");
  if(!data.items.some(i=>i.id===item)||!positive(qty)||qty===0||!locations.some(l=>l.id===to)||!["receive","transfer","consume"].includes(type))throw Error("Неверная операция");
  if(type!=="receive"&&!locations.some(l=>l.id===from))throw Error("Неизвестное место выдачи");
  if(type==="transfer"&&from===to)throw Error("Места совпадают");
- if(type==="consume"&&(!project||!project.trim()))throw Error("Укажи объект");
+ if(type==="consume"&&!projectExists(project))throw Error("Выбери существующий проект или сублот");
  if(type==="consume"&&to!=="depot")throw Error("Неверное направление");
  const next=JSON.parse(JSON.stringify(data)),source=key(item,from),dest=key(item,to);
  if(type!=="receive"&&(next.balances[source]||0)<qty)throw Error("Недостаточно материала");
@@ -32,7 +38,7 @@ function transact(type,item,from,to,qty,project){
  if(type!=="consume")next.balances[dest]=(next.balances[dest]||0)+qty;
  const id="mv-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,9);
  next.movements.push({id,type,item,from:type==="receive"?null:from,to:type==="consume"?null:to,qty,time:new Date().toISOString(),owner:"NVTSK demo",actor:"Локальный оператор (демо)"});
- if(type==="consume"){const unitCost=next.items.find(i=>i.id===item).unitCost;next.usage.push({movementId:id,project:project.trim().slice(0,120),qty,cost:Math.round(qty*unitCost*100)/100});}
+ if(type==="consume"){const unitCost=next.items.find(i=>i.id===item).unitCost;next.usage.push({movementId:id,project:project,qty,cost:Math.round(qty*unitCost*100)/100});}
  validate(next);
  localStorage.setItem(KEY,JSON.stringify(next));
  data=next;
@@ -58,12 +64,13 @@ function render(){
  const total=id=>locations.filter(l=>!l.external).reduce((a,l)=>a+(data.balances[key(id,l.id)]||0),0);
  const external=id=>data.balances[key(id,"ext")]||0;
  const options=locations.map(l=>'<option value="'+l.id+'">'+esc(l.name)+'</option>').join("");
+ const projectOptions=projects().map(p=>'<option value="'+esc(p.id)+'">'+esc(p.title)+' · '+esc(p.id)+'</option>').join("");
  const itemOptions=data.items.map(i=>'<option value="'+esc(i.id)+'">'+esc(i.name)+' ('+esc(i.unit)+')</option>').join("");
  return '<div class="stack"><div class="glass hero"><div class="overline">LOCAL FIRST / GARAGE</div><h2>NVTSK Garage · единый склад команды</h2><p>Полки и три буса образуют один склад. Fremdlager показывает материалы у внешнего подрядчика. Все цифры демонстрационные, данные хранятся только в этом браузере.</p></div>'+
  (locked?'<div class="glass work"><h3>⚠️ Хранилище повреждено или недоступно</h3><p>Операции заблокированы, чтобы не перезаписать исходные данные. Обратитесь к разработчику для восстановления.</p></div>':'')+
  '<div class="glass work"><h2>Общий остаток и внешнее хранение</h2><div class="garage-scroll"><table class="garage-table"><thead><tr><th>Материал</th><th>Гараж + бусы</th><th>Fremdlager</th><th>Всего нашего</th></tr></thead><tbody>'+data.items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+total(i.id)+' '+esc(i.unit)+'</td><td>'+external(i.id)+' '+esc(i.unit)+'</td><td>'+(total(i.id)+external(i.id))+' '+esc(i.unit)+'</td></tr>').join("")+'</tbody></table></div></div>'+
  '<div class="glass work"><h2>Расположение по бусам</h2><div class="garage-scroll"><table class="garage-table"><thead><tr><th>Место</th>'+data.items.map(i=>'<th>'+esc(i.name)+'</th>').join("")+'</tr></thead><tbody>'+locations.map(l=>'<tr><td>'+esc(l.name)+'</td>'+data.items.map(i=>'<td>'+(data.balances[key(i.id,l.id)]||0)+'</td>').join("")+'</tr>').join("")+'</tbody></table></div></div>'+
- '<div class="glass work"><h2>Операция с материалами</h2><form id="garageForm" class="formstack"><label>Действие<select name="type"><option value="transfer">Перемещение / передача</option><option value="consume">Фактически установлено на объекте</option><option value="receive">Поступление на склад</option></select></label><label>Материал<select name="item">'+itemOptions+'</select></label><label>Откуда<select name="from">'+options+'</select></label><label>Куда (для перемещения/поступления)<select name="to">'+options+'</select></label><label>Количество (целые единицы)<input name="qty" type="number" min="1" max="1000000" step="1" required></label><label>Объект (обязательно для расхода)<input name="project" maxlength="120" placeholder="Название демо-объекта"></label><button class="btn primary" type="submit" '+(locked?"disabled":"")+'>Подтвердить операцию</button></form><p class="small">Выдача в бус или подрядчику не считается расходом. Расход фиксируется отдельно по фактической установке.</p></div>'+
+ '<div class="glass work"><h2>Операция с материалами</h2><form id="garageForm" class="formstack"><label>Действие<select name="type"><option value="transfer">Перемещение / передача</option><option value="consume">Фактически установлено на объекте</option><option value="receive">Поступление на склад</option></select></label><label>Материал<select name="item">'+itemOptions+'</select></label><label>Откуда<select name="from">'+options+'</select></label><label>Куда (для перемещения/поступления)<select name="to">'+options+'</select></label><label>Количество (целые единицы)<input name="qty" type="number" min="1" max="1000000" step="1" required></label><label>Объект / сублот для расхода<select name="project"><option value="">Выбрать проект</option>'+projectOptions+'</select></label><button class="btn primary" type="submit" '+(locked?"disabled":"")+'>Подтвердить операцию</button></form><p class="small">Выдача в бус или подрядчику не считается расходом. Расход фиксируется отдельно по фактической установке.</p></div>'+
  '<div class="glass work"><h2>Резервная копия Garage</h2><p class="small">Склад хранится отдельно от проектов и НЕ включён в их экспорт. Сохраните оба файла. Импорт полностью заменяет складские демоданные.</p><button class="btn" type="button" id="garageExport">↓ Экспорт склада</button><form id="garageImport" class="formstack"><label>Вставьте JSON резервной копии Garage<textarea name="backup" maxlength="1500000" rows="4" required></textarea></label><button class="btn" type="submit">Проверить и восстановить</button></form></div>'+
  '<div class="glass work"><h2>Журнал операций</h2>'+(!data.movements.length?'<p>Пока нет операций.</p>':data.movements.slice(-15).reverse().map(m=>'<div class="garage-entry"><b>'+esc(m.type==="transfer"?"Перемещение":m.type==="receive"?"Поступление":"Монтаж")+'</b> · '+esc(data.items.find(i=>i.id===m.item)?.name||m.item)+' · '+m.qty+' · '+esc(m.from||"поставка")+' → '+esc(m.to||"объект")+'<div class="small muted">'+esc(m.time.slice(0,16).replace("T"," "))+(data.usage.find(u=>u.movementId===m.id)?' · '+esc(data.usage.find(u=>u.movementId===m.id).project):'')+'</div></div>').join(""))+'</div></div>';
 }
@@ -85,5 +92,5 @@ document.addEventListener("submit",e=>{
  try{transact(String(f.get("type")),String(f.get("item")),String(f.get("from")),String(f.get("to")),Number(f.get("qty")),String(f.get("project")||""));window.NVTSK_GARAGE_REFRESH?.();}
  catch(err){alert("Garage: "+err.message);}
 });
-window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup};
+window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup,setProjects,usageForProject};
 })();
