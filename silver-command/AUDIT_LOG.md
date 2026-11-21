@@ -382,3 +382,14 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Three role/conflict source scenarios:** DC assignee's existing stage must still match its lot; outsider cannot substitute as stage owner; AC/Anmeldung stage remains rejected. The new collection guards are actor-independent and do not provide authentication. Static invariants inspected: owner/assignee comparison, regulated-lot guard, crew uniqueness and required arrays. GitHub update succeeded; **no executable JS parser, DOM, browser reload, actual import or iPhone Safari test was run in this pass**. Do not claim test PASS.
 
 **Compatibility warning:** older backups lacking any of the four collection arrays now fail closed rather than migrate. User should export raw backup before replacing any damaged state. Next: versioned migration and real browser import/reload test; combined project+Garage backup; iPhone Field Mode. No backend, verified identity, actual media storage or production accounting.
+
+
+## Implementation pass #22 · 2026-11-21 ~19:00 CET · Garage demo operator boundary
+
+Scope: silver-command/garage.js and AUDIT_LOG.md only; root 0.3 untouched.
+
+Changes: local demo receipt and transfer operations now require the selected demo-client actor, while assigned DC/PLAN performers retain consumption rights. Receipt form requires its unused source selector to be set to depot to avoid misleading direction input. These are UI/demo guards, not secure authentication; switching actors or editing local JS remains possible.
+
+Verification: JS parsed with V8 new Function before commit. Source assertions confirm receipt/transfer guard and consume guard coexist. Three actor/conflict cases by static inspection: assigned DC installer may consume but not transfer; unrelated outsider cannot receive; demo-client can receive/transfer but cannot consume without assignment. No actual DOM, browser storage/reload, iPhone Safari, or import test in this pass. The source field on receipt remains a placeholder, not a real supplier identifier.
+
+Next: execute browser DOM + import/reload integration harness, paired project/Garage backup, mobile Field Mode, and real warehouse-role model. No backend, payments or verified identities.
