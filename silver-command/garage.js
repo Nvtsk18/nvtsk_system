@@ -33,6 +33,9 @@ function validate(s){
 }
 let data,locked=false;
 let projectProvider=()=>[];
+let actorProvider=()=>"";
+function setActor(provider){if(typeof provider!=="function")throw Error("Invalid actor provider");actorProvider=provider;}
+function canConsume(project){const p=projects().find(p=>p.id===project);const actor=actorProvider();return !!(p&&actor&&p.assignee===actor&&p.creator!==actor&&["DC","PLAN"].includes(p.kind));}
 function projects(){const list=projectProvider();return Array.isArray(list)?list.filter(p=>p&&typeof p.id==="string"&&p.id.trim()&&typeof p.title==="string").slice(0,2000):[];}
 function projectExists(id){return projects().some(p=>p.id===id);}
 function setProjects(provider){if(typeof provider!=="function")throw Error("Invalid project provider");projectProvider=provider;}
@@ -45,6 +48,7 @@ function transact(type,item,from,to,qty,project){
  if(type!=="receive"&&!locations.some(l=>l.id===from))throw Error("Неизвестное место выдачи");
  if(type==="transfer"&&from===to)throw Error("Места совпадают");
  if(type==="consume"&&!projectExists(project))throw Error("Выбери существующий проект или сублот");
+ if(type==="consume"&&!canConsume(project))throw Error("Расход может подтвердить только назначенный исполнитель DC/Projektierung (демо). AC/Anmeldung заблокированы.");
  if(type==="consume"&&to!=="depot")throw Error("Неверное направление");
  const next=JSON.parse(JSON.stringify(data)),source=key(item,from),dest=key(item,to);
  if(type!=="receive"&&(next.balances[source]||0)<qty)throw Error("Недостаточно материала");
@@ -106,5 +110,5 @@ document.addEventListener("submit",e=>{
  try{transact(String(f.get("type")),String(f.get("item")),String(f.get("from")),String(f.get("to")),Number(f.get("qty")),String(f.get("project")||""));window.NVTSK_GARAGE_REFRESH?.();}
  catch(err){alert("Garage: "+err.message);}
 });
-window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup,setProjects,usageForProject};
+window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup,setProjects,setActor,canConsume,usageForProject};
 })();
