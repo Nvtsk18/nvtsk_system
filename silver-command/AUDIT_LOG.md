@@ -371,3 +371,14 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Risk:** restoring an older stage with an owner no longer assigned now drops that record and emits the existing recovery warning; raw-data export should be used before any subsequent save. This is deliberate fail-closed behavior but lacks an explicit historical reassignment workflow. Demo actors remain spoofable and this is not authenticated access control.
 
 **Next:** implement executable import/reload integration harness and historical stage reassignment/revision rules; prioritise Field Mode and paired Garage/project backups. Defer network/Merit/social expansion.
+
+
+## Implementation pass #21 · 2026-11-21 ~18:05 CET · Fail-closed collection restore
+
+**Scope:** silver-command/app.js and AUDIT_LOG.md only. Root 0.3 untouched. Code commit: `8e532d069f0638fbff37ef428c593d51164883af`.
+
+**Fixes:** (1) reject backups/persisted states missing required stages/posts/crew/audit arrays instead of silently treating them as empty; (2) reject malformed, duplicate or oversized crew identities; (3) reject malformed or excessive audit entries. This reduces accidental data loss and corrupt-state acceptance on import/reload. The existing recovery lock preserves the original localStorage entry on failed startup normalization.
+
+**Three role/conflict source scenarios:** DC assignee's existing stage must still match its lot; outsider cannot substitute as stage owner; AC/Anmeldung stage remains rejected. The new collection guards are actor-independent and do not provide authentication. Static invariants inspected: owner/assignee comparison, regulated-lot guard, crew uniqueness and required arrays. GitHub update succeeded; **no executable JS parser, DOM, browser reload, actual import or iPhone Safari test was run in this pass**. Do not claim test PASS.
+
+**Compatibility warning:** older backups lacking any of the four collection arrays now fail closed rather than migrate. User should export raw backup before replacing any damaged state. Next: versioned migration and real browser import/reload test; combined project+Garage backup; iPhone Field Mode. No backend, verified identity, actual media storage or production accounting.
