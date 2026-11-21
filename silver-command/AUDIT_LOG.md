@@ -420,3 +420,14 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Verification:** GitHub writes returned commit SHAs. New source-linked Node regression test committed with seven assertions, but **the committed test was not executed** against fetched repository files in this pass. A local syntax check of an equivalent test draft succeeded; attempted local execution failed because the repository app.js/garage.js files were not present in that container, not because an assertion failed. No integrated browser click, import/reload, iPhone Safari, or end-to-end security test. Do not count the seven assertions as passed.
 
 **Remaining:** execute committed test in a checkout, run real browser persistence/import/reload test, implement safe paired project/Garage backup, and improve Field Mode on iPhone. Demo role switching is spoofable; no backend or secure access control. No client records committed.
+
+
+## Implementation pass #25 · 2026-11-21 ~21:00 CET · Deferred Merit contract
+
+**Scope:** silver-command/MERIT_FUTURE_SPEC.md and AUDIT_LOG.md only; root 0.3 unchanged. Spec commit: `14589fd613c7a48c3a59ef36c44537cb5b98cb4e`.
+
+**Delivered:** documented Case-only issuance (1000 Case Merit for €1000 Case), separately classified unresolved founder +10, zero Shard issuance, 250 existing Merit reserved by €250 Shard, supply/availability invariants, idempotency, cancellation and restore checks. Documented 100% fee earmarking without 80/20 split, and explicit conflicting Shard fee statements (earlier 1.2%, latest 2%) and fee-base uncertainty. **No fee logic or token logic enabled in MVP.**
+
+**Verification:** specification arithmetic reviewed: 1000-250=750, 250+800>1000; 1.2% of 250=3 and 2% of 250=5 are *illustrative only*, not live charges. No JS application code changed in this pass, therefore no new executable syntax, role, conflict, browser, iPhone, import/reload tests were run. Previously committed garage-actor.test.js still needs execution against checked-out sources. No claims of verified functionality.
+
+**Next:** prioritize a paired Case/Shard/Garage backup with rollback and migration, run actual JS tests against repo checkout, exercise three actors and three hostile restore/role scenarios in browser, then iPhone Field Mode. Founder +10 cadence and fee base/rate conflict require explicit product decision before implementation. No private records published.
