@@ -13,7 +13,7 @@ const initial = [
   {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,members:[],bids:[]}
 ];
 const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),name:"Участник",merit:3000,crew:["Участник","Роман","Денис","Олена"],stages:[],posts:[],audit:[]});
-const validLot = l => l && typeof l.id==="string" && typeof l.title==="string" && typeof l.creator==="string" && (l.parent===null || typeof l.parent==="string") && Array.isArray(l.members) && Array.isArray(l.bids) && Number.isFinite(l.price) && l.price>=0;
+const validLot = l => l && typeof l.id==="string" && !!l.id.trim() && l.id.length<=100 && typeof l.title==="string" && !!l.title.trim() && l.title.length<=300 && typeof l.creator==="string" && !!l.creator.trim() && l.creator.length<=100 && (l.parent===null || (typeof l.parent==="string" && !!l.parent.trim())) && (l.assignee==null || (typeof l.assignee==="string" && !!l.assignee.trim() && l.assignee!==l.creator)) && Array.isArray(l.members) && l.members.length<=100 && l.members.every(m=>typeof m==="string" && !!m.trim()) && new Set(l.members).size===l.members.length && Array.isArray(l.bids) && l.bids.length<=100 && l.bids.every(b=>b && typeof b.team==="string" && !!b.team.trim() && Number.isFinite(b.amount) && b.amount>0 && b.amount<=100000000 && (b.mine===undefined || typeof b.mine==="boolean")) && Number.isFinite(l.price) && l.price>=0 && l.price<=100000000;
 function normalize(raw) {
  if(!raw || !Array.isArray(raw.lots) || raw.lots.length>2000 || !raw.lots.every(validLot)) throw Error("Invalid saved lot data");
  const ids=new Set(raw.lots.map(l=>l.id));
@@ -244,14 +244,17 @@ document.addEventListener("submit",e=>{
    const input=String(data.backup||"");if(input.length>1500000)throw Error("Размер копии превышает 1,5 МБ");
    const parsed=JSON.parse(input),raw=parsed&&typeof parsed==="object"&&"data" in parsed?parsed.data:parsed;
    if(!raw||typeof raw!=="object"||Array.isArray(raw)||raw.schemaVersion!==2)throw Error("Неподдерживаемая версия копии");
-   if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.audit))throw Error("В копии отсутствуют необходимые разделы");
+   if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.audit)||!Array.isArray(raw.crew))throw Error("В копии отсутствуют необходимые разделы");
    const restored=normalize(raw);
    if(restored.recoveryWarnings.length)throw Error("Обнаружены повреждённые записи: "+restored.recoveryWarnings.join("; "));
    const message="Проверка пройдена. Лотов: "+restored.lots.length+", фотоэтапов: "+restored.stages.length+", записей: "+restored.posts.length+". Заменить текущие локальные демоданные? Сначала экспортируйте старую копию.";
    if(!window.confirm(message))return;
-   const serialized=JSON.stringify(restored);localStorage.setItem(KEY,serialized);
+   restored.audit.push({at:new Date().toISOString(),action:"import",lotId:null,actor:"me",details:"Local demo backup restored"});
+   restored.audit=restored.audit.slice(-300);
+   const serialized=JSON.stringify(restored);
+   localStorage.setItem(KEY,serialized); // one atomic localStorage replacement; no second save
    state=restored;recoveryLock=false;storageError="";demoActor="me";selected=state.lots[0]?.id||"";
-   log("import",null,"Local demo backup restored");save();close();go("dashboard");
+   close();go("dashboard");
   }catch(err){notify("Импорт отклонён: "+err.message)}
   return;
  }
