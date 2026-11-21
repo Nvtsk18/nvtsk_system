@@ -310,3 +310,16 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Executable V8 tests: 9/9 PASS:** project dropdown, invalid project rejection, transfer not expense, installer consumes 34 hooks for EUR119, unrelated lot cost isolation, overdraft rejection, external transfer not expense, storage reload by reinitializing module, validated backup preview. Both changed files parsed in V8. Three role/conflict perspectives: DC installer cannot post against unknown project or exceed van stock; customer sees only costs on their selected lot; external contractor custody does not post as consumed. **No authenticated role restrictions**: the client-side operator can still submit consumption for any lot. No browser DOM or iPhone Safari test. Storage remains two independent keys, so cross-key consistency/backup is not guaranteed. No real Bautagebuch, real prices, document uploads or financial accounting.
 
 **Next:** enforce local demo actor/lot assignment checks in inventory consumption, make project-linked usage resilient to project deletion/import and add actual browser DOM reload tests. Do not treat demo actor switching as real authorization.
+
+
+## Implementation pass #16 · 2026-11-21 · Garage import integrity
+
+**Scope:** only `silver-command/garage.js` and this audit. Root 0.3 untouched. Code commit: `f8e455fe653537291284f4ae3a18a98e4488b2a0`.
+
+**Critical fixes:** (1) reject duplicate or missing usage records for consumption movements, preventing double charges or orphaned consumption; (2) reject altered quantity/cost and consumption linked to a transfer; (3) validate movement endpoints and reject malformed/duplicate movement IDs during restore/import. Existing valid local data remains compatible.
+
+**Executable V8 checks: 12/12 PASS**: syntax, valid transfer/consumption, seven negative corruption scenarios (duplicate usage, missing usage, forged cost, wrong quantity, usage linked to transfer, malformed movement endpoint, duplicate movement), module reinitialization using persisted localStorage mock, backup preview and invalid backup rejection. First test harness failed because `structuredClone` was not available in tool V8; reran with JSON clone and all 12 passed. This is NOT real DOM, iPhone Safari, browser storage-quota or cross-device testing.
+
+**Three roles/conflicts:** (1) DC installer cannot import a doubled consumption entry; (2) customer cannot forge a lower cost or wrong installed quantity in imported usage; (3) external contractor/custodian cannot relabel a transfer as consumption without corresponding consistent ledger. These are integrity checks only, not authenticated role enforcement; client-side actor switching and direct JS calls remain spoofable.
+
+**Limitations and next:** separate project/Garage storage keys; no atomic combined backup, no authenticated roles, no server ledger or tamper-proof history. A fully internally consistent fabricated backup cannot be detected cryptographically. Actual browser click/reload tests and mobile Field Mode remain highest priority. Project-linked expense is demo-only, no accounting or Bautagebuch posting.
