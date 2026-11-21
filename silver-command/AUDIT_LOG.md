@@ -345,3 +345,16 @@ Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID vali
 **Executable JS V8 checks:** syntax PASS; 12/12 assertions PASS: transfer, consumption cost, insufficient stock, three demo actor scenarios (customer, outsider, AC performer), valid history, forged balance, forged movement quantity, backup preview, corrupted backup rejection, and module reload from mock localStorage. The three actor checks are NOT secure authentication. No real browser DOM/Safari test; no actual download/import through UI was tested.
 
 **Known issues:** opening stock is hardcoded to original demo seed; real inventory onboarding requires versioned opening snapshots and signed adjustments. Project and Garage backups remain separate. Garage local actor is spoofable; receipt and transfer lack garage captain/admin authorization. No backend, true Bautagebuch, or real accounting. Next: mobile Field Mode end-to-end, combined backup or explicit paired backup safety, and browser tests.
+
+
+## Implementation pass #19 · 2026-11-21 ~16:00 CET · Stage scope and backup clarity
+
+**Scope:** only `silver-command/app.js` and this audit. Root 0.3 untouched. Code commit: `345fc80bbcd4f9672e0f010f8ed343ea3db19701`.
+
+**Three targeted fixes:** (1) block stage creation for AC/Anmeldung even when a forged or legacy saved lot has an assignee; UI hides the creation control for regulated lots; (2) restrict demo actor dropdown to four known local identities, rejecting arbitrary actor strings; (3) explicitly label main JSON export/import as **projects only**, and warn that Garage requires a separate export/import. This does not solve cross-key atomicity.
+
+**Role/conflict review:** DC installer assigned to DC can still reach the stage creation path; AC/Anmeldung assignee cannot create a new stage even if an imported record contains that assignee; outsider injecting an unknown actor via select change is refused; customer restoring only project JSON is warned that Garage stock is not restored. These are client-side demonstrations, not identity security.
+
+**Verification:** fetched committed app source; V8 `new Function` syntax PASS, four targeted source assertions PASS (stage action guard, UI guard, actor allowlist, backup warning). No DOM click, real Safari/iPhone, reload or import end-to-end test. Existing stage records on regulated lots are not automatically removed, and the app remains locally spoofable.
+
+**Open:** real browser persistence/import/reload test; atomic paired backup for project+Garage; stage validation against lot kind on restore; Field Mode usability; secure server ACL and actual media storage. No production claims.
