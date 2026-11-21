@@ -5,3 +5,10 @@
 @media(max-width:740px){h1{font-size:24px}.layout{display:block}.sidebar{display:none}.content{padding:17px 13px 100px}.header{align-items:flex-start}.glass{padding:16px;border-radius:17px}.glass.work{padding:15px}.glass.hero{min-height:186px}.hero:after{font-size:195px;top:-60px}.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.grid{gap:10px}.maincols{grid-template-columns:1fr}.bottomnav{display:flex;gap:2px;position:fixed;left:0;right:0;bottom:0;padding:8px 4px max(8px,env(safe-area-inset-bottom));background:rgba(18,29,39,.78);border-top:1px solid #d0e1ea48;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:70;box-shadow:0 -10px 24px #0006}.bottomnav a{display:flex;flex-direction:column;gap:2px;flex:1;min-width:55px;text-align:center;padding:5px 2px 4px;font-size:10px;border-radius:11px;white-space:nowrap}.bottomnav .ico{font-size:21px}.mobile-only{display:block}.map-area{min-height:285px}.modal{padding:17px}.photo{aspect-ratio:1/1}}
 @media(max-width:395px){.g3{grid-template-columns:1fr 1fr}.bottomnav a{font-size:9px;min-width:50px}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Project Pulse: accepted stages only; not a measure of physical installation progress. */
+.pulse{margin-top:13px;padding:11px 12px;border:1px solid rgba(206,222,234,.22);border-radius:12px;background:rgba(13,26,36,.54)}
+.pulse .between{gap:12px;align-items:center}.pulse .between b{font-variant-numeric:tabular-nums;color:#dceaf2}
+.pulse-track{height:8px;margin-top:8px;border-radius:8px;background:#455561;overflow:hidden}
+.pulse-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#7d9cb0,#b6d2dd);transition:width .2s ease}
+@media(max-width:740px){.pulse{padding:12px}.pulse .small{font-size:12px}}
