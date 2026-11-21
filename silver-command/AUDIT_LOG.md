@@ -286,3 +286,16 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Critical limitations:** no actual browser DOM click/reload or iPhone Safari test; independent localStorage key means Garage is not yet part of the existing main JSON export/import and could be lost when users assume backup includes it; no backend, QR scanning, contractor acknowledgement, immutable ledger, concurrency protection, verified ownership, price accounting method or signed handoffs. The external custodian is a single demo placeholder, not a per-contractor registry. Quantity model supports integer base units only. The cost ledger is local demonstration, not integrated into project finances. Avoid real client/private records.
 
 **Next:** integrate Garage backup into main export/import or provide separate explicit export with warnings, test real DOM/storage/reload, add per-contractor custodian IDs, enforce actual actor permissions and integrate project Bautagebuch.
+
+
+## Implementation pass #14 · 2026-11-21
+
+Scope: silver-command/garage.js only, root 0.3 unchanged. Code commit: f3192477d20ee7432bb08ae9447a3e0c33ce3f77.
+
+Added separate Garage JSON export, validated preview/import, explicit confirmation and single-write restore. Garage and project backups remain separate; both must be saved. Invalid backup type/schema is rejected and corrupted startup storage remains locked.
+
+V8 mock-storage tests: 9/9 PASS, covering syntax, garage-to-van transfer, 34/40 installation with 6 remaining and EUR119 cost, overdraft rejection, external custody, non-mutating preview, invalid backup rejection, reload by module reinitialization, and restore. No real browser, DOM, iPhone Safari or actual file download test was run.
+
+Role/conflict scenarios: operator can export; installer cannot consume beyond stock; external custodian holdings do not count as garage available; importer cannot inject invalid backup. These are local accounting rules, NOT authenticated role enforcement.
+
+Open: no cross-key atomic backup, no Bautagebuch integration, no project-ID validation, no authenticated roles or cross-device sync. Next: real browser persistence tests and project-linked consumption.
