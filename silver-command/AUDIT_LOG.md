@@ -219,3 +219,16 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Newly noticed caveats / next pass:** the import JSON input limit is a UI and code bound, not a secure server limit. Imported data is untrusted local demo data and cannot establish identity or acceptance. The current normalizer still accepts some malformed nested fields in lots, bids, crew and audit; its whitelist/schema validation needs strengthening. The recovery lock covers parse failures, but partially valid data with filtered records can still be saved after a best-effort sessionStorage backup. Improve the workflow with a real executable DOM integration harness, negative-case tests for partial data, and a mandatory full export before any destructive restore. Manual backup import has no encryption or cloud recovery and should never be used for real customer records.
 
 **Remaining product gaps:** no backend, authenticated role enforcement, verified qualification, actual photo uploads, real-time messaging, money transfers, regulated Merit, privacy-compliant retention, legally binding acceptance or reliable cross-device sync.
+
+
+## Implementation pass #9 · 2026-11-21 (scheduled follow-up)
+
+**Scope:** only `silver-command/stage-domain.js` and this audit. Root 0.3 unchanged. **Code commit:** `87b72a51c39c308d73d791e919ab471383eb815b`.
+
+**MVP-first priority:** harden restored stage metadata rather than expand social features. `validStage` now rejects blank stage/lot/owner identifiers, duplicate or blank evidence IDs, blank notes, invalid PDF page references, future plan revisions, excessive evidence/history arrays, malformed history entries, and accepted stages whose reviewer is missing or equals the performer. This is local-data integrity validation, not authenticated acceptance.
+
+**Roles and conflict cases:** (1) customer attempts to import an accepted stage with no independent reviewer; (2) DC installer tries to insert duplicate evidence IDs or future-revision evidence; (3) crew captain imports a stage with missing owner or malformed PDF page. The corresponding domain checks now reject these states. The independently reviewed customer/installer happy path remains accepted.
+
+**Verification:** actual fetched module compiled with JavaScript `new Function` in the tool V8 runtime. **8/8 executable domain assertions PASS**: fresh stage, blank owner, duplicate evidence, invalid PDF page, self-review, future revision, independent review, accepted-stage immutability. This is not a DOM, localStorage reload, Node CLI or iPhone Safari test. No private customer data was used.
+
+**Open issues:** browser UI still lacks executable import/reload regression tests. History entries are mutable and not cryptographically authenticated; current check validates types only. `validStage` is not a full strict schema for every nested field, and localStorage actor switching is spoofable. Need to verify all existing stage tests against the stricter validator in Node; no claim that the full suite passed. Before real deployments, implement server-side roles, verified qualifications and protected evidence storage. The primary target remains a stable browser MVP, with social extensions deferred.
