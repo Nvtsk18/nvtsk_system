@@ -66,9 +66,11 @@ function transact(type,item,from,to,qty,project){
  if(!data.items.some(i=>i.id===item)||!positive(qty)||qty===0||!locations.some(l=>l.id===to)||!["receive","transfer","consume"].includes(type))throw Error("Неверная операция");
  if(type!=="receive"&&!locations.some(l=>l.id===from))throw Error("Неизвестное место выдачи");
  if(type==="transfer"&&from===to)throw Error("Места совпадают");
+ if((type==="receive"||type==="transfer")&&actorProvider()!=="demo-client")throw Error("Поступление и перемещение разрешены только демо-оператору склада.");
  if(type==="consume"&&!projectExists(project))throw Error("Выбери существующий проект или сублот");
  if(type==="consume"&&!canConsume(project))throw Error("Расход может подтвердить только назначенный исполнитель DC/Projektierung (демо). AC/Anmeldung заблокированы.");
  if(type==="consume"&&to!=="depot")throw Error("Неверное направление");
+ if(type==="receive"&&from!=="depot")throw Error("Для поступления поле «Откуда» должно быть «Гараж» (условное значение).");
  const next=JSON.parse(JSON.stringify(data)),source=key(item,from),dest=key(item,to);
  if(type!=="receive"&&(next.balances[source]||0)<qty)throw Error("Недостаточно материала");
  if(type!=="receive")next.balances[source]-=qty;
