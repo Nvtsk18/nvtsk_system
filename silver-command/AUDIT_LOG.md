@@ -156,3 +156,26 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Critical limitations and findings:** all data remains in browser localStorage, and actor identity can be changed in the UI. No authentication, server ACL, encrypted media, cross-device chat, moderation, blocking, notification delivery or GDPR-grade deletion. In fact, `posts` are stored in one local state object and filtered for display only: this is NOT secure isolation for actual users. Post bodies are plain text only, no photo/video uploads. Local data loss is still possible; backup export is manual. No real client data should be entered. The app still contains UI placeholder text about upcoming photo workflow that should be updated. Revisit duplicate IDs and robust nested comment validation in a later pass.
 
 **Next pass:** run actual syntax and unit tests in a Node-capable runtime, improve corrupted state recovery and saved-state regression tests, then design authenticated server-side ACL for social content before any real-user deployment. Extend the independent audit to moderation/appeals, data retention and crew offboarding.
+
+
+## Implementation pass #6 · 2026-11-21 ~03:00 CET
+
+**Scope:** only `silver-command/social-domain.js`, `social-domain.test.js`, `app.js` and this log. No root 0.3 files modified.
+
+**Code commits:** `87c75314` (social guards and validation), `ed50e75a` (regression tests), `66a64f57` (saved-post ID deduplication).
+
+**Priorities (3):**
+1. Correct a **real role-conflict bug**: `member(lot, undefined)` could return true when `lot.assignee` was missing; likewise null/empty actors could accidentally match absent fields. Now only nonempty string actors can be lot members. This affects local social creation and read filters, not server security.
+2. Reject malformed persisted posts/comments: blank IDs, blank bodies, duplicate comment IDs, invalid visibility. This reduces corruption and ambiguous identities on local reload.
+3. Drop duplicate post IDs when normalizing saved browser state, retaining the first valid record to avoid ambiguous comment targets. Bounded history and local JSON export remain.
+
+**Stakeholders and three conflict scenarios:**
+- **Uninvited outsider** with an absent identity vs **customer** of a lot whose assignee is missing: formerly an accidental match was possible; now refused.
+- **DC installer/captain** vs **other project customer**: cross-lot read/comment still checks both membership and exact lot ID; previously implemented guard retained.
+- **Moderator / reviewer** inspecting malformed or duplicated social data: duplicate comment IDs and blank author/body now fail validation, and duplicate post IDs are removed on restore.
+
+**Verification:** executed a JavaScript V8 harness in the connected tool runtime with the actual updated social-domain source: **20/20 assertions PASS**, including 14 prior behavior scenarios and six new edge cases. The harness parsed and executed the updated domain module, but is **not** Node CLI, an end-to-end browser test or proof of persistent storage. The six new regression tests were committed to `social-domain.test.js`. Static inspection confirms the app normalizer uses a Set to filter duplicate post IDs. Attempted to fetch GitHub raw source in container for Node CLI; DNS resolution failed (`Could not resolve host: raw.githubusercontent.com`), so no Node CLI or browser run is claimed.
+
+**Open limitations:** saved posts still reside in one localStorage object and are not cryptographically isolated. The demo actor switcher is impersonation by design. There is no authenticated server, ACL, moderation backend, real-time messaging, photo bytes, GDPR workflow or guaranteed data recovery. Invalid social records are silently dropped rather than individually recoverable; further work should expose recovery warnings and export the original corrupt state before reset. Duplicate lot and stage IDs need a broader integrity test. UI rendering and persistence across reload remain unverified on iPhone/Safari.
+
+**Next:** test saved-state recovery with a reproducible DOM harness; implement an explicit warning when records are dropped; review stage-owner/creator conflict under role switching; then design authenticated social moderation and message retention.
