@@ -17,4 +17,10 @@ check('cross lot comment blocked',()=>assert.throws(()=>S.comment(p,{lot:other,a
 check('member comment',()=>assert.equal(S.comment(p,{lot:own,actor:'captain',body:'OK'}).authorId,'captain'));
 check('blank comment rejected',()=>assert.throws(()=>S.comment(p,{lot:own,actor:'client',body:' '})));
 check('invalid visibility rejected',()=>assert.equal(S.valid({...p,visibility:'public'}),false));
+check('missing actor denied',()=>assert.equal(S.member({id:'x',creator:'client',members:[]},undefined),false));
+check('null actor denied',()=>assert.equal(S.member({id:'x',creator:'client',assignee:null,members:[]},null),false));
+check('empty actor denied',()=>assert.equal(S.member({id:'x',creator:'client',assignee:''},''),false));
+check('invalid empty post id',()=>assert.equal(S.valid({...p,id:''}),false));
+check('duplicate comment ids denied',()=>assert.equal(S.valid({...p,comments:[{id:'x',authorId:'client',body:'a'},{id:'x',authorId:'worker',body:'b'}]}),false));
+check('blank comment body invalid on restore',()=>assert.equal(S.valid({...p,comments:[{id:'x',authorId:'client',body:'   '}]}),false));
 console.log(count+' / '+count+' passed');
