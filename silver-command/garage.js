@@ -12,9 +12,23 @@ function validate(s){
  if(s.items.length>100||s.movements.length>2000||s.usage.length>2000||new Set(s.items.map(x=>x.id)).size!==s.items.length)throw Error("invalid garage limits");
  for(const i of s.items)if(!i||typeof i.id!=="string"||!i.id.trim()||i.id.length>60||typeof i.name!=="string"||!i.name.trim()||i.name.length>120||typeof i.unit!=="string"||!i.unit.trim()||!Number.isFinite(i.unitCost)||i.unitCost<0)throw Error("invalid item");
  for(const [k,n] of Object.entries(s.balances)){const [item,loc,...extra]=k.split("@");if(extra.length||!s.items.some(i=>i.id===item)||!locations.some(l=>l.id===loc)||!positive(n))throw Error("invalid balance");}
- const ids=new Set();
- for(const m of s.movements){if(!m||typeof m.id!=="string"||ids.has(m.id)||!["receive","transfer","consume"].includes(m.type)||!s.items.some(i=>i.id===m.item)||!positive(m.qty)||m.qty===0||typeof m.time!=="string"||!Number.isFinite(Date.parse(m.time)))throw Error("invalid movement");ids.add(m.id);}
- for(const u of s.usage)if(!u||!ids.has(u.movementId)||typeof u.project!=="string"||!u.project.trim()||!positive(u.qty)||!Number.isFinite(u.cost)||u.cost<0)throw Error("invalid usage");
+ const ids=new Set(), consumed=new Set();
+ for(const m of s.movements){
+  if(!m||typeof m.id!=="string"||!m.id.trim()||m.id.length>100||ids.has(m.id)||!["receive","transfer","consume"].includes(m.type)||!s.items.some(i=>i.id===m.item)||!positive(m.qty)||m.qty===0||typeof m.time!=="string"||!Number.isFinite(Date.parse(m.time)))throw Error("invalid movement");
+  if(m.type==="receive"&&(m.from!==null||!locations.some(l=>l.id===m.to)))throw Error("invalid receipt");
+  if(m.type==="transfer"&&(!locations.some(l=>l.id===m.from)||!locations.some(l=>l.id===m.to)||m.from===m.to))throw Error("invalid transfer");
+  if(m.type==="consume"&&(!locations.some(l=>l.id===m.from)||m.to!==null))throw Error("invalid consumption");
+  ids.add(m.id);if(m.type==="consume")consumed.add(m.id);
+ }
+ const usageIds=new Set();
+ for(const u of s.usage){
+  if(!u||typeof u.movementId!=="string"||!consumed.has(u.movementId)||usageIds.has(u.movementId)||typeof u.project!=="string"||!u.project.trim()||u.project.length>120||!positive(u.qty)||u.qty===0||!Number.isFinite(u.cost)||u.cost<0)throw Error("invalid usage");
+  const m=s.movements.find(m=>m.id===u.movementId);
+  const item=s.items.find(i=>i.id===m.item);
+  if(u.qty!==m.qty||Math.abs(u.cost-Math.round(u.qty*item.unitCost*100)/100)>0.001)throw Error("usage/movement mismatch");
+  usageIds.add(u.movementId);
+ }
+ if(consumed.size!==usageIds.size)throw Error("consumption missing usage");
  return s;
 }
 let data,locked=false;
