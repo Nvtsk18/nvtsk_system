@@ -22,7 +22,8 @@ function normalize(raw) {
  const stageApi=window.NVTSK_STAGE;
  const stages=Array.isArray(raw.stages)&&stageApi?raw.stages.filter(s=>stageApi.validStage(s)&&ids.has(s.lotId)&&s.history.length<=300&&s.evidence.length<=100).slice(0,500):[];
  const socialApi=window.NVTSK_SOCIAL;
- const posts=Array.isArray(raw.posts)&&socialApi?raw.posts.filter(p=>socialApi.valid(p)&&ids.has(p.lotId)).slice(-500):[];
+ const seenPosts=new Set();
+ const posts=Array.isArray(raw.posts)&&socialApi?raw.posts.filter(p=>{if(!socialApi.valid(p)||!ids.has(p.lotId)||seenPosts.has(p.id))return false;seenPosts.add(p.id);return true;}).slice(-500):[];
  return {...fresh(),...raw,stages,posts,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
 }
 let state,storageError="";
