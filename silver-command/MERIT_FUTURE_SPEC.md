@@ -1,32 +1,35 @@
-# Merit economics · deferred design contract (NOT ACTIVE)
+# Merit economics · agreed future specification (NOT ACTIVE)
 
-Status: **specification only**, not a deployed token, payment system, or accounting ledger. The PV operations MVP takes priority.
+**Status:** specification only. No actual Merit minting, fees, financial transactions, accounting or user balances are implemented. First finish the PV operations MVP.
 
-## Supply and allocation
+## Confirmed model (2026-11-21 evening)
 
-- A Case with nominal value €1,000 creates 1,000 Case Merit units **once**. Case creation must have a stable idempotency key.
-- An additional **10 founder Merit** is recorded in a separate founder issuance class, never as performer allocation. Whether this is per Case or a one-time grant is **unresolved**. Do not implement founder minting until clarified.
-- A €250 Shard reserves/transfers **250 of the existing Case Merit**, not a new issuance. Shard creation never changes total issued supply.
-- Case allocation invariant: sum(active Shard reservations + completed Shard allocations + other Case allocations) <= original Case issuance, excluding separately tracked founder units. A single unit cannot be both reserved and allocated. Cancellation releases only its own reservation, exactly once.
-- Idempotency: retries of Case creation, Shard reservation, Shard completion and cancellation must not duplicate movements. All balances nonnegative. Concurrent updates must use an atomic compare-and-swap or transaction when a backend exists.
+- Creating a **Case with nominal value €1,000** issues **1,010 new Merit**: 1,000 base Case Merit and **10 additional Merit for the platform founder** (not the Case creator). The 10 founder Merit belong to this illustrated Case issuance event; repeated events and exact scaling require formal issuance rules.
+- Creating a **Shard worth €250** issues **250 additional NEW Merit**. This is **not** a transfer, reservation or allocation of the Case's previously issued 1,000 Merit.
+- The Case fee is **1% of €1,000 = €10**. The Shard fee is **1.2% of €250 = €3**, paid by the **Shard creator**. The previously suggested 2% Shard fee is superseded.
+- After these two issuance events: **1,260 Merit issued**, **€13 in total fees**. Fees and issued Merit are different units and must not be conflated.
+- **100% of both fees** is earmarked for Merit backing / dilution compensation, **without an 80/20 split**. This earmark does not establish actual reserves or guarantee value.
 
-## Fees and coverage
+## Unresolved decisions (do not invent answers)
 
-- Current design instruction: **Case fee 1%, Shard fee 2%**; 100% of each fee is earmarked for Merit coverage / dilution offset, **no 80/20 split**. Earmarking is a *ledger policy*, not a claim of actual cash reserves or price stabilization.
-- **Open conflict:** an earlier conversation used **1.2% on a €250 Shard (€3)**, whereas the latest design instruction says **2% (€5 if charged on full €250)**. Do not charge, display or settle either rate in live code before explicit confirmation.
-- **Open fee bases:** whether Case fee applies to nominal Case value and Shard fee to nominal Shard value, paid amount, or another base; fee payer; rounding, refund, cancellation and tax treatment. No guessed calculations in active UI.
-- Even if 100% of fees is earmarked, this does not prove complete compensation for dilution or guarantee Merit value. Merit does not eliminate taxes.
+1. Recipient and vesting/availability of the 1,000 base Case Merit; recipient of the new 250 Shard Merit.
+2. Exact issuance time and lifecycle: creation, acceptance, cancellation, refund and reversals.
+3. Limits on total child Shard issuance relative to parent Case, including nested Shards and over-issuance risk.
+4. Stable event IDs, retries, duplicate prevention, concurrent updates, audit and import/replay idempotency.
+5. Founder grant formula for other Case sizes, rounding, minimum units and whether any one-off grants exist.
+6. Fee payer for the Case, fee treatment of cancellation, taxes, refunds and cash custody.
+7. Legal and financial obligations of backing Merit, dilution-offset methodology and independent accounting.
 
-## Future executable acceptance scenarios
+## Future acceptance scenarios
 
-1. Create Case 1000: issued Case supply +1000; retry unchanged; founder issuance separate and disabled pending clarification.
-2. Reserve Shard 250: Case available 750; total issued unchanged; retry unchanged.
-3. Reserve another 800: reject (would exceed Case allocation). Reject negative or fractional units and cross-Case transfers.
-4. Complete reserved 250: reservation -250, allocation +250; issued unchanged; repeated completion no-op.
-5. Cancel an uncompleted 250: reservation -250, available +250; repeated cancellation no-op; cannot cancel completed allocation without explicit reversal policy.
-6. Three roles: Case owner may propose Shard, assigned performer may report completion, independent reviewer may approve; outsider and performer-as-own-reviewer denied. These are future authenticated permissions, **not** the current demo actor switcher.
-7. On import/reload, recompute supply and allocations from canonical events, reject duplicates, unknown Case references, and balance divergence. Test partial restore, replay and concurrent reservations.
+1. One Case €1,000 produces 1,010 Merit, including 10 allocated to founder. Retry of the same creation event issues zero additional Merit.
+2. One new Shard €250 produces 250 **new** Merit, without reducing the 1,010 already issued. Retry issues zero.
+3. Supply after both unique events equals 1,260 Merit; fees are €10 + €3 = €13, entirely earmarked for backing.
+4. A Shard creator pays the €3 fee; 2% and 80/20 logic must not appear in executable financial code.
+5. Any unclear recipient, cancellation or issuance-cap case must fail closed rather than mint arbitrary balances.
+6. Three future authenticated roles: Case author, Shard executor and independent reviewer; an executor must not approve their own work.
+7. On import/reload, reject duplicate events, unknown parent IDs and divergent supply, and reconcile from canonical events.
 
 ## MVP boundary
 
-Do not wire this specification into Command Mode, Field Mode, Garage or Project Pulse until local PV workflow, paired backup, restore and role tests are reliable. No live payments, token issuance, KYC/AML/GDPR compliance, qualified electrical acceptance or production accounting is claimed.
+Do not wire Merit economics into Command Mode, Field Mode, Garage or Project Pulse until the local PV workflow, combined backup, restore and role tests are reliable. No live payments, tax exemptions, verified qualifications, production security or GDPR/AML compliance are claimed.
