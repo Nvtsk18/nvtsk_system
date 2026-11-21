@@ -260,3 +260,16 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Verification:** re-fetched committed `app.js` and `style.css`. V8 JavaScript syntax parse PASS; 9/9 targeted checks PASS, including four executable pure pulse cases (empty, accepted+submitted, returned, cross-lot isolation) and five static source/style invariants. These are **not** full browser tests, iPhone Safari, DOM click tests, localStorage reload or import end-to-end tests. No private client data used.
 
 **Open blockers:** highest priority remains a real browser DOM persistence/import/reload harness and a tested iPhone field workflow. UI has only text evidence references, no photo upload, PDF viewer integration or real financial ledger. Demo identity and acceptance are not secure. Future: explicit Command/Field navigation, safety checklists and reliable offline backups; keep social/network work deferred until browser MVP passes.
+
+
+## Implementation pass #12 · 2026-11-21 (Local First restore integrity)
+
+**Scope:** only `silver-command/app.js` and this audit. Root 0.3 untouched. Code commit: `50d78c9e738a91b4fa46044166f3f08a9f4bd61a`.
+
+**Three critical fixes:** (1) validate nonblank lot IDs, titles, creators, and assignees on local state restore, rejecting self-assignment; (2) validate members for duplicate/blank identities and bids for finite positive bounded amounts, nonblank team and correct optional `mine` type, preventing corrupt imports from becoming UI state; (3) restore imported data with a **single localStorage write** and include the import audit record in that same write, rather than writing restored state and immediately saving again. Require `crew` array in import backup.
+
+**Roles and three conflicting scenarios:** customer tries to import a lot with themselves as assigned performer (rejected); DC captain imports duplicated member identities (rejected); outsider/intermediary imports NaN/Infinity or negative bid (rejected). Valid independent assignee and ordinary finite bid remain allowed. These are local integrity guards, not authenticated permissions.
+
+**Verification:** fetched actual committed app source; JavaScript V8 `new Function` syntax **PASS**. Extracted the committed `validLot` predicate and executed **9/9 cases PASS** (valid baseline, blank ID, self-assignment, duplicate members, invalid bid, valid bid, blank title, blank member, negative bid). Recovery-lock source check PASS. Inspected the exact committed import-success block: **one localStorage.setItem**, no subsequent save. An initial broad static test incorrectly included unrelated later handlers and reported false failure; corrected the inspection to the exact import block. **No real browser, Safari, DOM event, reload, or storage-quota simulation was executed.**
+
+**Open blockers:** import still asks confirmation but not mandatory prior export; localStorage can be tampered with; malformed top-level crew/audit sections are only partially normalized; initial seed lot has legacy bid shape but passes current schema; actual mobile Field Mode and end-to-end persistence remain untested. Next: create an executable DOM/storage harness or real browser smoke test, then mobile Field Mode navigation. No backend, authenticated role checks, real photo bytes, qualified AC acceptance, GDPR compliance or real payment.
