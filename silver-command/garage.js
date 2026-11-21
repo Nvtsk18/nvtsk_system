@@ -29,6 +29,25 @@ function validate(s){
   usageIds.add(u.movementId);
  }
  if(consumed.size!==usageIds.size)throw Error("consumption missing usage");
+// Reconstruct current balances from the immutable demo opening stock and ordered movement log.
+// Legacy data without a snapshot uses the original sample opening stock.
+ const opening={"hooks@depot":40,"rail@depot":12,"cable@van1":200};
+ const reconstructed={...opening};
+ for(const m of s.movements){
+  const source=key(m.item,m.from),dest=key(m.item,m.to);
+  if(m.type!=="receive"){
+   if((reconstructed[source]||0)<m.qty)throw Error("movement overdraft");
+   reconstructed[source]-=m.qty;
+  }
+  if(m.type!=="consume"){
+   const next=(reconstructed[dest]||0)+m.qty;
+   if(!positive(next))throw Error("movement overflow");
+   reconstructed[dest]=next;
+  }
+ }
+ for(const k of new Set([...Object.keys(reconstructed),...Object.keys(s.balances)]))
+  if((reconstructed[k]||0)!==(s.balances[k]||0))throw Error("balance does not match movement history");
+
  return s;
 }
 let data,locked=false;
