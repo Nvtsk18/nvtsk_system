@@ -37,6 +37,23 @@ function transact(type,item,from,to,qty,project){
  localStorage.setItem(KEY,JSON.stringify(next));
  data=next;
 }
+function exportBackup(){
+ const payload=JSON.stringify({kind:"nvtsk-garage-backup",exportedAt:new Date().toISOString(),data:validate(data)},null,2);
+ const blob=new Blob([payload],{type:"application/json"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="nvtsk-garage-backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function importBackup(raw,confirmed){
+ if(typeof raw!=="string"||raw.length>1500000)throw Error("Файл слишком большой");
+ const wrapper=JSON.parse(raw);
+ if(!wrapper||wrapper.kind!=="nvtsk-garage-backup")throw Error("Это не резервная копия Garage");
+ const next=validate(wrapper.data);
+ if(!confirmed)return {items:next.items.length,movements:next.movements.length,usage:next.usage.length};
+ if(locked)throw Error("Повреждённое исходное хранилище: автоматическое восстановление заблокировано");
+ localStorage.setItem(KEY,JSON.stringify(next));
+ data=next;
+ return true;
+}
 function render(){
  const total=id=>locations.filter(l=>!l.external).reduce((a,l)=>a+(data.balances[key(id,l.id)]||0),0);
  const external=id=>data.balances[key(id,"ext")]||0;
@@ -47,14 +64,26 @@ function render(){
  '<div class="glass work"><h2>Общий остаток и внешнее хранение</h2><div class="garage-scroll"><table class="garage-table"><thead><tr><th>Материал</th><th>Гараж + бусы</th><th>Fremdlager</th><th>Всего нашего</th></tr></thead><tbody>'+data.items.map(i=>'<tr><td>'+esc(i.name)+'</td><td>'+total(i.id)+' '+esc(i.unit)+'</td><td>'+external(i.id)+' '+esc(i.unit)+'</td><td>'+(total(i.id)+external(i.id))+' '+esc(i.unit)+'</td></tr>').join("")+'</tbody></table></div></div>'+
  '<div class="glass work"><h2>Расположение по бусам</h2><div class="garage-scroll"><table class="garage-table"><thead><tr><th>Место</th>'+data.items.map(i=>'<th>'+esc(i.name)+'</th>').join("")+'</tr></thead><tbody>'+locations.map(l=>'<tr><td>'+esc(l.name)+'</td>'+data.items.map(i=>'<td>'+(data.balances[key(i.id,l.id)]||0)+'</td>').join("")+'</tr>').join("")+'</tbody></table></div></div>'+
  '<div class="glass work"><h2>Операция с материалами</h2><form id="garageForm" class="formstack"><label>Действие<select name="type"><option value="transfer">Перемещение / передача</option><option value="consume">Фактически установлено на объекте</option><option value="receive">Поступление на склад</option></select></label><label>Материал<select name="item">'+itemOptions+'</select></label><label>Откуда<select name="from">'+options+'</select></label><label>Куда (для перемещения/поступления)<select name="to">'+options+'</select></label><label>Количество (целые единицы)<input name="qty" type="number" min="1" max="1000000" step="1" required></label><label>Объект (обязательно для расхода)<input name="project" maxlength="120" placeholder="Название демо-объекта"></label><button class="btn primary" type="submit" '+(locked?"disabled":"")+'>Подтвердить операцию</button></form><p class="small">Выдача в бус или подрядчику не считается расходом. Расход фиксируется отдельно по фактической установке.</p></div>'+
+ '<div class="glass work"><h2>Резервная копия Garage</h2><p class="small">Склад хранится отдельно от проектов и НЕ включён в их экспорт. Сохраните оба файла. Импорт полностью заменяет складские демоданные.</p><button class="btn" type="button" id="garageExport">↓ Экспорт склада</button><form id="garageImport" class="formstack"><label>Вставьте JSON резервной копии Garage<textarea name="backup" maxlength="1500000" rows="4" required></textarea></label><button class="btn" type="submit">Проверить и восстановить</button></form></div>'+
  '<div class="glass work"><h2>Журнал операций</h2>'+(!data.movements.length?'<p>Пока нет операций.</p>':data.movements.slice(-15).reverse().map(m=>'<div class="garage-entry"><b>'+esc(m.type==="transfer"?"Перемещение":m.type==="receive"?"Поступление":"Монтаж")+'</b> · '+esc(data.items.find(i=>i.id===m.item)?.name||m.item)+' · '+m.qty+' · '+esc(m.from||"поставка")+' → '+esc(m.to||"объект")+'<div class="small muted">'+esc(m.time.slice(0,16).replace("T"," "))+(data.usage.find(u=>u.movementId===m.id)?' · '+esc(data.usage.find(u=>u.movementId===m.id).project):'')+'</div></div>').join(""))+'</div></div>';
 }
+document.addEventListener("click",e=>{if(e.target.closest("#garageExport")){try{exportBackup();}catch(err){alert("Garage: "+err.message);}}});
 document.addEventListener("submit",e=>{
+ if(e.target.id==="garageImport"){
+  e.preventDefault();
+  try{
+   const raw=String(new FormData(e.target).get("backup")||"");
+   const info=importBackup(raw,false);
+   if(window.confirm("Заменить все данные склада? Позиций: "+info.items+", операций: "+info.movements+". Сначала сохраните текущую копию склада.")){importBackup(raw,true);window.NVTSK_GARAGE_REFRESH?.();}
+  }catch(err){alert("Garage: "+err.message);}
+  return;
+ }
+
  if(e.target.id!=="garageForm")return;
  e.preventDefault();
  const f=new FormData(e.target);
  try{transact(String(f.get("type")),String(f.get("item")),String(f.get("from")),String(f.get("to")),Number(f.get("qty")),String(f.get("project")||""));window.NVTSK_GARAGE_REFRESH?.();}
  catch(err){alert("Garage: "+err.message);}
 });
-window.NVTSK_GARAGE={render,validate,transact};
+window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup};
 })();
