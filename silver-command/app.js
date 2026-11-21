@@ -38,9 +38,10 @@ function normalize(raw) {
  return {...fresh(),...raw,stages,posts,recoveryWarnings:warnings,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
 }
 let state,storageError="";
+let recoveryLock=false;
 try {const saved=localStorage.getItem(KEY);state=saved?normalize(JSON.parse(saved)):fresh();}
 catch (err) {
- state=fresh();storageError="Сохранённые данные повреждены или недоступны. Исходная запись не перезаписана; экспортируйте её перед созданием новых данных.";
+ state=fresh();recoveryLock=true;storageError="Сохранённые данные повреждены или недоступны. Исходная запись не перезаписана; экспортируйте её перед созданием новых данных.";
  console.warn("NVTSK storage recovery:",err);
 }
 if(state.recoveryWarnings?.length)storageError="При загрузке отклонены некорректные записи: "+state.recoveryWarnings.join("; ")+". Перед продолжением сохраните исходную копию.";
@@ -50,6 +51,7 @@ let screen = "dashboard";
 let selected = "singen";
 let demoActor = "me"; // local stage simulation only, never authentication
 const save = () => {try{
+ if(recoveryLock){storageError="Запись заблокирована: сначала экспортируйте повреждённые данные или восстановите корректную копию.";return false;}
  if(storageError && !sessionStorage.getItem("nvtsk04_original_saved")){
    const original=localStorage.getItem(KEY);
    if(original!==null)sessionStorage.setItem("nvtsk04_original_saved",original);
@@ -167,7 +169,7 @@ function chat() {
 }
 function profile() {
  return '<div class="stack">'+panel('<div class="row"><div class="avatar big">'+encode(state.name[0])+'</div><div><h2>'+encode(state.name)+'</h2><p>Ваше имя, без выбора роли при регистрации</p></div></div><div style="margin-top:14px">'+button("edit-name","✎ Изменить имя")+'</div>')+
- '<div style="margin:12px 0">'+button("export","↓ Экспорт демоданных")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
+ '<div style="margin:12px 0" class="row">'+button("export","↓ Экспорт демоданных")+button("import","↑ Импорт копии")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
  panel('<h2>Команда и MentorGate</h2><p>Здесь будут навыки, Merit, финансовая история, капитан и администраторы бригад, наставничество и личные проекты.</p><div class="tile">'+state.crew.map(encode).join(" • ")+'</div>')+'</div>';
 }
 function render() {
@@ -202,6 +204,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="projects")go("projects");
  if(b.dataset.act==="new")create();
  if(b.dataset.act==="split")split(find(b.dataset.id));
+ if(b.dataset.act==="import"){modal('<h2>Импорт локальной резервной копии</h2><p class="small">Только демоданные. Существующие данные будут заменены после проверки и подтверждения. Не вставляйте реальные адреса клиентов, документы или персональные данные.</p><form id="importForm" class="formstack"><label>JSON резервной копии<textarea name="backup" rows="8" maxlength="1500000" required placeholder=\'{"exportedAt":"...","data":{...}}\'></textarea></label><button class="btn primary" type="submit">Проверить и восстановить</button></form>');return;}
  if(b.dataset.act==="export-raw"){try{const raw=sessionStorage.getItem("nvtsk04_original_saved")??localStorage.getItem(KEY);if(raw===null)throw Error("Нет исходной записи");const blob=new Blob([raw],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-original-recovery.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){notify("Не удалось экспортировать: "+err.message)}return;}
  if(b.dataset.act==="export"){const payload=JSON.stringify({exportedAt:new Date().toISOString(),data:state},null,2);const blob=new Blob([payload],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-silver-demo-backup.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
  if(b.dataset.act==="edit-name")modal('<h2>Ваше имя</h2><form id="nameForm"><label>Ваше имя<input name="name" value="'+encode(state.name)+'" required></label><button class="btn primary" type="submit">Сохранить</button></form>');
@@ -223,6 +226,22 @@ document.addEventListener("change",e=>{if(e.target?.id==="demoActor"){demoActor=
 document.addEventListener("submit",e=>{
  const f=e.target;if(!(f instanceof HTMLFormElement))return;e.preventDefault();
  const data=Object.fromEntries(new FormData(f));
+ if(f.id==="importForm"){
+  try{
+   const input=String(data.backup||"");if(input.length>1500000)throw Error("Размер копии превышает 1,5 МБ");
+   const parsed=JSON.parse(input),raw=parsed&&typeof parsed==="object"&&"data" in parsed?parsed.data:parsed;
+   if(!raw||typeof raw!=="object"||Array.isArray(raw)||raw.schemaVersion!==2)throw Error("Неподдерживаемая версия копии");
+   if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.audit))throw Error("В копии отсутствуют необходимые разделы");
+   const restored=normalize(raw);
+   if(restored.recoveryWarnings.length)throw Error("Обнаружены повреждённые записи: "+restored.recoveryWarnings.join("; "));
+   const message="Проверка пройдена. Лотов: "+restored.lots.length+", фотоэтапов: "+restored.stages.length+", записей: "+restored.posts.length+". Заменить текущие локальные демоданные? Сначала экспортируйте старую копию.";
+   if(!window.confirm(message))return;
+   const serialized=JSON.stringify(restored);localStorage.setItem(KEY,serialized);
+   state=restored;recoveryLock=false;storageError="";demoActor="me";selected=state.lots[0]?.id||"";
+   log("import",null,"Local demo backup restored");save();close();go("dashboard");
+  }catch(err){notify("Импорт отклонён: "+err.message)}
+  return;
+ }
  if(f.id==="newForm"){
  const title=String(data.title||"").trim().slice(0,120),city=String(data.city||"").trim().slice(0,100),price=Number(data.price);
  if(!title||!city||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, город и сумму.");return;}
