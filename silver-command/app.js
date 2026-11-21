@@ -55,6 +55,9 @@ const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOStrin
 let screen = "dashboard";
 let selected = "singen";
 let demoActor = "me"; // local stage simulation only, never authentication
+let projectPage = 0;
+const projectPages = ["Обзор","Этапы","Лента","Сублоты и исполнители"];
+function projectNav(){return '<div class="row project-pages" role="navigation" aria-label="Страницы проекта">'+projectPages.map((name,i)=>'<button type="button" class="btn sm '+(i===projectPage?"primary":"")+'" data-act="project-page" data-page="'+i+'">'+encode(name)+'</button>').join("")+'</div>';}
 const save = () => {try{
  if(recoveryLock){storageError="Запись заблокирована: сначала экспортируйте повреждённые данные или восстановите корректную копию.";return false;}
  if(storageError && !sessionStorage.getItem("nvtsk04_original_saved")){
@@ -181,9 +184,9 @@ function lotScreen() {
  const subs = state.lots.filter(x=>x.parent===l.id);
  let sublist = subs.length ? subs.map(x=>'<div class="listrow"><span>'+encode(x.title)+'</span>'+button("lot","Открыть",x.id)+'</div>').join("") : '<p>Сублотов пока нет.</p>';
  let bidlist = (l.bids||[]).map(b=>'<div class="listrow"><span>'+encode(b.team)+'</span><b>'+money(b.amount)+' €</b></div>').join("");
- return '<div class="stack">'+panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div>'+pulseView(l)+'<p class="small">Материалы Garage (локальный деморасход): '+money(garageCost(l.id))+' €</p><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
- stagePanel(l)+socialPanel(l)+'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фотоэтапы с описанием до/после, номером страницы PDF и независимой демоприёмкой доступны выше. Файлы фотографий и PDF пока не загружаются. Stringplan, Erdung и реальные подписи требуют отдельной реализации.</p>') +
- panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div></div>';
+ return '<div class="stack">'+projectNav()+(projectPage===0?panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div>'+pulseView(l)+'<p class="small">Материалы Garage (локальный деморасход): '+money(garageCost(l.id))+' €</p><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
+  : "")+(projectPage===1?stagePanel(l):"")+(projectPage===2?socialPanel(l):"")+(projectPage===3?'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фотоэтапы с описанием до/после, номером страницы PDF и независимой демоприёмкой доступны выше. Файлы фотографий и PDF пока не загружаются. Stringplan, Erdung и реальные подписи требуют отдельной реализации.</p>') +
+ panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div>':"")+'</div>';
 }
 function chat() {
  return panel('<h2>Коммуникация</h2><p>Ленты объектов, сообщения и комментарии входят в архитектуру. Для настоящего межпользовательского чата нужны авторизация и сервер, поэтому здесь пока только концептуальный экран.</p><div class="tile">Личные сообщения • Чаты объектов • Социальная лента • Уведомления</div>');
@@ -202,7 +205,11 @@ function render() {
  $("#app").innerHTML=view;
 }
 window.NVTSK_GARAGE_REFRESH=()=>{if(screen==="garage")render()};
-function go(s){screen=s;render();window.scrollTo({top:0,behavior:"smooth"})}
+function go(s){if(s==="lot" && screen!=="lot")projectPage=0;screen=s;render();window.scrollTo(0,0)}
+function setProjectPage(n){if(screen!=="lot"||!Number.isInteger(n)||n<0||n>=projectPages.length)return;projectPage=n;render();window.scrollTo(0,0)}
+let touchStart=null;
+document.addEventListener("touchstart",e=>{if(screen!=="lot"||e.touches.length!==1||e.target.closest("input,textarea,select,[contenteditable],.project-pages")){touchStart=null;return;}const t=e.touches[0];touchStart={x:t.clientX,y:t.clientY};},{passive:true});
+document.addEventListener("touchend",e=>{if(!touchStart||screen!=="lot"||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.abs(dx)<75||Math.abs(dx)<Math.abs(dy)*1.7)return;setProjectPage(projectPage+(dx>0?1:-1));},{passive:true});
 function modal(html){$("#dialog").innerHTML=html;$("#dialogBackdrop").hidden=false}
 function close(){$("#dialogBackdrop").hidden=true}
 function create() {
@@ -222,7 +229,8 @@ document.addEventListener("click",e=>{
  const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();
  if(b.dataset.act.startsWith("post-")){socialAction(b.dataset.act,b.dataset.id);return;}
  if(b.dataset.act.startsWith("stage-")){stageAction(b.dataset.act,b.dataset.id);return;}
- if(b.dataset.act==="lot"){selected=b.dataset.id;go("lot");}
+ if(b.dataset.act==="lot"){selected=b.dataset.id;projectPage=0;go("lot");}
+ if(b.dataset.act==="project-page"){setProjectPage(Number(b.dataset.page));return;}
  if(b.dataset.act==="projects")go("projects");
  if(b.dataset.act==="new")create();
  if(b.dataset.act==="split")split(find(b.dataset.id));
