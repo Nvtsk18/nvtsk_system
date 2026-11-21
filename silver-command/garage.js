@@ -9,8 +9,8 @@ const key=(item,loc)=>item+"@"+loc;
 const positive=n=>typeof n==="number"&&Number.isSafeInteger(n)&&n>=0&&n<=1000000;
 function validate(s){
  if(!s||s.version!==1||!Array.isArray(s.items)||!Array.isArray(s.movements)||!Array.isArray(s.usage)||!s.balances||typeof s.balances!=="object"||Array.isArray(s.balances))throw Error("invalid garage record");
- if(s.items.length>100||s.movements.length>2000||s.usage.length>2000||new Set(s.items.map(x=>x.id)).size!==s.items.length)throw Error("invalid garage limits");
- for(const i of s.items)if(!i||typeof i.id!=="string"||!i.id.trim()||i.id.length>60||typeof i.name!=="string"||!i.name.trim()||i.name.length>120||typeof i.unit!=="string"||!i.unit.trim()||!Number.isFinite(i.unitCost)||i.unitCost<0)throw Error("invalid item");
+ if(s.items.length>100||s.movements.length>2000||s.usage.length>2000||s.items.some(x=>!x||typeof x.id!=="string")||new Set(s.items.map(x=>x.id)).size!==s.items.length)throw Error("invalid garage limits");
+ for(const i of s.items)if(!i||typeof i.id!=="string"||!i.id.trim()||i.id.length>60||i.id.includes("@")||typeof i.name!=="string"||!i.name.trim()||i.name.length>120||typeof i.unit!=="string"||!i.unit.trim()||!Number.isFinite(i.unitCost)||i.unitCost<0)throw Error("invalid item");
  for(const [k,n] of Object.entries(s.balances)){const [item,loc,...extra]=k.split("@");if(extra.length||!s.items.some(i=>i.id===item)||!locations.some(l=>l.id===loc)||!positive(n))throw Error("invalid balance");}
  const ids=new Set(), consumed=new Set();
  for(const m of s.movements){
