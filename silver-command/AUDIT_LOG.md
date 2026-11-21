@@ -393,3 +393,16 @@ Changes: local demo receipt and transfer operations now require the selected dem
 Verification: JS parsed with V8 new Function before commit. Source assertions confirm receipt/transfer guard and consume guard coexist. Three actor/conflict cases by static inspection: assigned DC installer may consume but not transfer; unrelated outsider cannot receive; demo-client can receive/transfer but cannot consume without assignment. No actual DOM, browser storage/reload, iPhone Safari, or import test in this pass. The source field on receipt remains a placeholder, not a real supplier identifier.
 
 Next: execute browser DOM + import/reload integration harness, paired project/Garage backup, mobile Field Mode, and real warehouse-role model. No backend, payments or verified identities.
+
+
+## Implementation pass #23 · 2026-11-21 ~20:00 CET · Garage malformed-item recovery
+
+**Scope:** only `silver-command/garage.js` and this audit; root 0.3 untouched. Code commit: `ea65079e838a55e346e5585222752aa43e008dcd`.
+
+**Critical changes:** (1) reject null/missing item IDs before the duplicate-ID Set/map step, avoiding a TypeError during restore; (2) reject item IDs containing `@`, which is reserved for the `item@location` inventory balance key and could otherwise create ambiguous keys. Existing valid sample data remains compatible. These guards apply to saved-state initialization, import preview, and transactions through `validate`.
+
+**Executable V8 checks: 11/11 PASS:** JS syntax, valid opening stock, null item, missing ID, reserved separator, duplicate item, forged balance, customer transfer, outsider transfer refusal, assigned DC consumption, and customer consumption refusal. Tests used a mocked localStorage and document; **not a real DOM/browser/iPhone Safari run**. Role switching remains a demo and cannot establish actual security.
+
+**Three roles/conflicts:** demo-client can transfer but not consume DC material; outsider cannot transfer; assigned DC installer can consume their assigned DC lot. These checks were executed in the V8 mock harness, not via actual UI clicks.
+
+**Remaining:** combined project/Garage backup, real browser import/reload and mobile Field Mode; current backup is split across two localStorage keys. No backend, authentication, genuine payments, or production ledger. Next pass should prioritise an executable browser harness and safe paired backup rather than more social/Merit functionality.
