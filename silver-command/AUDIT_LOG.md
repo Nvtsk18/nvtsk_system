@@ -431,3 +431,14 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Verification:** specification arithmetic reviewed: 1000-250=750, 250+800>1000; 1.2% of 250=3 and 2% of 250=5 are *illustrative only*, not live charges. No JS application code changed in this pass, therefore no new executable syntax, role, conflict, browser, iPhone, import/reload tests were run. Previously committed garage-actor.test.js still needs execution against checked-out sources. No claims of verified functionality.
 
 **Next:** prioritize a paired Case/Shard/Garage backup with rollback and migration, run actual JS tests against repo checkout, exercise three actors and three hostile restore/role scenarios in browser, then iPhone Field Mode. Founder +10 cadence and fee base/rate conflict require explicit product decision before implementation. No private records published.
+
+
+## Implementation pass #26 · 2026-11-21 22:00 CET · Correct deferred Merit contract
+
+**Scope:** silver-command/MERIT_FUTURE_SPEC.md and AUDIT_LOG.md only. Root 0.3 unchanged. Spec commit: `dd7b4314dfd49b3f9889e4177b6f167ebef623cb`.
+
+**Critical correction:** prior pass #25 incorrectly asserted that Shards reserve existing Case Merit and that Shard fee was 2%. The user's latest explicit instruction supersedes both: Case €1000 issues 1010 new Merit (including 10 founder Merit), Shard €250 issues 250 **additional new** Merit; Case fee €10 (1%), Shard creator fee €3 (1.2%); resulting issuance 1260 Merit, fees €13; 100% earmarked for backing, no 80/20 split. Updated the future specification and its example scenarios, retaining unresolved recipient/issuance-cap/cancellation/legal questions rather than guessing.
+
+**Verification:** arithmetic manually rechecked: 1000+10+250=1260; 1000×0.01=10; 250×0.012=3; 10+3=13. GitHub returned the spec commit SHA. **No application JS changed; no syntax, three-role execution, import/reload or browser/iPhone test was performed this pass.** The old #25 audit is intentionally retained as history, not as current requirements.
+
+**Critical open items for next run:** unified Case/Shard/Garage backup and rollback, browser integration tests, project-only horizontal swipe navigation and top-of-screen screen replacement. Existing MVP remains local demo with spoofable actors; no production-ready claim.
