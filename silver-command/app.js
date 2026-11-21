@@ -61,12 +61,25 @@ const save = () => {try{
 const notify = msg => {window.alert(msg)};
 
 const find = id => state.lots.find(l => l.id === id);
+const pulse = (lot, stages) => {
+ const relevant=stages.filter(s=>s.lotId===lot.id);
+ const accepted=relevant.filter(s=>s.status==="accepted").length;
+ const pending=relevant.filter(s=>s.status==="submitted").length;
+ const returned=relevant.filter(s=>s.status==="returned").length;
+ return {total:relevant.length,accepted,pending,returned,percent:relevant.length?Math.round(accepted/relevant.length*100):0};
+};
+const pulseView = l => {
+ const p=pulse(l,state.stages);
+ const label=p.total ? p.accepted+" из "+p.total+" этапов приняты" : "Этапы ещё не созданы";
+ const warning=p.returned ? " · "+p.returned+" на исправлении" : p.pending ? " · "+p.pending+" ожидают проверки" : "";
+ return '<div class="pulse" role="group" aria-label="Project Pulse"><div class="between"><span class="small">Project Pulse · '+encode(label+warning)+'</span><b>'+p.percent+'%</b></div><div class="pulse-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+p.percent+'" aria-label="Принятые этапы"><div class="pulse-fill" style="width:'+p.percent+'%"></div></div></div>';
+};
 const role = l => l.creator === "me" ? "Заказчик" : l.assignee === "me" || (l.members || []).includes("me") ? "Исполнитель" : (l.bids || []).some(b => b.mine) ? "Кандидат" : "Наблюдатель";
 const button = (act, label, id) => '<button class="btn sm" data-act="' + act + '" data-id="' + (id || "") + '">' + label + '</button>';
 const panel = content => '<section class="glass work">' + content + '</section>';
 const badge = text => '<span class="pill blue">' + encode(text) + '</span>';
 function item(l) {
-  return panel(badge(l.kind) + '<h3 style="font-size:19px;margin-top:12px">' + encode(l.title) + '</h3><p>' + encode(l.client) + '</p><div class="stat" style="margin:10px 0">' + money(l.price) + ' €</div><div class="small muted">' + role(l) + '</div><div style="margin-top:12px">' + button("lot","Открыть лот",l.id) + '</div>');
+  return panel(badge(l.kind) + '<h3 style="font-size:19px;margin-top:12px">' + encode(l.title) + '</h3><p>' + encode(l.client) + '</p><div class="stat" style="margin:10px 0">' + money(l.price) + ' €</div><div class="small muted">' + role(l) + '</div>'+pulseView(l)+'<div style="margin-top:12px">' + button("lot","Открыть лот",l.id) + '</div>');
 }
 function overview() {
   return '<div class="stack">' + (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong><p class="small">Исходные данные доступны для экспорта, если браузер разрешает чтение.</p>'+button("export-raw","↓ Сохранить исходную запись")):"") + '<section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
@@ -88,7 +101,7 @@ function stagePanel(l){
  if(!d)return panel('<h2>Фотоэтапы</h2><p>Модуль недоступен. Обновите страницу.</p>');
  const stages=state.stages.filter(s=>s.lotId===l.id);
  let content='<h2>Фотоэтапы · демонстрация</h2><p class="small">Переключение персонажа только для теста, не авторизация. Файлы не загружаются.</p><label>Персонаж для проверки <select id="demoActor"><option value="me"'+(demoActor==="me"?" selected":"")+'>Автор / я</option><option value="roman"'+(demoActor==="roman"?" selected":"")+'>Роман</option><option value="denis"'+(demoActor==="denis"?" selected":"")+'>Денис</option><option value="olena"'+(demoActor==="olena"?" selected":"")+'>Олена</option></select></label>';
- if(l.creator===demoActor || l.assignee===demoActor)content+=button("stage-new","＋ Новый этап",l.id);
+ if(l.assignee===demoActor && l.assignee!==l.creator)content+=button("stage-new","＋ Новый этап",l.id);
  for(const s of stages){
   content+='<div class="tile"><b>'+encode(s.title)+'</b> · '+badge(s.status)+'<p class="small">План рев. '+s.revision+' · '+s.evidence.length+' записей</p>';
   for(const ev of s.evidence)content+='<div class="small">'+encode(ev.type)+': '+encode(ev.note)+(ev.pdfPage?' · PDF стр. '+ev.pdfPage:'')+'</div>';
@@ -102,8 +115,8 @@ function stageAction(act,id){
  const d=window.NVTSK_STAGE;if(!d)return;
  const stage=state.stages.find(s=>s.id===id);
  if(act==="stage-new"){
-  const l=find(id);if(!l||!(l.creator===demoActor||l.assignee===demoActor))return notify("Нет доступа");
-  const ownerId=l.assignee||demoActor;if(ownerId===l.creator)return notify("Сначала назначьте независимого исполнителя.");
+  const l=find(id);if(!l||l.assignee!==demoActor||l.assignee===l.creator)return notify("Создать этап может только назначенный независимый исполнитель.");
+  const ownerId=l.assignee;if(ownerId===l.creator)return notify("Сначала назначьте независимого исполнителя.");
   const title=prompt("Название этапа (демо):","Монтаж DC");if(!title?.trim())return;
   state.stages.push(d.createStage({id:uuid(),lotId:id,title,ownerId,planRevision:1}));
   log("stage_created",id,title);save();render();return;
@@ -160,8 +173,8 @@ function lotScreen() {
  const subs = state.lots.filter(x=>x.parent===l.id);
  let sublist = subs.length ? subs.map(x=>'<div class="listrow"><span>'+encode(x.title)+'</span>'+button("lot","Открыть",x.id)+'</div>').join("") : '<p>Сублотов пока нет.</p>';
  let bidlist = (l.bids||[]).map(b=>'<div class="listrow"><span>'+encode(b.team)+'</span><b>'+money(b.amount)+' €</b></div>').join("");
- return '<div class="stack">'+panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
- stagePanel(l)+socialPanel(l)+'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фото до/после, PDF, Stringplan, Erdung и подтверждение заказчиком станут следующими подключаемыми модулями. Фото само по себе не означает принятия работ.</p>') +
+ return '<div class="stack">'+panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div>'+pulseView(l)+'<div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') +
+ stagePanel(l)+socialPanel(l)+'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фотоэтапы с описанием до/после, номером страницы PDF и независимой демоприёмкой доступны выше. Файлы фотографий и PDF пока не загружаются. Stringplan, Erdung и реальные подписи требуют отдельной реализации.</p>') +
  panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div></div>';
 }
 function chat() {
@@ -217,7 +230,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="bid"){
   const l=find(selected),amount=Number($("#bid").value);
   if(role(l)==="Заказчик"){alert("Нельзя подавать ставку на свой лот");return;}
-  if(!(amount>0)){alert("Введите корректную сумму");return;}
+  if(!Number.isFinite(amount)||amount<=0||amount>100000000){alert("Введите корректную сумму");return;}
   if(l.assignee==="me"){notify("Назначенный исполнитель не может одновременно подавать новую ставку.");return;}
   l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);save();render();
  }
