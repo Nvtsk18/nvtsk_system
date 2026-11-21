@@ -232,3 +232,16 @@ Only count a review toward the user's requested ≥20 when it was a **separate, 
 **Verification:** actual fetched module compiled with JavaScript `new Function` in the tool V8 runtime. **8/8 executable domain assertions PASS**: fresh stage, blank owner, duplicate evidence, invalid PDF page, self-review, future revision, independent review, accepted-stage immutability. This is not a DOM, localStorage reload, Node CLI or iPhone Safari test. No private customer data was used.
 
 **Open issues:** browser UI still lacks executable import/reload regression tests. History entries are mutable and not cryptographically authenticated; current check validates types only. `validStage` is not a full strict schema for every nested field, and localStorage actor switching is spoofable. Need to verify all existing stage tests against the stricter validator in Node; no claim that the full suite passed. Before real deployments, implement server-side roles, verified qualifications and protected evidence storage. The primary target remains a stable browser MVP, with social extensions deferred.
+
+
+## Implementation pass #10 · 2026-11-21 (MVP-first follow-up)
+
+**Scope:** `silver-command/stage-domain.js`, `stage-domain.test.js`, this audit only. Root 0.3 unchanged. Commits: `0648ebc1`, `4eb8d164`, `5ad2a8d5` (test repair).
+
+**Three priorities:** (1) fail closed when restored `submitted` or `accepted` stages lack current-revision before/after evidence; (2) normalize duplicate evidence ID comparison with trim so whitespace cannot bypass it; (3) prohibit an unrelated actor from revising a stage plan in the pure local demo domain. Previously the revision helper accepted any actor. The revision helper now permits the stage owner; future product work should explicitly model separate authorized planning specialists and approval of revisions instead of relying on client-supplied actor strings.
+
+**Three roles / conflict scenarios:** customer attempts to restore accepted status with stale/missing evidence (rejected); DC installer attempts duplicate photo reference IDs with whitespace (rejected); outsider or intermediary tries to increment plan revision without being stage owner (rejected). Positive cases include installer submission, independent customer review, and owner plan revision. The local UI actor switch remains spoofable; this is not secure access control.
+
+**Verification:** fetched committed domain and test sources back from GitHub. V8 `new Function` syntax parse passed for both after repairing pre-existing malformed test closures. Executed the committed test script in a V8 harness with Node assert-compatible shims: **20/20 tests PASS**. This is an executable domain test, **not** the Node CLI test runner, actual DOM test, localStorage reload, iPhone Safari or end-to-end integration. No private data used.
+
+**Remaining:** persisted state can still be manually tampered with; no backend ACL, real media evidence, qualified AC sign-off, authenticated revision authority, guaranteed recovery, GDPR compliance, or real payments. Critical next milestone: executable browser persistence/import/reload tests and mobile navigation validation. Defer new social features until MVP workflow passes.
