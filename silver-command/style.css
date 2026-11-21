@@ -12,3 +12,4 @@
 .pulse-track{height:8px;margin-top:8px;border-radius:8px;background:#455561;overflow:hidden}
 .pulse-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#7d9cb0,#b6d2dd);transition:width .2s ease}
 @media(max-width:740px){.pulse{padding:12px}.pulse .small{font-size:12px}}
+\n.garage-scroll{overflow-x:auto}.garage-table{width:100%;border-collapse:collapse;min-width:420px}.garage-table th,.garage-table td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}.garage-table th{color:var(--soft);font-size:11px}.garage-entry{padding:10px 0;border-bottom:1px solid var(--line)}\n
