@@ -472,3 +472,123 @@ body:has(.command-center) main{margin:0;padding:0;min-height:100vh}
  .command-dock{position:fixed;left:0;right:0;bottom:0;z-index:70;width:100%;min-height:calc(77px + env(safe-area-inset-bottom));margin:0;padding:7px 5px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #4d9fc8;background:linear-gradient(180deg,#14273ef7,#071423fb);box-shadow:0 -7px 28px #0009;overflow-x:clip}
  .command-dock button{min-height:60px;max-width:100%;min-width:0}
 }
+
+/* NVTSK v40 — cinematic soft command: photographic office, tactile side actions */
+:root{--v40-bg:#0c151e;--v40-card:#182832;--v40-line:#66828d;--v40-mint:#b9eee4;--v40-text:#f1f7f7}
+body:has(.command-center){background:var(--v40-bg)}
+.command-center{background:#101b25;color:var(--v40-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}
+.command-top{height:82px;border-bottom:1px solid #647d88a8;background:linear-gradient(118deg,#121d27,#1d2b34 48%,#101b26);box-shadow:0 12px 32px #02091185}
+.command-brand{gap:14px}.command-brand-logo{width:51px;height:51px;object-fit:contain;filter:drop-shadow(0 5px 12px #000a)}
+.command-brand strong{font-size:clamp(16px,1.65vw,26px);letter-spacing:.055em;font-weight:750;color:#f8fcfc}
+.command-brand small{color:#9bb4bd;font-size:10px;letter-spacing:.18em}
+.command-status span{background:#23343c9e;border:1px solid #77939b55;color:#d8ebe7;padding:9px 14px}
+.command-status span:first-child{color:#a8e6ce}
+.command-topbuttons button{color:#d8e5e9;border-color:#748e9955;background:#293740;border-radius:13px;font-size:19px}
+.command-stage{background:#0d1720;position:relative;isolation:isolate;overflow:hidden}
+.command-stage::before{content:"";position:absolute;inset:0 0 auto;height:760px;z-index:-1;pointer-events:none;background:linear-gradient(180deg,#0b171e10 0%,#0815212e 30%,#0c1721ac 69%,#0d1720 98%),linear-gradient(90deg,#07111bc9 0%,#0a15221f 75%),url("art/office-command-v40.png") center 45%/cover no-repeat;opacity:1}
+.command-stage-head{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 205px;grid-template-rows:auto auto;min-height:365px;align-items:end;gap:16px;padding:8px 0 18px}
+.command-title{grid-column:1;grid-row:1/3;align-self:center;justify-self:start;max-width:min(610px,100%);text-align:left;padding:28px 30px;background:linear-gradient(103deg,#0e1b28e8,#142633bd 77%,#1124306b);border:1px solid #b7d8d841;border-radius:24px;backdrop-filter:blur(7px);box-shadow:0 20px 55px #02080c73,inset 0 1px #ffffff17}
+.command-eyebrow{display:block;margin-bottom:12px;font-size:11px;letter-spacing:.21em;font-weight:750;color:#a5e8d6}
+.command-title h1{font-size:clamp(32px,3.15vw,51px);letter-spacing:.02em;line-height:1.05;color:#fff;text-shadow:0 2px 15px #000a}
+.command-title p{margin:15px 0 0;font-size:clamp(14px,1.25vw,18px);letter-spacing:.015em;color:#d3e4e8}
+.command-hero-actions{margin-top:25px;display:flex;flex-wrap:wrap;gap:9px}
+.command-hero-actions button{min-height:46px;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:10px 15px;border-radius:12px;border:1px solid #c1e8de75;color:#112329;background:linear-gradient(145deg,#c8eee6,#85c9be);font-weight:750;font-size:13px;box-shadow:0 7px 22px #0005}
+.command-hero-actions button:nth-child(2){color:#e0f7f3;background:#233c47de;border-color:#7eb8b6}
+.command-hero-actions .ui-icon{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8}
+.command-health,.command-clock{max-width:none;min-width:0;border-radius:16px;padding:14px 16px;border:1px solid #a2d9d263;background:#1b303cdb;box-shadow:0 12px 28px #0007,inset 0 1px #ffffff1b;backdrop-filter:blur(10px)}
+.command-health{grid-column:2;grid-row:2;align-self:end}.command-health small{font-size:9px;letter-spacing:.1em;color:#b0dfd2}.command-health strong{font-size:34px;color:#fff}.command-health span{font-size:11px;color:#c2dce0}
+.command-trend{width:100%;height:33px;overflow:visible}.command-trend path{fill:none;stroke:#8de8cd;stroke-width:2.5;filter:drop-shadow(0 0 4px #3de8bd)}
+.command-clock{grid-column:2;grid-row:1;justify-self:stretch;align-self:start;gap:5px}.command-clock strong{font-size:15px;color:#f0f9fa}.command-clock span{font-size:10px;color:#c6d6dc}
+.command-metrics{position:relative;z-index:2;gap:12px;margin:12px 0 23px;max-width:none}
+.command-metric{position:relative;min-height:108px;border:1px solid #a8c8cf52;border-radius:17px;gap:6px;background:linear-gradient(150deg,#243844ed,#101c27ee);box-shadow:0 9px 26px #0005,inset 0 1px #ffffff31;backdrop-filter:blur(12px);color:#edf6f7}
+.command-metric-glyph{color:#9bdfd3}.command-metric-glyph .ui-icon{width:27px;height:27px}
+.command-metric>span:nth-child(2){color:#c9d8da;font-size:12px;font-weight:600}
+.command-metric strong{font-size:clamp(21px,1.7vw,27px);font-weight:750}
+.command-metric:hover{background:#314956ee;border-color:#98e0cf;transform:translateY(-3px)}
+.command-panels{position:relative;z-index:2;align-items:stretch;gap:14px}
+.command-panel{padding:17px;border-radius:19px;border:1px solid #97b3b64c;background:linear-gradient(150deg,#253640eb,#14232eed);box-shadow:0 14px 32px #0005,inset 0 1px #ffffff1a;backdrop-filter:blur(18px)}
+.command-panel h2{min-height:37px;font-size:15px;letter-spacing:.01em;font-weight:750;gap:9px;border-bottom:1px solid #d3eeef23}
+.command-panel h2 .ui-icon{width:20px;height:20px;stroke:#a1e4d7;stroke-width:1.7;fill:none}
+.command-panel h2 button{color:#b3e4dc;font-size:23px;min-height:28px;min-width:28px}
+.command-panel-banner{display:block;width:100%;height:78px;object-fit:cover;border-radius:11px;margin:0 0 11px;opacity:.86;border:1px solid #b7cdd023}
+.command-case-row{min-height:72px;gap:9px;padding:8px 0;font-size:12px}
+.command-case-photo{height:53px;width:66px;object-fit:cover;border-radius:10px;border:1px solid #91c5c257;flex:none}
+.command-case-id{font-size:10px;padding:5px 6px;color:#cee8e6;background:#2b4851}
+.command-case-name{min-width:65px;font-size:12px;font-weight:700}
+.command-info-row{min-height:39px;color:#dcecef;font-size:12px}
+.command-dot{filter:drop-shadow(0 0 3px currentColor)}
+.command-dock{border-left:1px solid #7da2aa65!important;background:linear-gradient(180deg,#192933,#0c1720 90%)!important;box-shadow:-8px 0 26px #050b1280!important}
+.command-dock button{border-radius:18px;border:1px solid #95b7b66b;background:linear-gradient(155deg,#293f4a,#152834 78%);box-shadow:0 10px 20px #0005,inset 0 1px #e5ffff31;color:#f4fcfc}
+.command-dock button.is-primary{border-color:#e0c59b9f;background:linear-gradient(160deg,#47524f,#27373b)}
+.command-dock button>span{color:#a9e8dd}.command-dock button.is-primary>span{color:#efcc9c}
+.command-dock button>span .ui-icon{width:30px;height:30px}
+.command-dock strong{font-size:clamp(15px,1.25vw,19px);font-weight:750}
+.command-dock small{color:#b6cbd0}
+.command-dock button:hover{transform:translateY(-2px);background:#3e545d;box-shadow:0 14px 28px #0008,inset 0 1px #fff4}
+.command-mobile-tiles{display:none}
+@media(min-width:1320px){
+ .command-stage-head{grid-template-columns:minmax(0,1fr) 220px;grid-template-rows:auto auto}
+ .command-title{grid-column:1;grid-row:1/3}.command-health{grid-column:2;grid-row:2}.command-clock{grid-column:2;grid-row:1}
+ .command-metrics{grid-template-columns:repeat(7,minmax(0,1fr))}
+}
+@media(min-width:721px) and (max-width:1319px){
+ .command-stage-head{grid-template-columns:minmax(0,1fr) 190px;grid-template-rows:auto auto}
+ .command-title{grid-column:1;grid-row:1/3}.command-health{grid-column:2;grid-row:2}.command-clock{grid-column:2;grid-row:1}
+ .command-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(min-width:721px) and (max-width:960px){
+ .command-stage-head{grid-template-columns:minmax(0,1fr);gap:6px;min-height:355px}
+ .command-title{grid-column:1;grid-row:1/3;align-self:center}
+ .command-clock{grid-column:1;grid-row:1;justify-self:end;max-width:190px}
+ .command-health{display:none}
+ .command-title{max-width:100%;margin-top:70px;padding:21px 19px}
+ .command-stage::before{height:710px;background-position:center,center,62% top}
+}
+@media(max-width:720px){
+ .command-top{height:66px;gap:5px;padding:7px 12px}
+ .command-brand{gap:7px}.command-brand-logo{height:38px;width:38px}
+ .command-brand strong{font-size:15px}.command-brand small{font-size:8px}
+ .command-stage{padding:0 12px 24px;overflow:visible}
+ .command-stage::before{height:580px;background:linear-gradient(180deg,#09192308,#0917233d 30%,#0d1720dd 82%,#0d1720 100%),linear-gradient(90deg,#07111b9c,#081e2f1a),url("art/office-command-v40.png") 62% top/auto 570px no-repeat}
+ .command-stage-head{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:9px;min-height:340px;padding:87px 0 10px;align-items:end}
+ .command-title{grid-column:1/-1;grid-row:1;align-self:end;width:100%;padding:19px 16px;margin:0;border-radius:18px}
+ .command-eyebrow{font-size:9px;margin-bottom:9px}.command-title h1{font-size:31px}.command-title p{font-size:13px;margin-top:9px;letter-spacing:0}
+ .command-hero-actions{margin-top:15px;gap:7px}
+ .command-hero-actions button{min-height:40px;padding:8px 10px;font-size:11px}
+ .command-hero-actions .ui-icon{width:16px;height:16px}
+ .command-health,.command-clock{grid-row:2;display:grid;align-self:stretch;gap:3px;margin:0;padding:10px 12px;background:#1b303cde;border-radius:12px}
+ .command-health{grid-column:1}.command-clock{grid-column:2;justify-self:stretch}
+ .command-health strong{font-size:19px}.command-health small{font-size:8px}.command-health span,.command-clock span{font-size:9px}
+ .command-trend{display:none}.command-clock strong{font-size:13px}
+ .command-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px;margin-bottom:18px}
+ .command-metric{min-height:86px;padding:10px;border-radius:14px}
+ .command-metric:nth-child(n+5){display:none}
+ .command-metric strong{font-size:23px}.command-metric-glyph .ui-icon{width:24px;height:24px}
+ .command-mobile-tiles{position:relative;z-index:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:16px}
+ .command-mobile-tiles button{display:flex;flex-direction:column;min-width:0;padding:0 0 11px;border-radius:16px;text-align:left;overflow:hidden;border:1px solid #8eb6ba5b;background:linear-gradient(#253943,#15262f);box-shadow:0 9px 19px #0006;color:#eff9f8}
+ .command-mobile-tiles img{display:block;width:100%;height:100px;object-fit:cover;margin-bottom:9px;opacity:.87}
+ .command-mobile-tiles strong{font-size:13px;margin:0 11px 3px}.command-mobile-tiles small{font-size:10px;color:#b9d5d3;margin:0 11px}
+ .command-panel{padding:13px}.command-panel h2{font-size:14px}
+ .command-panel-banner{height:85px}.command-case-photo{width:61px;height:50px}
+ .command-case-row{gap:5px}.command-progress{display:none}.command-case-name{font-size:11px}
+ .command-dock{border-left:none!important;border-top:1px solid #a6cccc61;gap:4px;padding-top:9px}
+ .command-dock button{border-radius:12px;background:#243843;box-shadow:inset 0 1px #d5f9f43d}
+ .command-dock button>span .ui-icon{width:21px;height:21px}
+ .command-dock strong{font-size:10px}
+}
+@media(max-width:370px){
+ .command-title h1{font-size:26px}
+ .command-case-id{display:none}.command-case-photo{width:53px}
+ .command-metric strong{font-size:19px}
+}
+@media(prefers-reduced-motion:reduce){
+ .command-metric,.command-dock button{transition:none!important;transform:none!important}
+}
+/* Other workspace pages: retain application logic; soften surfaces to match Command. */
+body:not(:has(.command-center)){background:#0d1720;color:#e5f3f5}
+body:not(:has(.command-center)) main{background:radial-gradient(ellipse at 45% 0,#29414a77,transparent 65%),#0d1720}
+body:not(:has(.command-center)) .panel{border:1px solid #8bb0b34b;border-radius:17px;background:linear-gradient(145deg,#23343dec,#13212ceb);box-shadow:0 10px 24px #0005,inset 0 1px #ffffff1a}
+body:not(:has(.command-center)) #nav{background:linear-gradient(160deg,#18252f,#0c161e);border-right-color:#68828c52}
+body:not(:has(.command-center)) #nav button.active{background:#34565b;border-left:3px solid #b9e6d9}
+body:not(:has(.command-center)) .visualtile{border-color:#a0b7ba50;background:linear-gradient(150deg,#30424a,#1c2e36);border-radius:18px}
+body:not(:has(.command-center)) .visualtile img{border-radius:12px}
