@@ -42,7 +42,10 @@ with sync_playwright() as pw:
         # of a project map, on both desktop and mobile.
         expect(page.locator(".command-home-actions .command-home-action")).to_have_count(2)
         expect(page.locator(".command-home-map .casemap")).to_be_visible()
-        expect(page.locator(".command-home-map iframe")).to_have_attribute("title", "OpenStreetMap · регион Bodensee")
+        expect(page.locator(".command-home-map .casemap-schematic svg")).to_be_visible()
+        expect(page.locator(".command-home-map .mapcasepin")).to_have_count(4)
+        assert page.locator(".command-home-map iframe").count() == 0, "Map must not depend on an external iframe"
+        expect(page.locator(".command-home-map .casemapnote")).to_contain_text("схематическая")
         home = page.evaluate("""() => {
            const bounds=s=>document.querySelector(s).getBoundingClientRect().toJSON();
            return {open:bounds('.command-home-action.is-open'),
