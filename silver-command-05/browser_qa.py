@@ -36,6 +36,7 @@ with sync_playwright() as pw:
         def fits():
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), (width,page.url)
         expect(page.get_by_role("heading",name="Добро пожаловать",exact=False)).to_be_visible()
+        expect(page.locator(".edition")).to_contain_text("0.5")
         fits()
         def capture(screen):
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
@@ -93,6 +94,11 @@ with sync_playwright() as pw:
         # affect the remaining Chromium/WebKit test matrix.
         ctx.set_offline(True)
         page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        assert page.evaluate("""() => {
+            const record=JSON.parse(localStorage.getItem('nvtsk05_independent'));
+            return record.data.cases.some(c=>c.title==='QA Roof') &&
+                record.data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted');
+        }"""), "Offline reload lost persisted Case or accepted Shard"
         route("settings");act("sandbox")
         expect(page.get_by_text("Тестовая копия · изменения изолированы")).to_be_visible()
         route("projects");act("new-case")
