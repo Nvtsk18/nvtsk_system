@@ -289,7 +289,7 @@ $("#editor").onsubmit=async e=>{
  }catch(error){alert(error.message||"Ошибка вложения")}
  finally{submit.disabled=false}
 };
-const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты"],["garage","box","Склад"],["tasks","check","Задачи"],["social","team","Лента"],["settings","settings","Настройки"]];
+const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты / задачи"],["lager","box","Lager"],["social","team","Лента"],["settings","settings","Настройки"]];
 $("#nav").innerHTML=navigation.map(([route,sym,name])=>'<button data-route="'+route+'">'+icon(sym)+'<span>'+name+'</span></button>').join("");
 document.querySelector('.mode [data-route="dashboard"]').innerHTML=icon("screen")+" Command Mode";
 document.querySelector('.mode [data-route="field"]').innerHTML=icon("field")+" Field Mode";
