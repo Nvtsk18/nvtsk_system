@@ -33,5 +33,28 @@ for(let i=0;i<300;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const previ
 try{move('t'+i,seed%2?'issue':'return',seed%13+1)}catch{assert.equal(JSON.stringify(d),previous)}
 validate(d);const issued=d.moves.reduce((n,m)=>n+(m.type==='issue'?m.qty:m.type==='return'?-m.qty:0),0);
 assert.equal(d.garage[0].qty+issued,23);}
+
+// Independent three-role conflict regression (separate immutable scenario).
+let rolesState=validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Installer'}],tasks:[],shards:[]}));
+const roleAct=(name,p)=>{rolesState=apply(rolesState,name,p)};
+const deny=(name,p)=>{const before=JSON.stringify(rolesState);assert.throws(()=>roleAct(name,p));assert.equal(JSON.stringify(rolesState),before,'denied '+name+' must not mutate state')};
+roleAct('crew',{id:'keeper',title:'Storekeeper',role:'Кладовщик'});
+roleAct('case',{id:'rolecase',title:'Demo roof',city:'Stockach',price:100});
+roleAct('shard',{id:'roleshard',caseId:'rolecase',title:'DC',kind:'DC',price:60,assignee:'member-0'});
+deny('shard',{id:'overbudget',caseId:'rolecase',title:'AC',kind:'AC',price:41,assignee:null});
+roleAct('material',{id:'roleitem',title:'Rail',qty:10});
+roleAct('actor',{id:'keeper'});
+deny('case',{id:'unauthorized',title:'No',city:'Demo',price:1});
+deny('accept',{shardId:'roleshard'});
+roleAct('move',{id:'keeperissue',type:'issue',qty:2,itemId:'roleitem',shardId:'roleshard'});
+roleAct('actor',{id:'member-0'});
+deny('move',{id:'installerissue',type:'issue',qty:1,itemId:'roleitem',shardId:'roleshard'});
+deny('accept',{shardId:'roleshard'});
+roleAct('submit',{shardId:'roleshard'});
+roleAct('actor',{id:'lead'});
+roleAct('accept',{shardId:'roleshard'});
+deny('move',{id:'closedkeeperissue',type:'issue',qty:1,itemId:'roleitem',shardId:'roleshard'});
+assert.equal(rolesState.garage[0].qty,8);
+validate(rolesState);
 assert.equal(base.cases.length,0);
-console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, seed=42');
+console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, three-role conflict matrix, seed=42');
