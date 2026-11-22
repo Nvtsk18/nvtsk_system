@@ -53,6 +53,13 @@ with sync_playwright() as pw:
         page.reload();route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         page.evaluate("navigator.serviceWorker.ready");page.wait_for_function("!!navigator.serviceWorker.controller")
         ctx.set_offline(True);page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        route("settings");act("sandbox")
+        expect(page.get_by_text("Тестовая копия · изменения изолированы")).to_be_visible()
+        route("projects");act("new-case")
+        page.get_by_label("Название").fill("Sandbox only")
+        page.get_by_label("Город").fill("Demo");page.get_by_label("Бюджет").fill("0");save()
+        route("settings");act("sandbox");route("projects")
+        expect(page.get_by_role("heading",name="Sandbox only")).to_have_count(0)
         assert not errors, errors
         print(f"PASS {engine.name} {width}×{height}: layout, Case, Shard, Garage, Field, acceptance, export/import, undo, persistence, offline",flush=True)
         ctx.close()
