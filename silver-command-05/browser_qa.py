@@ -200,7 +200,7 @@ with sync_playwright() as pw:
         route("dashboard")
         expect(page.locator(".command-dock button")).to_have_count(5)
         page.locator(".command-dock [data-route=projects]").first.click()
-        expect(page.get_by_role("heading",name="Projects")).to_be_visible()
+        expect(page.get_by_role("heading",name="Projects",exact=True)).to_be_visible()
         # Project Hub search and tabs must work without altering case ownership.
         route("projects")
         expect(page.locator(".ph-tabs [data-action=project-tab]")).to_have_count(3)
