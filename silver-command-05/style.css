@@ -220,3 +220,42 @@ button:active{transform:translateY(1px)}
 .lagertabs button{border:1px solid #4d5a6b;background:#1a2430;border-radius:9px;padding:11px 17px;color:#d8e1eb;cursor:pointer;font-weight:600}
 .lagertabs button.active{background:#d5dce6;color:#111924;border-color:#d5dce6}
 @media(max-width:500px){.lagertabs{display:grid;grid-template-columns:1fr 1fr}.lagertabs button{padding:10px 6px;font-size:12px}}
+
+
+/* Command dashboard: unified projects/tasks and Lager */
+.homehero{display:flex;align-items:stretch;justify-content:space-between;overflow:hidden;gap:16px}
+.homehero>div{padding:20px 0;flex:1;z-index:1}
+.homehero>img{width:33%;min-height:145px;object-fit:cover;border-radius:10px;opacity:.84}
+.homeeyebrow{font-size:10px;letter-spacing:.18em;opacity:.7}
+.homemetrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+.homequick{margin:12px 0}
+.homeactions{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.homeactions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:82px;padding:12px 6px;border:1px solid #465265;border-radius:10px;background:#1b2633;cursor:pointer}
+.homeactions svg{width:23px;height:23px}
+.homeactions span{font-size:12px;text-align:center}
+.homegrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:12px;margin-top:12px}
+.homeproject{border-top:1px solid #394452;padding:12px 0}
+.homeprojectmain{width:100%;display:flex;align-items:center;gap:12px;text-align:left}
+.homeprojectmain>img{width:82px;height:64px;object-fit:cover;border-radius:8px}
+.homeprojectmain>span{flex:1;min-width:0;display:grid;gap:6px}
+.homeprojectmain strong{font-size:14px}
+.homeprojectmain small{font-size:11px;opacity:.75}
+.homeprojectmain>b{font-size:13px}
+.homeprojectshards{margin:7px 0 0 95px;display:grid;gap:4px}
+.homeprojectshards button{display:flex;align-items:center;gap:8px;font-size:12px;text-align:left;padding:6px 4px}
+.homeprojectshards svg{width:14px;height:14px}
+.homeprojectshards small{margin-left:auto;opacity:.65}
+.homelagerstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 16px}
+.homelagerstats button{display:grid;justify-items:center;gap:5px;padding:13px 8px;border:1px solid #4c5868;border-radius:9px}
+.homelagerstats svg{width:22px;height:22px}
+.homelagerstats strong{font-size:22px}
+.homelagerstats small{font-size:11px}
+.homelager h3{font-size:12px;margin:13px 0 7px}
+.homestockrow{display:flex;align-items:center;gap:10px;width:100%;padding:7px 0;text-align:left}
+.homestockrow img{width:40px;height:34px;object-fit:cover;border-radius:5px}
+.homestockrow span{flex:1;font-size:12px}
+.homefleet{display:flex;gap:7px;flex-wrap:wrap}
+.homefleetitem{display:grid;gap:5px;flex:1;min-width:75px;font-size:10px}
+.homefleetitem img{width:100%;height:58px;object-fit:cover;border-radius:6px}
+@media(max-width:900px){.homegrid{grid-template-columns:1fr}.homeactions{grid-template-columns:repeat(3,minmax(0,1fr))}.homemetrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:500px){.homehero>img{width:26%;min-height:115px}.homehero h1{font-size:23px}.homeactions{grid-template-columns:repeat(3,minmax(0,1fr))}.homeprojectmain>img{width:60px;height:58px}.homeprojectshards{margin-left:70px}.homemetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
