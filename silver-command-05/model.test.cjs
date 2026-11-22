@@ -102,5 +102,34 @@ const appSource = readFileSync(require('node:path').join(__dirname,'app.js'),'ut
 assert.match(appSource,/if\(kind==="move"\)\{const open=state\.shards\.filter\(s=>s\.status==="draft"\)/);
 assert.doesNotMatch(appSource,/if\(kind==="move"\)\{const open=state\.shards\.filter\(s=>s\.status!=="accepted"\)/);
 
+
+// Social member profile regression: persistence through v2, owner edit, role guards,
+// optional image data and no mutation of Project/Shard/Merit accounting.
+let profiles=validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Installer'}],tasks:[],shards:[]}));
+const pAct=(a,p)=>{profiles=apply(profiles,a,p)};
+pAct('case',{id:'profile-project',title:'PV roof',city:'Stockach',price:1000});
+pAct('shard',{id:'profile-shard',caseId:'profile-project',title:'DC',kind:'DC',price:600,assignee:'member-0'});
+pAct('profile',{memberId:'lead',headline:'PV Coordinator',location:'Bodensee',bio:'Organizing DC crews',skills:['PV','DC']});
+assert.equal(profiles.crew.find(x=>x.id==='lead').headline,'PV Coordinator');
+assert.deepEqual(profiles.crew.find(x=>x.id==='lead').skills,['PV','DC']);
+const profileSnapshot=JSON.stringify(profiles);
+assert.throws(()=>pAct('profile',{memberId:'member-0',headline:'X',location:'Y',bio:'Z',skills:[]}),/недоступно/);
+assert.equal(JSON.stringify(profiles),profileSnapshot);
+pAct('actor',{id:'member-0'});
+assert.throws(()=>pAct('profile',{memberId:'lead',headline:'No',location:'',bio:'',skills:[]}),/недоступно/);
+pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bio:'PV work',skills:['DC','novotegra']});
+assert.equal(profiles.crew.find(x=>x.id==='member-0').headline,'DC Monteur');
+assert.equal(profiles.cases[0].price,1000);
+assert.equal(profiles.shards[0].price,600);
+const validAvatar='data:image/png;base64,iVBORw0KGgo=';
+pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bio:'PV work',skills:['DC'],avatar:validAvatar});
+validate(profiles);
+assert.equal(profiles.crew.find(x=>x.id==='member-0').avatar,validAvatar);
+const beforeInvalid=JSON.stringify(profiles);
+assert.throws(()=>pAct('profile',{memberId:'member-0',headline:'DC',location:'',bio:'',skills:[],avatar:'javascript:alert(1)'}),/фото/);
+assert.equal(JSON.stringify(profiles),beforeInvalid);
+assert.throws(()=>pAct('profile',{memberId:'member-0',headline:'DC',location:'',bio:'',skills:['x','x','x','x','x','x','x','x','x']}),/навыков/);
+assert.equal(JSON.stringify(profiles),beforeInvalid);
+
 assert.equal(base.cases.length,0);
 console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, three-role conflict matrix, seed=42');
