@@ -221,7 +221,7 @@ assert(issues.some(x=>x.level==='danger'&&x.title.includes('модулей')),'1
 assert(issues.some(x=>x.level==='warning'&&x.title.includes('Anlagenleistung')),'6.44 vs 6.9 kWp anomaly detected');
 const engineeringBad=JSON.stringify(engineering);
 assert.throws(()=>apply(engineering,'pv-check',{caseId:'engineering-case',key:'imaginary',value:true}),/Неизвестный/);
-assert.throws(()=>apply(engineering,'pv-add',{caseId:'engineering-case',list:'zones',id:'pv-z2',name:'Negative',modules:'-1',hooks:'0',panelWp:'460'}),/PV/);
+assert.throws(()=>apply(engineering,'pv-add',{caseId:'engineering-case',list:'zones',id:'pv-z2',name:'Negative',modules:'-1',hooks:'0',panelWp:'460'}),/Project/);
 assert.equal(JSON.stringify(engineering),engineeringBad,'Rejected mutations never change original state');
 engineering=apply(engineering,'pv-remove',{caseId:'engineering-case',list:'materials',rowId:'pv-m1'});
 assert.equal(engineering.cases[0].pvPlan.materials.length,0);
