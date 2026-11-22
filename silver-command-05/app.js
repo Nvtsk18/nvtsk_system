@@ -254,6 +254,7 @@ function communityShell(active,body){
   return '<div class="community">'+
     '<section class="community-hero"><img src="art/hero.webp" alt="Фотография солнечных панелей" loading="eager"><div class="community-hero-inner"><span class="community-kicker">NVTSK · PEOPLE & CULTURE</span><h1>Команда</h1><p>Люди, реальные результаты и общие достижения.</p><div class="community-hero-stats"><span><b>'+state.crew.length+'</b> участников</span><span><b>'+state.shards.filter(sh=>sh.status==="accepted").length+'</b> принято Shards</span><span><b>'+state.tasks.filter(t=>t.status==="done").length+'</b> готово Tasks</span></div></div></section>'+
     '<div class="community-identity">'+memberAvatar(c)+'<div class="community-identity-copy"><small>Ваш профиль · LOCAL FIRST</small><strong>'+esc(c.name)+'</strong><span>'+esc(stats.level)+' · '+stats.xp+' XP</span></div><button data-route="member/'+esc(c.id)+'">Мой профиль</button>'+(lead()?button("＋ Участник","new-crew"):"")+'</div>'+
+    '<div class="community-profile-switch">'+profile()+'</div>'+
     communityTabs(active)+body+
     '<p class="community-disclaimer">Пилот социальной системы: профили, публикации и достижения хранятся локально на этом устройстве. Это не общая сеть между телефонами; XP не является Merit и не влияет на оплату.</p></div>';
 }
