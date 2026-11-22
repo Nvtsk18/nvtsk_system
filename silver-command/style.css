@@ -40,3 +40,14 @@ input,textarea,select{background:#0d1922;border-color:#9dbdcc4a}
 .modal{background:linear-gradient(150deg,#253847,#0a121a);box-shadow:0 32px 90px #000d}
 @media(max-width:1020px){.layout{grid-template-columns:200px minmax(0,1fr)}.content{padding:24px 18px 90px}}
 @media(max-width:740px){.layout{display:block}.content{padding:19px 13px calc(100px + env(safe-area-inset-bottom))}.header{padding-bottom:14px;margin-bottom:17px}.header h1{font-size:25px}.glass.hero{min-height:210px;padding:20px}.glass{border-radius:17px}.glass.work{padding:15px}.bottomnav{background:rgba(10,17,24,.94);border-top:1px solid #a7d3df55;box-shadow:0 -15px 36px #000b}.bottomnav a{color:#a6bbc8;border:1px solid transparent}.bottomnav a.active{color:#ecf9fc;border-color:#8dd2e351;background:#5eafc21b}.bottomnav .ico{font-size:22px}.modalback{padding:12px}}
+
+/* Command dashboard and five-tab information architecture */
+.command-home{gap:19px}.command-hero{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:13px;min-height:290px!important}
+.command-hero h2{font-size:clamp(29px,3.5vw,47px)!important;line-height:1.07;letter-spacing:-1.5px;margin:4px 0!important;max-width:660px}
+.command-hero p{font-size:14px;max-width:600px;color:#bfd1db}.command-hero .pill{margin-left:auto;margin-top:-22px}.command-actions{margin-top:12px!important}
+.command-stats .glass{min-height:132px}.command-stats .stat{font-size:36px}.command-stats p{margin-top:6px}
+.command-home .maincols .glass{min-width:0}.command-home .listrow{gap:12px;align-items:flex-start}.command-home .listrow>div:first-child{min-width:0;flex:1}
+.command-home .pulse{margin-top:10px}.command-home .action-list a{background:linear-gradient(120deg,#2b425060,#14222c80);padding:15px;border-color:#a7c6d33d}
+.settings-modules{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.settings-modules .tile{display:flex;align-items:center;justify-content:space-between;gap:8px}
+@media(max-width:900px){.command-home .maincols{grid-template-columns:1fr}.command-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:740px){.command-hero{min-height:255px!important;gap:10px}.command-hero h2{font-size:30px!important}.command-hero .pill{margin:0}.command-actions{width:100%}.command-actions .btn{flex:1}.command-stats .glass{min-height:110px}.command-stats .stat{font-size:29px}.settings-modules{grid-template-columns:1fr}.command-home .listrow{flex-wrap:wrap}}
