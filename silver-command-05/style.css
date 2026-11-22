@@ -137,3 +137,38 @@ button:active{transform:translateY(1px)}
 .casemapnote{font-size:11px;opacity:.68;margin:5px 0 0}
 @media(min-width:1050px){.casemapviewport{height:260px}}
 @media(max-width:600px){.casemapviewport{height:205px}.casemaplegend{font-size:11px}}
+
+
+/* Field Mode visual operations workspace */
+.fieldhero{position:relative;min-height:230px;overflow:hidden;border:1px solid #38404b;border-radius:14px;background:#141b25;margin-bottom:15px}
+.fieldheroimage{position:absolute;inset:0;background:linear-gradient(90deg,#111923 3%,#111923e8 42%,#11192320 100%),url("art/roof.webp") center 45%/cover}
+.fieldherocontent{position:relative;padding:26px 25px;max-width:550px;z-index:1}
+.fieldeyebrow{font-size:10px;letter-spacing:.18em;color:#c5cdd8}
+.fieldherocontent h1{font-size:clamp(21px,3vw,31px);margin:9px 0}
+.fieldherocontent p{font-size:13px;max-width:350px;color:#d0d6dd}
+.fieldherolinks{display:flex;gap:9px;margin-top:16px}
+.fieldherolinks button{border:1px solid #8190a4;background:#293647;color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer}
+.fieldbrief{margin:12px 0}
+.fieldbriefbody{display:flex;gap:18px;align-items:center}
+.fieldbriefbody>img{width:175px;height:105px;object-fit:cover;border-radius:9px}
+.fieldbriefbody>div{display:grid;gap:7px;flex:1}
+.fieldbriefbody small{opacity:.72}
+.fieldbriefbody p{font-size:12px;margin:0}
+.fieldbriefbody button,.fieldtaskbuttons button{padding:9px 12px;border:1px solid #6d7888;border-radius:7px;cursor:pointer;justify-self:start}
+.fieldtaskvisual{display:flex;gap:14px;align-items:stretch;padding:12px}
+.fieldtaskvisual>img{width:130px;min-height:110px;object-fit:cover;border-radius:8px}
+.fieldtaskcontent{flex:1;min-width:0}
+.fieldtasknotes{font-size:12px;opacity:.7;margin:8px 0}
+.fieldtaskbuttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.fieldworkflow{margin-top:14px}
+.fieldsteps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.fieldsteps>div{display:flex;flex-direction:column;gap:7px;padding:14px;border:1px solid #4a5564;border-radius:9px;min-width:0}
+.fieldsteps span{font-size:11px;opacity:.65}
+.fieldsteps svg{width:26px;height:26px}
+.fieldsteps strong{font-size:13px}
+.fieldsteps small{font-size:11px;opacity:.72}
+.fieldwarning{font-size:11px;opacity:.65;margin-top:12px}
+.case .thumb{overflow:hidden}
+.case .thumb img{width:100%;height:100%;object-fit:cover}
+@media(max-width:700px){.fieldsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.fieldhero{min-height:220px}.fieldherocontent{padding:20px}.fieldbriefbody>img{width:105px;height:105px}.fieldtaskvisual>img{width:90px}.fieldtaskvisual{gap:10px}}
+@media(max-width:390px){.fieldtaskvisual>img{width:66px}.fieldbriefbody>img{width:85px}.fieldherolinks button{padding:8px 10px}}
