@@ -330,9 +330,10 @@ document.addEventListener("submit",e=>{
  const kind=["CUSTOM","PLAN","DC","AC","REG"].includes(data.kind)?data.kind:"CUSTOM";
  if(!title||title.length>120||description.length>2000||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, описание и бюджет.");return;}
  const id=uuid();
+ const auditBefore=state.audit.slice();
  state.lots.push({id,title,description,city:parent.city,client:parent.client,price,kind,creator:"me",parent:parent.id,assignee:null,members:[],bids:[]});
  log("shard_created",parent.id,"Shard: "+id+" / "+title);
- if(!save()){state.lots=state.lots.filter(x=>x.id!==id);notify("Не удалось сохранить Shard. Данные не изменены.");return;}
+ if(!save()){state.lots=state.lots.filter(x=>x.id!==id);state.audit=auditBefore;notify("Не удалось сохранить Shard. Данные не изменены.");return;}
  close();selected=parent.id;projectPage=3;go("lot");return;
 }
 if(f.id==="newForm"){
