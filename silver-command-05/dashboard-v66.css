@@ -79,3 +79,17 @@
 .ref66-map-wide .casemaplegend{display:flex;align-items:center;justify-content:flex-start;margin-top:10px}
 .ref66-map-wide .casemapnote{font-size:11px;color:#a8c3ce;margin:8px 0 0}
 @media(max-width:600px){.ref66-map-wide{margin-bottom:12px}.ref66-map-wide .casemap{padding:11px;border-radius:14px}.ref66-map-wide .casemapviewport{height:270px;min-height:270px}.ref66-map-wide .casemap .panelhead{flex-wrap:wrap}.ref66-map-wide .casemapnote{font-size:10px}}
+
+/* v70: quiet welcome top-left; character and PV workshop own the hero */
+.ref66-scene{height:clamp(390px,38vw,550px);padding:22px 26px;overflow:hidden}
+.ref66-greeting{position:relative;z-index:3;max-width:360px;padding:10px 14px 12px;border-radius:13px;background:linear-gradient(90deg,#0d1a24d9,#101d27a6);border:1px solid #9ac1ca33;backdrop-filter:blur(8px);text-shadow:0 2px 10px #0008}
+.ref66-greeting .ref66-spark{font-size:15px;line-height:1}
+.ref66-greeting p{font-size:13px;margin:2px 0 3px;color:#d6e5e8}
+.ref66-greeting h1{font-size:clamp(20px,1.9vw,27px);margin:0 0 5px;line-height:1.14;letter-spacing:.03em}
+.ref66-greeting>span:last-child{font-size:10px;line-height:1.45;color:#bcd2d8}
+.ref70-workshop{position:absolute;inset:95px 10px 6px 18%;display:flex;align-items:flex-end;justify-content:flex-end;pointer-events:none;z-index:1}
+.ref70-workshop:before{content:"";position:absolute;inset:5% 2% 0 10%;border-radius:24px;background:radial-gradient(ellipse at 55% 50%,#8be0dd18,transparent 68%)}
+.ref70-workshop img{display:block;width:min(100%,1000px);height:100%;object-fit:contain;object-position:center bottom;filter:drop-shadow(0 15px 28px #0007)}
+.ref66-toolbar{z-index:5}
+@media(max-width:850px){.ref66-scene{height:410px;padding:16px}.ref66-greeting{max-width:295px}.ref70-workshop{inset:100px -25px 4px 8%}}
+@media(max-width:600px){.ref66-scene{height:355px;padding:56px 6px 8px}.ref66-greeting{max-width:240px;padding:8px 10px}.ref66-greeting p{font-size:11px}.ref66-greeting h1{font-size:20px}.ref66-greeting>span:last-child{font-size:9px}.ref70-workshop{inset:120px -42px 3px -10px}.ref70-workshop img{object-position:center bottom}.ref66-toolbar{top:8px}}
