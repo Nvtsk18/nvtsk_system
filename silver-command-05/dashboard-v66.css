@@ -121,3 +121,24 @@
 .ref66-map-wide .casemap{background:linear-gradient(145deg,#43535eea,#182630f2);border:1px solid #b4c5ce7a;box-shadow:inset 0 1px #ffffff30,0 15px 35px #0008}
 @media(max-width:850px){.ref66-scene{height:440px}.ref66:before{background-position:56% top}}
 @media(max-width:600px){.ref66-scene{height:330px}.ref66:before{height:520px;background-position:54% top;background-size:auto 520px}.ref66-toolbar{right:4px;top:9px}.ref72-orbit{width:75vw}.ref72-beam{left:8%;right:8%;bottom:13%}}
+
+/* v73: obsidian / smoked titanium, visibly darker than silver edition */
+body:has(.ref66){background:#05080d;color:#e1e5ea}
+.ref66{background:#070b11!important;color:#e1e6ed!important}
+.ref66:before{background-image:linear-gradient(180deg,#020408a8 0%,#03060bc4 43%,#050910e8 75%,#070b11 100%),url("art/silver-command-office.svg")!important;background-color:#05080d!important;opacity:.92}
+.ref66-scene{background:linear-gradient(90deg,#02040880,transparent 48%,#02040870);border-bottom:1px solid #84909b2b}
+.ref72-ambient{background:linear-gradient(90deg,#0204089c,#04070c3a 42%,#020408ad)!important}
+.ref72-orbit{border-color:#bdc8d31a!important;box-shadow:0 0 30px #9daeb81a!important}
+.ref72-beam{background:linear-gradient(90deg,transparent,#a5b2bd52,transparent)!important}
+.ref66-kpi,.ref66-panel{background:linear-gradient(150deg,#242d38f7 0%,#101820fc 50%,#090e16fe 100%)!important;border:1px solid #78879457!important;box-shadow:inset 0 1px #d7e1ea1a,0 16px 38px #000b!important}
+.ref66-kpi:hover,.ref66-action-grid button:hover{border-color:#b3c1cc9c!important;background:linear-gradient(145deg,#303d4a,#151e29)!important}
+.ref66-kpi small,.ref66-panel-title h2{color:#c6d0da!important}
+.ref66-kpi strong{color:#f1f4f7!important}
+.ref66-action-grid button{background:linear-gradient(150deg,#293540,#101820 78%)!important;border:1px solid #7f8e9957!important;box-shadow:inset 0 1px #e1ebf21c,0 6px 20px #0008!important;color:#e2e8ef!important}
+.ref66-project{background:#0c141d!important;border-color:#71808b50!important}
+.ref66-project-body{background:#0b131d!important}
+.ref66-map-wide .casemap{background:linear-gradient(140deg,#202c37,#090f17)!important;border-color:#8796a352!important;box-shadow:inset 0 1px #dae4eb16,0 16px 36px #000b!important}
+.ref66-toolbar>button,.ref66-date{background:#0b121be8!important;border-color:#7e8d9952!important;color:#e2e8ee!important}
+.ref66-toolbar .workspace-switch summary{background:linear-gradient(145deg,#27323ded,#0b131bea)!important;border-color:#a1b0bc6b!important}
+.ref66-bottom{color:#8796a3}
+@media(max-width:600px){.ref66:before{background-image:linear-gradient(180deg,#020408b3 0%,#03060bc9 55%,#070b11 100%),url("art/silver-command-office.svg")!important}}
