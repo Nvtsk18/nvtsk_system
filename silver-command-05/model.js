@@ -4,6 +4,8 @@ globalThis.NVModel = (() => {
   const requireValue = (ok, message) => { if (!ok) throw new Error(message); };
   const label = value => typeof value === "string" && value.trim().length > 0 && value.length <= 240;
   const amount = value => Number.isFinite(value) && value >= 0 && value <= 1e12;
+  const optional = (value, max=2000) => value===undefined || (typeof value==="string" && value.length<=max);
+  const attachments = list => list===undefined || (Array.isArray(list)&&list.length<=8&&list.every(a=>a&&ident(a.id)&&optional(a.name,180)&&a.name&&typeof a.data==="string"&&/^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(a.data)&&a.data.length<=900000));
   const ident = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
   function migrate(old) {
     if (old.version !== 1) return old;
@@ -22,8 +24,8 @@ globalThis.NVModel = (() => {
     }
     const has = (list,id) => list.some(x=>x.id===id);
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников");
-    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)),"Ошибка Case");
-    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
+    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Case");
+    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
     requireValue(d.garage.every(m=>label(m.title)&&amount(m.qty)),"Ошибка количества");
     const held = new Map();
     for (const m of d.moves) {
@@ -43,9 +45,9 @@ globalThis.NVModel = (() => {
     switch(action) {
       case "actor": d.actor=p.id; break;
       case "crew": allowed(lead); d.crew.push({id:p.id,name:p.title,role:p.role}); break;
-      case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price}); break;
+      case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[]}); break;
       case "shard": allowed(lead);
-        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Стоимость Shard превышает остаток бюджета Case"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft"}); break;
+        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Стоимость Shard превышает остаток бюджета Case"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
       case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; break;
       case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); s.status="submitted"; break;
       case "accept": case "revise": allowed(lead && s && s.status==="submitted" && actor.id!==s.assignee); s.status=action==="accept"?"accepted":"draft"; break;
