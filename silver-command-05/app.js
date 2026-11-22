@@ -317,14 +317,25 @@ function pulse(){
 function settings(){return heading("Настройки")+profile()+'<div class="panel tools"><button data-route="team">Команда и роли</button>'+button(lab?"Вернуться к рабочим данным":"Тестовая копия","sandbox")+button("Экспорт JSON","export")+(lead()?'<label>Импорт JSON<input id="import" type="file" accept=".json,application/json"></label>'+ (history.length?button("Time Machine · отменить последнюю операцию","undo"):""):"")+'</div><p>Профили действуют на этом устройстве. История хранит последние 10 операций.</p>'}
 
 const SOCIAL_KEY=BASE+"_social";
+let communityFeedView="all";
+function acceptedWorkEvents(memberId=null){
+ return state.shards.filter(sh=>sh.status==="accepted"&&sh.assignee&&(memberId===null||sh.assignee===memberId)).slice().reverse().map(sh=>({
+  sh,owner:state.crew.find(c=>c.id===sh.assignee),project:state.cases.find(c=>c.id===sh.caseId),
+  completed:state.tasks.filter(t=>t.shardId===sh.id&&t.status==="done").length
+ }));
+}
+function communityWorkFeed(events){
+ return events.map(({sh,owner,project,completed})=>'<article class="community-work-event" data-workevent="'+esc(sh.id)+'"><div class="community-work-symbol">'+icon("check")+'</div><div class="community-work-copy"><span class="community-work-label">ПОДТВЕРЖДЁННЫЙ РЕЗУЛЬТАТ</span><strong>'+esc(owner?.name||"Участник")+' · принят Shard</strong><p>'+esc(sh.title)+(completed?' · '+completed+' Tasks':"")+'</p><small>'+esc(project?.city||"")+' · приёмка завершена</small><div class="community-work-links"><button data-route="member/'+esc(sh.assignee)+'">Профиль</button><button data-route="shard/'+esc(sh.id)+'">Открыть Shard →</button></div></div></article>').join("");
+}
+
 function socialData(){try{const d=JSON.parse(localStorage.getItem(SOCIAL_KEY)||'{"posts":[]}');return Array.isArray(d.posts)?d:{posts:[]}}catch{return {posts:[]}}}
 function social(){
  const d=socialData(),people=Object.fromEntries(state.crew.map(c=>[c.id,c.name]));
  const posts=d.posts.slice().reverse().map(p=>{
  const c=state.cases.find(c=>c.id===p.caseId),likes=p.likes||[],comments=p.comments||[];
  return '<article class="socialpost"><div class="socialauthor"><button class="socialavatar" data-route="member/'+esc(p.author)+'" aria-label="Профиль автора">'+esc((people[p.author]||"?").slice(0,1))+'</button><div><strong>'+esc(people[p.author]||"Участник")+'</strong><small>'+esc(new Date(p.created).toLocaleString("ru-RU"))+'</small></div></div><p>'+esc(p.text)+'</p>'+(c?'<button data-route="case/'+esc(c.id)+'">Project: '+esc(c.title)+' →</button>':'')+'<div class="socialactions"><button data-action="social-like" data-id="'+esc(p.id)+'">'+(likes.includes(state.actor)?"♥":"♡")+' '+likes.length+'</button><span>Комментарии '+comments.length+'</span></div><div class="socialcomments">'+comments.map(x=>'<p><strong>'+esc(people[x.author]||"Участник")+':</strong> '+esc(x.text)+'</p>').join("")+'</div><form class="socialcommentform" data-post="'+esc(p.id)+'"><input required maxlength="500" name="comment" placeholder="Комментарий"><button type="submit">Отправить</button></form></article>';
- }).join("")||'<div class="socialempty"><img src="art/roof.webp" alt=""><p>Публикаций пока нет. Расскажите команде о ходе работ.</p></div>';
- return '<section class="community-section-head community-feed-heading"><div><h2>Лента команды</h2><small>Обновления, вопросы и результаты работ</small></div></section><section class="panel socialcomposer"><h2>Новая публикация</h2><form id="social-compose"><textarea name="text" required maxlength="1200" rows="3" placeholder="Что нового на объекте?"></textarea><div class="socialcomposeactions"><select name="caseId"><option value="">Без Project</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.title)+'</option>').join("")+'</select><button type="submit">Опубликовать</button></div></form></section><div class="socialfeed">'+posts+'</div><p class="socialnotice">Публикации сохраняются только на этом устройстве. Это не общий онлайн-чат. Не публикуйте персональные данные клиентов.</p>';
+ }).join("");
+ return '<section class="community-section-head community-feed-heading"><div><h2>Лента команды</h2><small>Обновления, вопросы и результаты работ</small></div></section><section class="panel socialcomposer"><h2>Новая публикация</h2><form id="social-compose"><textarea name="text" required maxlength="1200" rows="3" placeholder="Что нового на объекте?"></textarea><div class="socialcomposeactions"><select name="caseId"><option value="">Без Project</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.title)+'</option>').join("")+'</select><button type="submit">Опубликовать</button></div></form></section><div class="community-feed-filters" role="group" aria-label="Фильтр ленты">'+[["all","Всё"],["posts","Публикации"],["work","Результаты"]].map(([id,label])=>'<button data-action="feed-view" data-view="'+id+'" class="'+(communityFeedView===id?"is-active":"")+'">'+label+'</button>').join("")+'</div><div class="socialfeed">'+((communityFeedView!=="posts"?communityWorkFeed(acceptedWorkEvents()):"")+(communityFeedView!=="work"?posts:"")||'<div class="community-empty-feed">Пока нет публикаций или принятых Shards.</div>')+'</div><p class="socialnotice">Публикации сохраняются только на этом устройстве. Это не общий онлайн-чат. Не публикуйте персональные данные клиентов.</p>';
 }
 const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social:()=>communityShell("feed",social()),lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
 function render(){
@@ -371,6 +382,7 @@ function edit(kind,id){
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
+ if(e.target.closest('[data-action="feed-view"]')){const view=e.target.closest("[data-action]").dataset.view;if(["all","posts","work"].includes(view)){communityFeedView=view;render()}return}
  if(e.target.closest('[data-action="social-like"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
 
  const b=e.target.closest("[data-route],[data-action]");if(!b)return;
