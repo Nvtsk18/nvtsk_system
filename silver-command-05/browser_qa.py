@@ -99,6 +99,18 @@ with sync_playwright() as pw:
         print("WAREHOUSE_PHOTOS",engine.name,width,json.dumps(photos,ensure_ascii=False))
         capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
         expect(page.locator(".stockitem").filter(has_text="Einlegeschiene").get_by_text("22",exact=True)).to_be_visible()
+        # Article accounting: unique SKUs, receipts, writeoffs and negative-stock guard.
+        article_guards=page.evaluate("""() => {
+          const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+          const item={id:'qa-article',title:'K2 SingleRail 36',sku:'2004260',brand:'K2 Systems',qty:0};
+          const a=NVModel.apply(d,'material',item);
+          const b=NVModel.apply(a,'move',{id:'qa-in',itemId:item.id,type:'receive',qty:12});
+          const c=NVModel.apply(b,'move',{id:'qa-out',itemId:item.id,type:'writeoff',qty:2,reason:'Повреждённая упаковка'});
+          const stock=c.garage.find(m=>m.id===item.id);
+          const errors=[()=>NVModel.apply(c,'material',{...item,id:'qa-duplicate'}),()=>NVModel.apply(c,'move',{id:'qa-over',itemId:item.id,type:'writeoff',qty:11,reason:'Брак'}),()=>NVModel.apply(c,'move',{id:'qa-noreason',itemId:item.id,type:'writeoff',qty:1})];
+          return stock.qty===10&&c.moves.at(-1).reason==='Повреждённая упаковка'&&errors.every(fn=>{try{fn();return false}catch{return true}});
+        }""")
+        assert article_guards, (width,"Article receipts/writeoffs/SKU invariants failed")
         # Inventory invariants: insufficient stock, cross-Shard returns and
         # fractional quantities must fail without modifying persisted data.
         stock_guards = page.evaluate("""() => {
