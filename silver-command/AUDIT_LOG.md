@@ -462,3 +462,17 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 - **Verification:** GitHub update succeeded and two static source assertions confirmed route helper and popstate listener. **No Node syntax execution, actual browser click-through, iPhone Safari test, persistence/reload test or 3-role runtime test in this iteration.** Do not count these as PASS.
 - **Known limitations:** URL hash can expose internal demo lot IDs; do not put private customer identifiers into these IDs. Browser back can be affected by previous untracked hash entries. Route restoration does not establish access control. A full combined Case/Shard/Garage backup remains unresolved. The existing demo is not production-ready.
 - **Next:** test route changes and swipe directions in a browser; implement and verify atomic combined backup with rollback and strict validation; run three role-conflict scenarios and complete a real end-to-end walkthrough.
+
+
+## Implementation pass · 2026-11-22 01:00 CET · Combined export foundation
+
+**Scope:** only silver-command/garage.js, app.js, AUDIT_LOG.md; root 0.3 untouched.
+**Code commits:** a3b84e751bebcfaf63f9c125d930997e51d65bcb, 6547da741629d33889aab9905ec321502d6f0c23.
+
+**Implemented:** Garage exposes a validated deep-cloned snapshot; the existing project Export action now packages both project state and Garage snapshot into a single JSON file with explicit kind/version. If Garage is invalid, locked or unavailable, the combined export is refused instead of silently omitting inventory. The snapshot call does not mutate storage. This is **export-only**, not a completed paired backup/restore feature.
+
+**Critical limitation:** Existing project import accepts legacy project-only schema and does **not** import the new combined format or restore Garage. The new file is an archival combined export, **not yet a restorable one-click backup**. Preserve separate Garage/project backups until a validated two-store import with rollback, compatibility checks and crash recovery is implemented. No code claims atomic multi-key localStorage writes; browser localStorage cannot atomically commit two keys.
+
+**Three perspectives/conflicts considered (design review, NOT executed):** owner exporting a full project; Garage operator with corrupted inventory must not produce falsely complete backup; field installer attempting restore must not be treated as authenticated. These are design checks only.
+
+**Verification:** GitHub accepted both code commits; exact old source anchors were checked before replacement. **No JavaScript parser, Node tests, browser click, role tests, import/reload, or iPhone Safari tests were executed in this pass.** Therefore no runtime PASS claimed. Next run: execute source-linked JS tests, implement safe validated combined restore using rollback journal or single-envelope storage migration, test failure injection, and update UI to distinguish archival export from restorable backup.
