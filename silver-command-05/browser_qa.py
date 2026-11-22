@@ -79,7 +79,7 @@ with sync_playwright() as pw:
         # even if the actor is the manager. The persisted local snapshot must stay intact.
         closed_guard = page.evaluate("""() => {
             const raw = JSON.parse(localStorage.getItem('nvtsk05_independent'));
-            const data = raw.format === 1 ? raw.data : raw;
+            const data = raw.data;
             const shard = data.shards.find(s => s.title === 'QA монтаж');
             const item = data.garage.find(m => m.id === 'rail');
             if (!shard || shard.status !== 'accepted' || !item) return false;
@@ -110,7 +110,7 @@ with sync_playwright() as pw:
         # Offline emulation is isolated to this browser context and does not
         # affect the remaining Chromium/WebKit test matrix.
         ctx.set_offline(True)
-        page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        page.reload(wait_until="domcontentloaded");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         assert page.evaluate("""() => {
             const record=JSON.parse(localStorage.getItem('nvtsk05_independent'));
             return record.data.cases.some(c=>c.title==='QA Roof') &&
