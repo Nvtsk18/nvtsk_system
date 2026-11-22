@@ -31,7 +31,7 @@ assert.throws(()=>act('accept',{shardId:'s'}));
 let seed=42;
 for(let i=0;i<300;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const previous=JSON.stringify(d);
 try{move('t'+i,seed%2?'issue':'return',seed%13+1)}catch{assert.equal(JSON.stringify(d),previous)}
-validate(d);const issued=d.moves.reduce((n,m)=>n+(m.type==='issue'?m.qty:-m.qty),0);
+validate(d);const issued=d.moves.reduce((n,m)=>n+(m.type==='issue'?m.qty:m.type==='return'?-m.qty:0),0);
 assert.equal(d.garage[0].qty+issued,23);}
 assert.equal(base.cases.length,0);
 console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, seed=42');
