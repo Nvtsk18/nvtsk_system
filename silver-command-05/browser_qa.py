@@ -217,7 +217,7 @@ with sync_playwright() as pw:
         expect(page.locator(".ph-account-stats > div")).to_have_count(4)
         expect(page.locator(".ph-account")).to_contain_text("Управленческая сводка")
         expect(page.locator(".ph-account")).to_contain_text("не подтверждённые поступления")
-        expect(page.locator(".ph-account-row")).to_have_count(4)
+        expect(page.locator(".ph-account-row")).to_have_count(page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent')).data.cases.length"""))
         page.locator(".ph-tabs [data-tab=mine]").click()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
