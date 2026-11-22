@@ -38,6 +38,23 @@ globalThis.NVModel = (() => {
   const optional = (value, max=2000) => value===undefined || (typeof value==="string" && value.length<=max);
   const attachments = list => list===undefined || (Array.isArray(list)&&list.length<=8&&list.every(a=>a&&ident(a.id)&&optional(a.name,180)&&a.name&&typeof a.data==="string"&&/^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(a.data)&&a.data.length<=900000));
   const ident = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
+  // Optional technical dossier for one PV Project. Does not change historical Cases/Shards/Merit.
+  const pvChecks=["risk","access","fall","static","materials","strings","dcTests","photos","handover"];
+  const optQty=n=>n===undefined||n===null||(Number.isFinite(n)&&n>=0&&n<=1e7);
+  const pvPlanValid=p=>{
+    if(p===undefined)return true;
+    if(!p||typeof p!=="object"||Array.isArray(p))return false;
+    const texts=["bauherr","revision","roofType","tileType","mounting","moduleType","insulation","cableRoute","hazards","safetyPlan","sourcePlan","model3d","acScope","dcScope"];
+    if(!texts.every(k=>optional(p[k],k==="hazards"||k==="safetyPlan"?2000:500)))return false;
+    if(p.model3d&&!/^https:\/\/[^\s"'<>]{1,450}$/.test(p.model3d))return false;
+    if(!["declaredModules","panelWp","declaredKwp","slopeDeg","eaveHeightM","rafterSpacingCm","roofLengthM"].every(k=>optQty(p[k])))return false;
+    const list=(v,max,fn)=>v===undefined||(Array.isArray(v)&&v.length<=max&&v.every(fn)&&new Set(v.map(x=>x.id)).size===v.length);
+    if(!list(p.zones,30,z=>z&&ident(z.id)&&label(z.name)&&optional(z.direction,80)&&optional(z.moduleType,140)&&optional(z.notes,600)&&optQty(z.modules)&&optQty(z.hooks)))return false;
+    if(!list(p.materials,120,m=>m&&ident(m.id)&&label(m.name)&&optional(m.unit,20)&&optional(m.sku,90)&&optQty(m.qty)))return false;
+    if(!list(p.documents,35,d=>d&&ident(d.id)&&label(d.name)&&optional(d.kind,70)&&optional(d.revision,70)&&optional(d.url,700)&&(!d.url||/^https:\/\/[^\s"'<>]{1,680}$/.test(d.url))))return false;
+    if(p.checks!==undefined&&(!p.checks||typeof p.checks!=="object"||Object.keys(p.checks).some(k=>!pvChecks.includes(k)||typeof p.checks[k]!=="boolean")))return false;
+    return true;
+  };
   function migrate(old) {
     if (old.version === 2) return upgradeCaptain({...old,teams:Array.isArray(old.teams)?old.teams:[],counterparties:seedCounterparties(old.counterparties)});
     if (old.version !== 1) return old;
@@ -60,7 +77,7 @@ globalThis.NVModel = (() => {
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
     requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
     requireValue(d.counterparties.every(p=>label(p.name)&&optional(p.category,80)&&optional(p.address,240)&&optional(p.city,120)&&optional(p.phone,50)&&optional(p.email,160)&&optional(p.website,180)&&optional(p.register,180)&&optional(p.vatId,80)&&Array.isArray(p.directors)&&p.directors.length<=8&&p.directors.every(x=>label(x))&&Array.isArray(p.services)&&p.services.length<=15&&p.services.every(x=>typeof x==="string"&&x.length<=100)&&(!p.relationship||(typeof p.relationship==="object"&&optional(p.relationship.service,150)&&optional(p.relationship.ac,150)&&optional(p.relationship.status,120)))&&(!p.sources||(Array.isArray(p.sources)&&p.sources.length<=8&&p.sources.every(x=>typeof x==="string"&&x.startsWith("https://")&&x.length<=250)))),"Ошибка карточки контрагента");
-    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)&&(c.counterpartyId===undefined||c.counterpartyId===null||has(d.counterparties,c.counterpartyId))),"Ошибка Project");
+    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)&&pvPlanValid(c.pvPlan)&&(c.counterpartyId===undefined||c.counterpartyId===null||has(d.counterparties,c.counterpartyId))),"Ошибка Project");
     requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))&&(s.teamId===undefined||s.teamId===null||has(d.teams,s.teamId))),"Ошибка Shard");
     requireValue(d.tasks.every(t=>label(t.title)&&has(d.shards,t.shardId)&&["todo","doing","done"].includes(t.status)&&optional(t.notes,2000)&&(t.assignee===null||has(d.crew,t.assignee))),"Ошибка задачи");
     requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
@@ -131,6 +148,47 @@ globalThis.NVModel = (() => {
         break;
       }
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
+      case "pv-tech": {
+        allowed(lead);
+        const c=d.cases.find(x=>x.id===p.caseId); allowed(c);
+        const keys=["bauherr","revision","roofType","tileType","mounting","moduleType","insulation","cableRoute","hazards","safetyPlan","sourcePlan","model3d","acScope","dcScope"];
+        const nums=["declaredModules","panelWp","declaredKwp","slopeDeg","eaveHeightM","rafterSpacingCm","roofLengthM"];
+        const current=c.pvPlan||{};
+        const changes=Object.fromEntries(keys.map(k=>[k,String(p[k]??"").trim()]));
+        for(const k of nums){changes[k]=p[k]===""||p[k]===undefined||p[k]===null?null:Number(p[k])}
+        c.pvPlan={...current,...changes};
+        break;
+      }
+      case "pv-add": {
+        allowed(lead);
+        const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
+        const type=p.list;
+        requireValue(["zones","materials","documents"].includes(type),"Некорректный раздел PV");
+        const current=c.pvPlan||{},list=(current[type]||[]).slice();
+        const item={id:p.id};
+        if(type==="zones")Object.assign(item,{name:p.name,direction:p.direction||"",modules:p.modules===""?null:Number(p.modules),hooks:p.hooks===""?null:Number(p.hooks),moduleType:p.moduleType||"",notes:p.notes||""});
+        if(type==="materials")Object.assign(item,{name:p.name,unit:p.unit||"St.",qty:Number(p.qty),sku:p.sku||""});
+        if(type==="documents")Object.assign(item,{name:p.name,kind:p.kind||"Andere",url:p.url||"",revision:p.revision||""});
+        list.push(item);
+        c.pvPlan={...current,[type]:list};
+        break;
+      }
+      case "pv-remove": {
+        allowed(lead);
+        const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
+        requireValue(["zones","materials","documents"].includes(p.list),"Некорректный раздел PV");
+        const cur=c.pvPlan||{};
+        c.pvPlan={...cur,[p.list]:(cur[p.list]||[]).filter(x=>x.id!==p.rowId)};
+        break;
+      }
+      case "pv-check": {
+        allowed(lead);
+        const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
+        requireValue(pvChecks.includes(p.key)&&typeof p.value==="boolean","Неизвестный пункт проверки");
+        const cur=c.pvPlan||{};
+        c.pvPlan={...cur,checks:{...cur.checks,[p.key]:p.value}};
+        break;
+      }
       case "link-counterparty": {
         allowed(lead);
         const project=d.cases.find(c=>c.id===p.caseId);
