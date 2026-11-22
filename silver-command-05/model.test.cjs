@@ -30,11 +30,16 @@ assert.equal(JSON.stringify(d),installerSnapshot,'installer cannot receive stock
 act('actor',{id:'lead'});
 act('move',{id:'manager-receive',type:'receive',qty:3,itemId:'m',shardId:null});
 assert.equal(d.garage[0].qty,21,'manager can receive stock after acceptance');
+act('move',{id:'manager-writeoff',type:'writeoff',qty:1,itemId:'m',shardId:null,reason:'Damaged stock'});
+assert.equal(d.garage[0].qty,20,'writeoff without Shard reduces available stock');
+assert.equal(d.moves.at(-1).shardId,null,'writeoff is warehouse-level, not Shard-level');
+assert.throws(()=>act('move',{id:'invalid-writeoff',type:'writeoff',qty:1,itemId:'m',shardId:null,reason:''}),/причину/);
+assert.throws(()=>act('move',{id:'missing-shard',type:'issue',qty:1,itemId:'m',shardId:null}),/недоступно/);
 let seed=42;
 for(let i=0;i<300;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const previous=JSON.stringify(d);
 try{move('t'+i,seed%2?'issue':'return',seed%13+1)}catch{assert.equal(JSON.stringify(d),previous)}
 validate(d);const issued=d.moves.reduce((n,m)=>n+(m.type==='issue'?m.qty:m.type==='return'?-m.qty:0),0);
-assert.equal(d.garage[0].qty+issued,23);}
+assert.equal(d.garage[0].qty+issued,22);}
 
 // Independent three-role conflict regression (separate immutable scenario).
 let rolesState=validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Installer'}],tasks:[],shards:[]}));
