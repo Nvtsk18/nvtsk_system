@@ -312,6 +312,8 @@ $("#editor").onsubmit=async e=>{
 };
 document.querySelector('.mode [data-route="dashboard"]').innerHTML=icon("screen")+" Command Mode";
 document.querySelector('.mode [data-route="field"]').innerHTML=icon("field")+" Field Mode";
+const navIconNames={dashboard:"home",projects:"layers",team:"team",lager:"box",pulse:"coins",field:"field",social:"team",settings:"settings"};
+document.querySelectorAll("#nav button[data-route]").forEach(b=>{const holder=b.querySelector(".nav-glyph");if(holder)holder.innerHTML=icon(navIconNames[b.dataset.route]||"box")});
 addEventListener("hashchange",()=>{render();scrollTo(0,0)});
 addEventListener("storage",e=>{if(e.key===KEY||e.key===null){try{readStore()}catch{damaged=true}$("#dialog").close();render()}});
 render();
