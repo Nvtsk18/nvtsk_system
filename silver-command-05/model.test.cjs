@@ -3,6 +3,33 @@ require('./model.js');
 const {apply,validate,migrate} = NVModel;
 const base = validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Worker'}],tasks:[],shards:[]}));
 assert.equal(base.crew.find(c=>c.id==='lead').name,'Капитан');
+
+assert.deepEqual(base.teams,[],'Migrate v1 into internal company workspace with Teams');
+const legacyV2=JSON.parse(JSON.stringify(base));
+delete legacyV2.teams;
+assert.deepEqual(validate(migrate(legacyV2)).teams,[],'Old v2 data upgrades without loss');
+let company=validate(migrate({version:1,cases:[],shards:[],tasks:[],garage:[],crew:[{name:'Installer'}]}));
+function companyAct(type,p){company=apply(company,type,p)}
+companyAct('case',{id:'company-p',title:'PV roof',city:'Stockach',price:1000});
+companyAct('shard',{id:'company-sh',caseId:'company-p',title:'DC mounting',kind:'DC',price:400,assignee:null});
+companyAct('team-create',{id:'team-dc',title:'DC Crew',description:'Bodensee PV монтаж',captainId:'member-0',memberIds:['member-0']});
+assert.equal(company.teams.length,1);
+assert.equal(company.teams[0].captainId,'member-0');
+companyAct('team-update',{teamId:'team-dc',title:'Solar Crew',description:'PV DC',captainId:'member-0',memberIds:['member-0','lead']});
+assert.equal(company.teams[0].memberIds.length,2);
+companyAct('team-assign',{shardId:'company-sh',teamId:'team-dc'});
+assert.equal(company.shards[0].teamId,'team-dc');
+assert.equal(company.shards[0].assignee,'member-0');
+assert.equal(company.cases[0].price,1000,'Team assignment must not change project budget');
+assert.equal(company.shards[0].price,400,'Team assignment must not change Shard/Merit');
+const companySnapshot=JSON.stringify(company);
+assert.throws(()=>companyAct('team-assign',{shardId:'company-sh',teamId:'missing'}),/недоступно/);
+assert.equal(JSON.stringify(company),companySnapshot,'Invalid Team assignment must be atomic');
+companyAct('assign',{shardId:'company-sh',assignee:'member-0'});
+assert.equal(company.shards[0].teamId,null,'Direct individual assignment clears old Team binding');
+companyAct('actor',{id:'member-0'});
+assert.throws(()=>companyAct('team-create',{id:'rogue',title:'Unauthorized',captainId:'member-0',memberIds:[]}),/недоступно/);
+
 assert.equal(base.crew.find(c=>c.id==='lead').role,'Руководитель','Underlying role remains stable for permissions');
 let d=base;
 function act(a,p){d=apply(d,a,p)}
