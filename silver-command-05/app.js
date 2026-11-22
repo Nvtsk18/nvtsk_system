@@ -168,7 +168,7 @@ function edit(kind,id){
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
  if(kind==="move")fields+=select("type","Операция",state.shards.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"]]:[["receive","Приход"]])+select("shardId","Case / Shard",(state.shards.length?[]:[["stock","Склад"]]).concat(state.shards.map(s=>[s.id,state.cases.find(c=>c.id===s.caseId).title+" / "+s.title])));
  if(kind==="material"||kind==="move")fields+=input("qty","Количество","number");
- if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Case/Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
+ if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ, всего до 2 МБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Case/Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
@@ -211,6 +211,7 @@ $("#editor").onsubmit=async e=>{
  try{
    if(selected){
      if(selected.length>8)throw Error("Максимум 8 файлов");
+     if(Array.from(selected).reduce((n,file)=>n+file.size,0)>2000000)throw Error("Суммарный размер вложений не должен превышать 2 МБ");
      p.files=await Promise.all(Array.from(selected,async file=>{
        if(file.size>650000)throw Error("Файл "+file.name+" превышает 650 КБ");
        if(!["image/png","image/jpeg","image/webp","image/gif","application/pdf"].includes(file.type))throw Error("Недопустимый тип файла");
@@ -238,7 +239,8 @@ $("#editor").onsubmit=async e=>{
      return next;
    };
    if(await change(operation)){$("#dialog").close();if(kind==="case"||kind==="electrical")location.hash="case/"+p.id}
- }finally{submit.disabled=false}
+ }catch(error){alert(error.message||"Ошибка вложения")}
+ finally{submit.disabled=false}
 };
 const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты"],["garage","box","Склад"],["tasks","check","Задачи"],["settings","settings","Настройки"]];
 $("#nav").innerHTML=navigation.map(([route,sym,name])=>'<button data-route="'+route+'">'+icon(sym)+'<span>'+name+'</span></button>').join("");
