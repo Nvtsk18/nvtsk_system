@@ -96,5 +96,11 @@ assert.equal(work.shards[0].status,"accepted");
 assert.equal(work.tasks.length,2);
 assert.equal(work.cases[0].price,1000,"Tasks cannot mint Merit or alter project budget");
 
+// Warehouse picker must match model.js: only draft Shards accept issue/return.
+const {readFileSync} = require('node:fs');
+const appSource = readFileSync(require('node:path').join(__dirname,'app.js'),'utf8');
+assert.match(appSource,/if\(kind==="move"\)\{const open=state\.shards\.filter\(s=>s\.status==="draft"\)/);
+assert.doesNotMatch(appSource,/if\(kind==="move"\)\{const open=state\.shards\.filter\(s=>s\.status!=="accepted"\)/);
+
 assert.equal(base.cases.length,0);
 console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, three-role conflict matrix, seed=42');
