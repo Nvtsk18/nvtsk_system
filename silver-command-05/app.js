@@ -52,11 +52,38 @@ const iconPaths={
 const icon=name=>'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'+iconPaths[name]+'"/></svg>';
 const demoCaseLocations={Stockach:[47.851,9.012],Singen:[47.760,8.841],"Überlingen":[47.769,9.171],Konstanz:[47.660,9.175]};
 function caseMiniMap(){
- const bounds={west:8.68,east:9.37,south:47.52,north:47.98};
- const placed=state.cases.map(c=>({c,coord:c.id.startsWith("demo-")?demoCaseLocations[c.city]:null})).filter(x=>x.coord);
- const pins=placed.map(({c,coord})=>{const x=100*(coord[1]-bounds.west)/(bounds.east-bounds.west),y=100*(bounds.north-coord[0])/(bounds.north-bounds.south);return '<button class="mapcasepin" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%" data-route="case/'+esc(c.id)+'" title="'+esc(c.title+' · '+c.city)+'" aria-label="Открыть '+esc(c.title)+'"><span></span></button>'}).join('');
- const bbox=[bounds.west,bounds.south,bounds.east,bounds.north].join('%2C');
- return '<section class="panel casemap"><div class="panelhead"><h2>Карта проектов</h2><small>'+placed.length+' с отметками · '+state.cases.length+' всего</small></div><div class="casemapviewport"><iframe loading="lazy" title="OpenStreetMap · регион Bodensee" src="https://www.openstreetmap.org/export/embed.html?bbox='+bbox+'&layer=mapnik" referrerpolicy="no-referrer" tabindex="-1"></iframe><div class="casemappins">'+pins+'</div><span class="casemapcredit">© OpenStreetMap contributors</span></div><div class="casemaplegend"><span><i></i> Демо-проекты по центру города</span><button data-route="projects">Все проекты →</button></div><p class="casemapnote">На карте отмечены только демо-проекты с известными координатами. Реальные адреса пока не геокодируются.</p></section>';
+  // Schematic Bodensee region; project pins use grounded demo city coordinates.
+  // Unknown real-world addresses are never silently geocoded.
+  const bounds={west:8.68,east:9.37,south:47.52,north:47.98};
+  const placed=state.cases.map(c=>({c,coord:c.id.startsWith("demo-")?demoCaseLocations[c.city]:null})).filter(x=>x.coord);
+  const pins=placed.map(({c,coord})=>{
+    const x=100*(coord[1]-bounds.west)/(bounds.east-bounds.west);
+    const y=100*(bounds.north-coord[0])/(bounds.north-bounds.south);
+    return '<button class="mapcasepin" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%" data-route="case/'+esc(c.id)+'" title="'+esc(c.title+' · '+c.city)+'" aria-label="Открыть проект '+esc(c.title)+'"><span></span></button>';
+  }).join("");
+  const schematic=[
+    '<div class="casemap-schematic" role="img" aria-label="Схематическая карта Боденского озера: Stockach, Singen, Überlingen, Konstanz">',
+    '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">',
+    '<defs><linearGradient id="lake-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#205a77"/><stop offset="1" stop-color="#157b93"/></linearGradient>',
+    '<linearGradient id="map-ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2b5260"/><stop offset="1" stop-color="#183a4d"/></linearGradient></defs>',
+    '<rect width="100" height="100" fill="url(#map-ground)"/>',
+    '<g stroke="#5b8a89" stroke-width=".35" opacity=".31" fill="none">',
+    '<path d="M-6 14 Q25 8 44 17 T109 13"/><path d="M-10 35 Q25 26 51 35 T108 27"/><path d="M-9 55 Q22 46 47 56 T109 49"/><path d="M-7 82 Q22 75 41 86 T105 78"/>',
+    '<path d="M10 -8 Q2 32 14 61 T12 112"/><path d="M41 -8 Q30 24 39 57 T30 109"/><path d="M76 -8 Q69 23 78 56 T69 112"/></g>',
+    '<g stroke="#9baaa3" stroke-width=".86" stroke-linecap="round" opacity=".51" fill="none">',
+    '<path d="M-5 32 C15 26 22 43 34 38 S55 28 71 44 S91 35 106 42"/>',
+    '<path d="M2 63 C21 48 29 50 47 33 S71 26 103 19"/>',
+    '<path d="M12 101 Q23 76 43 68 T72 70 Q87 84 112 68"/>',
+    '<path d="M39 -5 Q50 20 46 32 T71 72"/></g>',
+    '<path d="M61 41 C68 40 70 43 76 43 C83 42 86 45 103 43 L105 73 C93 77 86 69 80 64 C74 60 68 60 64 64 C62 61 58 56 58 50 Z" fill="url(#lake-gradient)" stroke="#75bbc7" stroke-width=".48"/>',
+    '<path d="M67 64 C59 64 56 72 50 71 C43 68 39 75 38 82 C47 83 52 79 56 78 C61 78 67 77 72 72 Z" fill="#246f86" stroke="#75bbc7" stroke-width=".4"/>',
+    '<g fill="#c2dbe0" font-family="system-ui,-apple-system,Arial,sans-serif" font-weight="650" font-size="3.8" letter-spacing=".15">',
+    '<text x="40" y="22">STOCKACH</text><text x="9" y="44">SINGEN</text><text x="68" y="34">ÜBERLINGEN</text><text x="72" y="78">KONSTANZ</text>',
+    '<text x="72" y="55" font-size="3.4" fill="#b2e8f1" font-style="italic">BODENSEE</text></g>',
+    '<g transform="translate(6 8)" stroke="#c9eaed" fill="none" stroke-width=".6"><path d="M0 7 L0 0 M-2.3 4 L0 0 L2.3 4"/></g>',
+    '<text x="4.6" y="19" font-family="system-ui" fill="#c9eaed" font-size="3">N</text></svg></div>'
+  ].join("");
+  return '<section class="panel casemap"><div class="panelhead"><h2>Карта проектов</h2><small>'+placed.length+' с отметками · '+state.cases.length+' всего</small></div><div class="casemapviewport">'+schematic+'<div class="casemappins">'+pins+'</div><span class="casemapcredit">СХЕМА РЕГИОНА</span></div><div class="casemaplegend"><span><i></i> Демо-проекты</span><button data-route="projects">Все проекты →</button></div><p class="casemapnote">Карта схематическая. Точки показывают только проекты с известными координатами.</p></section>';
 }
 function dashboard(){
  const active=state.shards.filter(s=>s.status!=="accepted");
