@@ -487,7 +487,16 @@ function edit(kind,id){
 }
 document.addEventListener("click",async e=>{
  const phTab=e.target.closest('[data-action="project-tab"]');
- if(phTab){projectHubTab=phTab.dataset.tab;projectHubFilter="all";projectHubQuery="";render();return}
+ if(phTab){projectHubTab=phTab.dataset.tab;projectHubFilter="all";projectHubQuery="";projectHubCity="all";projectHubKind="all";render();return}
+ const phSave=e.target.closest('[data-action="project-save"]');
+ if(phSave){
+   const id=phSave.dataset.id;
+   if(!state.cases.some(c=>c.id===id))return;
+   const saved=projectHubSaved();
+   saved.has(id)?saved.delete(id):saved.add(id);
+   try{localStorage.setItem(projectHubSavedKey(),JSON.stringify([...saved]));render()}catch(err){alert("Не удалось сохранить закладку: "+err.message)}
+   return;
+ }
  const phFilter=e.target.closest('[data-action="project-filter"]');
  if(phFilter){projectHubFilter=phFilter.dataset.filter;render();return}
  if(e.target.closest('[data-action="feed-view"]')){const view=e.target.closest("[data-action]").dataset.view;if(["all","posts","work"].includes(view)){communityFeedView=view;render()}return}
@@ -516,7 +525,10 @@ document.addEventListener("click",async e=>{
 });
 document.addEventListener("submit",e=>{const form=e.target;if(form.id!=="social-compose"&&!form.matches(".socialcommentform"))return;e.preventDefault();const d=socialData(),isPost=form.id==="social-compose",value=String(new FormData(form).get(isPost?"text":"comment")||"").trim();if(!value||value.length>(isPost?1200:500))return;try{if(isPost){const caseId=new FormData(form).get("caseId");d.posts.push({id:crypto.randomUUID(),author:state.actor,created:new Date().toISOString(),text:value,caseId:state.cases.some(c=>c.id===caseId)?caseId:null,likes:[],comments:[]})}else{const p=d.posts.find(x=>x.id===form.dataset.post);if(!p)return;p.comments.push({id:crypto.randomUUID(),author:state.actor,text:value})}localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}});
 function syncMoveFields(){const type=$("#fields [name=type]")?.value;const wrap=$("#move-shard-wrap");if(!wrap)return;const linked=type==="issue"||type==="return";wrap.hidden=!linked;const picker=wrap.querySelector("select");if(picker)picker.required=linked;const reason=$("#fields [name=reason]");if(reason)reason.required=type==="writeoff";}
-document.addEventListener("change",async e=>{if(e.target.name==="type"&&pending?.kind==="move")syncMoveFields();
+document.addEventListener("change",async e=>{
+ if(e.target.id==="ph-city"){projectHubCity=e.target.value;filterProjectHub();return}
+ if(e.target.id==="ph-kind"){projectHubKind=e.target.value;filterProjectHub();return}
+ if(e.target.name==="type"&&pending?.kind==="move")syncMoveFields();
  if(e.target.id==="actor")await change(()=>apply(state,"actor",{id:e.target.value}));
  if(e.target.id==="import"&&lead()&&e.target.files.length){try{
  const file=e.target.files[0];if(file.size>5000000)throw Error("Файл больше 5 МБ");
