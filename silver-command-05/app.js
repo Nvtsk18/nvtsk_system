@@ -72,7 +72,7 @@ function dashboard(){
  const quick='<div class="actions">'+action("layers","Новый кейс","new-case")+action("box","Новый шард",state.cases.length?"new-shard":"new-case",null)+action("check","Приёмка",null,"tasks")+action("van","Выдача со склада",null,"garage")+action("settings","Учёт материалов",null,"garage")+action("screen","Задания монтажника",null,"field")+'</div>';
  const tasks=open.slice(0,3).map((s,i)=>'<button class="tasklink" data-route="case/'+esc(s.caseId)+'"><span class="taskcheck">'+""+'</span><span>'+esc(s.title)+'</span><small>'+esc(statusName[s.status])+'</small></button>').join("")||"<p>Очередь пуста</p>";
  const footer='<div class="future"><span>'+icon("layers")+' Академия <small>Скоро</small></span><button data-route="settings">'+icon("team")+' Документы</button><button data-route="pulse">'+icon("coins")+' Токеномика (Merit)</button><span>'+icon("pulse")+' Синхронизация <small>Скоро</small></span><span>'+icon("settings")+' Интеграции <small>Скоро</small></span></div>';
- return '<section class="hero"><div><h1>Добро пожаловать в NVTSK <em>//</em></h1><p>Оперативное управление PV-проектами</p></div></section><div class="stats desktopmetrics">'+statsHtml+'</div><div class="columns">'+panel("Активные кейсы ("+state.cases.length+")","projects",caseRows)+'<div>'+panel("Шарды (в работе)","tasks",shardRows)+panel("Гараж / Автопарк","garage",'<div class="fleet">'+cars+'</div>')+'</div><div>'+panel("Быстрые действия","projects",quick)+panel("Ближайшие задачи","tasks",tasks)+'</div></div>'+caseMiniMap()+footer;
+ return '<section class="hero"><div><h1>Добро пожаловать в NVTSK <em>//</em></h1><p>Оперативное управление PV-проектами</p></div></section><div class="stats desktopmetrics">'+statsHtml+'</div><div class="columns">'+panel("Активные кейсы ("+state.cases.length+")","projects",caseRows)+'<div>'+panel("Шарды (в работе)","tasks",shardRows)+panel("Гараж / Автопарк","garage",'<div class="fleet">'+cars+'</div>')+'</div><div>'+panel("Быстрые действия","projects",quick)+panel("Ближайшие задачи","tasks",tasks)+'</div></div>'+caseMiniMap()+panel('Сообщество','social','<div class="socialteaser"><img src="art/roof.webp" alt=""><div><strong>Новости с объектов</strong><p>Публикации и обсуждения команды</p><button data-route="social">Открыть ленту →</button></div></div>')+footer;
 }
 const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+action+'</div>';
 function projects(){return heading("Case / Проекты",button("＋ Новый Case","new-case")+button("⚡ Электромонтаж","new-electrical"))+'<div class="cards">'+state.cases.map(c=>'<section class="panel item"><h2>'+esc(c.title)+'</h2><p>⌖ '+esc(c.city)+' · '+money(c.price)+' €</p><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div><button class="action" data-route="case/'+esc(c.id)+'">Открыть Case →</button></section>').join("")+'</div>'}
@@ -173,7 +173,18 @@ function pulse(){
  '<p class="pulsehint">Merit создаётся только при создании Case. Shard распределяет уже существующий Merit, не создавая новый.</p>';
 }
 function settings(){return heading("Настройки")+profile()+'<div class="panel tools"><button data-route="team">Команда и роли</button>'+button(lab?"Вернуться к рабочим данным":"Тестовая копия","sandbox")+button("Экспорт JSON","export")+(lead()?'<label>Импорт JSON<input id="import" type="file" accept=".json,application/json"></label>'+ (history.length?button("Time Machine · отменить последнюю операцию","undo"):""):"")+'</div><p>Профили действуют на этом устройстве. История хранит последние 10 операций.</p>'}
-const pages={dashboard,projects,garage,tasks,team,field,settings,pulse};
+
+const SOCIAL_KEY=BASE+"_social";
+function socialData(){try{const d=JSON.parse(localStorage.getItem(SOCIAL_KEY)||'{"posts":[]}');return Array.isArray(d.posts)?d:{posts:[]}}catch{return {posts:[]}}}
+function social(){
+ const d=socialData(),people=Object.fromEntries(state.crew.map(c=>[c.id,c.name]));
+ const posts=d.posts.slice().reverse().map(p=>{
+ const c=state.cases.find(c=>c.id===p.caseId),likes=p.likes||[],comments=p.comments||[];
+ return '<article class="socialpost"><div class="socialauthor"><span class="socialavatar">'+esc((people[p.author]||"?").slice(0,1))+'</span><div><strong>'+esc(people[p.author]||"Участник")+'</strong><small>'+esc(new Date(p.created).toLocaleString("ru-RU"))+'</small></div></div><p>'+esc(p.text)+'</p>'+(c?'<button data-route="case/'+esc(c.id)+'">Case: '+esc(c.title)+' →</button>':'')+'<div class="socialactions"><button data-action="social-like" data-id="'+esc(p.id)+'">'+(likes.includes(state.actor)?"♥":"♡")+' '+likes.length+'</button><span>Комментарии '+comments.length+'</span></div><div class="socialcomments">'+comments.map(x=>'<p><strong>'+esc(people[x.author]||"Участник")+':</strong> '+esc(x.text)+'</p>').join("")+'</div><form class="socialcommentform" data-post="'+esc(p.id)+'"><input required maxlength="500" name="comment" placeholder="Комментарий"><button type="submit">Отправить</button></form></article>';
+ }).join("")||'<div class="socialempty"><img src="art/roof.webp" alt=""><p>Публикаций пока нет. Расскажите команде о ходе работ.</p></div>';
+ return heading("Сообщество")+'<section class="socialhero"><img src="art/roof.webp" alt=""><div><h2>Лента команды</h2><p>Новости объектов, вопросы и опыт монтажников</p></div></section><section class="panel socialcomposer"><h2>Новая публикация</h2><form id="social-compose"><textarea name="text" required maxlength="1200" rows="3" placeholder="Что нового на объекте?"></textarea><div class="socialcomposeactions"><select name="caseId"><option value="">Без Case</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.title)+'</option>').join("")+'</select><button type="submit">Опубликовать</button></div></form></section><div class="socialfeed">'+posts+'</div><p class="socialnotice">Публикации сохраняются только на этом устройстве. Это не общий онлайн-чат. Не публикуйте персональные данные клиентов.</p>';
+}
+const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social};
 function render(){
  const r=location.hash.slice(1)||"dashboard";
  $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
@@ -204,6 +215,8 @@ function edit(kind,id){
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
+ if(e.target.closest('[data-action="social-like"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
+
  const b=e.target.closest("[data-route],[data-action]");if(!b)return;
  if(b.dataset.route){location.hash=b.dataset.route;return}
  const a=b.dataset.action,id=b.dataset.id;
@@ -222,6 +235,7 @@ document.addEventListener("click",async e=>{
  const url=URL.createObjectURL(new Blob([damaged?raw:JSON.stringify(state,null,2)],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="nvtsk-05.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
  }
 });
+document.addEventListener("submit",e=>{const form=e.target;if(form.id!=="social-compose"&&!form.matches(".socialcommentform"))return;e.preventDefault();const d=socialData(),isPost=form.id==="social-compose",value=String(new FormData(form).get(isPost?"text":"comment")||"").trim();if(!value||value.length>(isPost?1200:500))return;try{if(isPost){const caseId=new FormData(form).get("caseId");d.posts.push({id:crypto.randomUUID(),author:state.actor,created:new Date().toISOString(),text:value,caseId:state.cases.some(c=>c.id===caseId)?caseId:null,likes:[],comments:[]})}else{const p=d.posts.find(x=>x.id===form.dataset.post);if(!p)return;p.comments.push({id:crypto.randomUUID(),author:state.actor,text:value})}localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}});
 document.addEventListener("change",async e=>{
  if(e.target.id==="actor")await change(()=>apply(state,"actor",{id:e.target.value}));
  if(e.target.id==="import"&&lead()&&e.target.files.length){try{
@@ -274,7 +288,7 @@ $("#editor").onsubmit=async e=>{
  }catch(error){alert(error.message||"Ошибка вложения")}
  finally{submit.disabled=false}
 };
-const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты"],["garage","box","Склад"],["tasks","check","Задачи"],["settings","settings","Настройки"]];
+const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты"],["garage","box","Склад"],["tasks","check","Задачи"],["social","team","Лента"],["settings","settings","Настройки"]];
 $("#nav").innerHTML=navigation.map(([route,sym,name])=>'<button data-route="'+route+'">'+icon(sym)+'<span>'+name+'</span></button>').join("");
 document.querySelector('.mode [data-route="dashboard"]').innerHTML=icon("screen")+" Command Mode";
 document.querySelector('.mode [data-route="field"]').innerHTML=icon("field")+" Field Mode";
