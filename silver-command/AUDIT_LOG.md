@@ -517,3 +517,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Perspectives reviewed, not runtime tested:** manager restoring a project backup that excludes a consumed-material project; warehouse custodian with corrupted/locked Garage; field installer encountering an import form. No real authentication is implemented.
 
 **Remaining P0:** combined atomic/crash-recoverable Case/Shard/Garage import with rollback; schema migration without silent truncation; three-role runtime security tests; real mobile browser navigation and full workflow. Preserve separate backups; do not claim MVP is ready.
+
+
+## Iteration · 2026-11-22 05:00 CET · fail-closed lossy startup
+
+**Code commit:** `ea075ab294f20b4fe9d5b22797296205e28ee118` (`silver-command/app.js` only).
+
+**Critical issue:** normalize() may discard invalid stage/post entries and emit recoveryWarnings during initial load. Previously storageError was shown but recoveryLock stayed false, so any later save could overwrite the original localStorage record with the truncated in-memory version. This is silent data-loss risk.
+
+**Fix:** when initial normalization reports recoveryWarnings, activate recoveryLock before any user action. Existing save() refuses writes while locked, existing combined export refuses locked state, and the raw-original export action remains available. No destructive automatic migration was attempted.
+
+**Checks executed:** fetched current app.js and AUDIT_LOG.md; exact unique source anchor and lock-before-save ordering PASS; GitHub update succeeded; fetched committed app.js and parsed complete source with V8 Function constructor PASS. Static check confirmed combined exporter rejects recoveryLock. No browser reload, storage fault injection, three-role authorization, actual iPhone Safari or end-to-end test this run. These remain NOT RUN. The UI still has potentially misleading legacy text, and the combined import remains unimplemented.
+
+**Next:** validated combined Case/Shard/Garage restore with crash-safe journal or one-envelope storage migration; verify old backups without truncation; execute actual browser persistence, role-conflict and navigation tests. Keep original records and separate backups. MVP not ready.
