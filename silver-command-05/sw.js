@@ -1,5 +1,5 @@
-const CACHE="nvtsk-05-recovery-10";
-const CORE=["./","./index.html","./model.js","./app.js?v=10","./style.css?v=10"];
+const CACHE="nvtsk-05-reference-11";
+const CORE=["./","./index.html","./model.js","./app.js?v=11","./style.css?v=11"];
 self.addEventListener("install",event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);await Promise.allSettled(CORE.map(async path=>{const req=new Request(path,{cache:"reload"});const res=await fetch(req);if(res.ok)await cache.put(req,res)}));await self.skipWaiting()})())});
 self.addEventListener("activate",event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE&&key.startsWith("nvtsk-"))await caches.delete(key);await self.clients.claim()})())});
 self.addEventListener("fetch",event=>{
