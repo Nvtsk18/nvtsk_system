@@ -330,7 +330,7 @@ with sync_playwright() as pw:
         expect(page.locator(".socialpost")).to_have_count(0)
         expect(page.locator(".community-work-event")).to_have_count(1)
         assert not page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent_social')).posts.length"""), "Deleting own post must persist"
-                route("settings")
+        route("settings")
         expect(page.locator(".company-identity-settings")).to_contain_text("SolAn Plus GmbH")
         expect(page.locator(".company-identity-settings")).to_contain_text("NVTSK SYSTEM")
         route("projects")
