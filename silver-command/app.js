@@ -5,7 +5,7 @@ const $ = s => document.querySelector(s);
 const encode = v => String(v ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 const money = n => Number(n || 0).toLocaleString("ru-RU");
 const uuid = () => "lot-" + Math.random().toString(36).slice(2,10);
-const tabs = [["dashboard","⌂","Главная"],["map","⌾","Карта"],["projects","▤","Проекты"],["garage","▦","Склад"],["chats","☷","Чаты"],["profile","◉","Профиль"]];
+const tabs = [["dashboard","⌂","Главная"],["projects","▤","Проекты"],["garage","▦","Склад"],["tasks","☑","Задачи"],["settings","⚙","Настройки"]];
 const kinds = [["PLAN","Projektierung"],["DC","DC-Montage"],["AC","AC-Anschluss"],["REG","Anmeldung"]];
 const initial = [
   {id:"stock",title:"20 кВт DC • Stockach",city:"Stockach",client:"Демо Solarbau Süd",price:2000,kind:"DC",creator:"demo-client",parent:null,members:[],bids:[]},
@@ -93,11 +93,22 @@ function item(l) {
   return panel(badge(l.kind) + '<h3 style="font-size:19px;margin-top:12px">' + encode(l.title) + '</h3><p>' + encode(l.client) + '</p><div class="stat" style="margin:10px 0">' + money(l.price) + ' €</div><div class="small muted">' + role(l) + '</div>'+pulseView(l)+'<div style="margin-top:12px">' + button("lot","Открыть лот",l.id) + '</div>');
 }
 function overview() {
-  return '<div class="stack">' + (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong><p class="small">Исходные данные доступны для экспорта, если браузер разрешает чтение.</p>'+button("export-raw","↓ Сохранить исходную запись")):"") + '<section class="glass hero"><div class="overline">NVTSK SILVER COMMAND / 0.4</div><h2 style="font-size:30px;margin:12px 0">Управление PV-проектами</h2><p>Единая система для заказчиков, монтажных бригад, документов, общения и профессионального развития.</p><div style="margin-top:17px">' + button("new","＋ Создать лот") + '</div></section><div class="grid g3">' +
-  panel('<div class="statlabel">Проекты</div><div class="stat">'+state.lots.length+'</div>') +
-  panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>') +
-  panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>') +
-  '</div>' + panel('<h2>Недавние объекты</h2>' + state.lots.filter(l=>!l.parent).map(l=>'<div class="listrow"><div><b>'+encode(l.title)+'</b><div class="small muted">'+role(l)+'</div></div>'+button("lot","Открыть",l.id)+'</div>').join("")) + '</div>';
+ const roots=state.lots.filter(l=>!l.parent);
+ const children=state.lots.filter(l=>l.parent);
+ const accepted=state.stages.filter(s=>s.status==="accepted").length;
+ const waiting=state.stages.filter(s=>s.status==="submitted").length;
+ const active=roots.slice(0,4);
+ return '<div class="stack command-home">'+
+ (storageError?panel('<strong>⚠ '+encode(storageError)+'</strong><p class="small">Перед изменениями сохраните исходные данные.</p>'+button("export-raw","↓ Сохранить исходную запись")):"")+
+ '<section class="glass hero command-hero"><div class="overline">NVTSK SYSTEM / SILVER COMMAND 0.4</div><span class="pill green">● LOCAL DEMO</span><h2>Ваш центр управления PV</h2><p>Проекты, монтажные этапы, исполнители и материалы. Все данные остаются в этом браузере.</p><div class="row command-actions">'+button("new","＋ Новый Case")+ '<a class="btn" href="#projects" data-screen="projects">Открыть проекты</a></div></section>'+
+ '<div class="grid g4 command-stats">'+
+ panel('<div class="statlabel">Активные Case</div><div class="stat">'+roots.length+'</div><p class="small">Локальные проекты</p>')+
+ panel('<div class="statlabel">Рабочие Shard</div><div class="stat">'+children.length+'</div><p class="small">Сублоты проектов</p>')+
+ panel('<div class="statlabel">Принято этапов</div><div class="stat">'+accepted+'</div><p class="small">Только демоприёмка</p>')+
+ panel('<div class="statlabel">Ожидают проверки</div><div class="stat">'+waiting+'</div><p class="small">Фотоэтапы</p>')+'</div>'+
+ '<div class="grid maincols">'+panel('<div class="between"><h2>Активные проекты</h2><a href="#projects" data-screen="projects" class="btn sm">Все проекты</a></div>'+
+ (active.length?active.map(l=>'<div class="listrow"><div><b>'+encode(l.title)+'</b><div class="small muted">'+encode(l.city||"Без локации")+' · '+encode(role(l))+'</div>'+pulseView(l)+'</div>'+button("lot","Открыть",l.id)+'</div>').join(""):'<p>Создайте первый проект.</p>'))+
+ panel('<h2>Быстрые действия</h2><div class="action-list"><a href="#projects" data-screen="projects">▤ Управление проектами</a><a href="#garage" data-screen="garage">▦ Материалы и склад</a><a href="#tasks" data-screen="tasks">☑ Задачи и приёмка</a><a href="#settings" data-screen="settings">⚙ Настройки и резервные копии</a></div><p class="small" style="margin-top:16px">Field Mode и Command Mode: общий локальный прототип, без реальной авторизации.</p>')+'</div></div>';
 }
 function market() {
  return '<div class="stack">'+panel('<h2>Карта и биржа</h2><p>Пока схема региона и демо-объекты. Для реального поиска потребуется геокодирование и сервер.</p>') +
@@ -195,12 +206,24 @@ function profile() {
  '<p class="small">⚠ Общий экспорт включает проекты и Garage, но пока архивный: единое восстановление не поддерживается. Сохраните также отдельные резервные копии. Импорт ниже принимает только копию проектов и не меняет Garage.</p><div style="margin:12px 0" class="row">'+button("export","↓ Архив Case + Garage (без общего импорта)")+button("import","↑ Импорт только проектов")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
  panel('<h2>Команда и MentorGate</h2><p>Здесь будут навыки, Merit, финансовая история, капитан и администраторы бригад, наставничество и личные проекты.</p><div class="tile">'+state.crew.map(encode).join(" • ")+'</div>')+'</div>';
 }
+function tasks() {
+ const stages=state.stages||[];
+ const statuses={draft:"Черновик",submitted:"На проверке",accepted:"Принято",returned:"На исправлении"};
+ return '<div class="stack">'+panel('<div class="between"><h2>Задачи · фотоэтапы</h2><span class="pill">DEMO</span></div><p>Откройте проект, чтобы создать этап, приложить свидетельства и провести независимую демоприёмку.</p>')+
+ '<div class="grid g3">'+panel('<div class="statlabel">Всего этапов</div><div class="stat">'+stages.length+'</div>')+panel('<div class="statlabel">На проверке</div><div class="stat">'+stages.filter(s=>s.status==="submitted").length+'</div>')+panel('<div class="statlabel">Принято</div><div class="stat">'+stages.filter(s=>s.status==="accepted").length+'</div>')+'</div>'+
+ panel('<h2>Список задач</h2>'+(stages.length?stages.map(t=>{const l=find(t.lotId);return '<div class="listrow"><div><b>'+encode(t.title)+'</b><div class="small muted">'+encode(l?.title||"Неизвестный проект")+' · '+encode(statuses[t.status]||t.status)+'</div></div>'+(l?button("lot","Открыть",l.id):"")+'</div>'}).join(""):'<p>Задач пока нет. Создайте этап внутри проекта.</p>'))+'</div>';
+}
+function settings() {
+ return '<div class="stack">'+panel('<div class="between"><h2>Настройки системы</h2><span class="pill">LOCAL FIRST</span></div><p>Профиль и данные доступны сейчас. Остальные модули появятся после стабилизации MVP.</p>')+
+ profile()+
+ panel('<h2>Следующие модули</h2><div class="settings-modules">'+["Организация","Уведомления","Рабочие процессы","Автопарк","Интеграции","Синхронизация","Безопасность","Токеномика"].map(x=>'<div class="tile"><b>'+x+'</b><span class="pill">Скоро</span></div>').join("")+'</div>')+'</div>';
+}
 function render() {
  for (const sel of ["#desktopNav","#mobileNav"]) {
    $(sel).innerHTML = tabs.map(t=>'<a href="#'+t[0]+'" data-screen="'+t[0]+'" class="'+(screen===t[0]?"active":"")+'"><span class="ico">'+t[1]+'</span>'+t[2]+'</a>').join("");
  }
  $("#screenTitle").textContent = tabs.find(t=>t[0]===screen)?.[2] || "Лот";
- const view = screen==="dashboard"?overview():screen==="map"?market():screen==="projects"?projects():screen==="chats"?chat():screen==="profile"?profile():screen==="garage"?(window.NVTSK_GARAGE?.render()||"<p>Склад недоступен</p>"):lotScreen();
+ const view = screen==="dashboard"?overview():screen==="map"?market():screen==="projects"?projects():screen==="chats"?chat():screen==="profile"?profile():screen==="tasks"?tasks():screen==="settings"?settings():screen==="garage"?(window.NVTSK_GARAGE?.render()||"<p>Склад недоступен</p>"):lotScreen();
  $("#app").innerHTML=view;
 }
 window.NVTSK_GARAGE_REFRESH=()=>{if(screen==="garage")render()};
