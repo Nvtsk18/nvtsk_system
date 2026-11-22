@@ -229,18 +229,19 @@ function communityStats(c){
   const accepted=owned.filter(sh=>sh.status==="accepted").length;
   const tasks=state.tasks.filter(t=>t.assignee===c.id||(t.assignee===null&&owned.some(sh=>sh.id===t.shardId)));
   const done=tasks.filter(t=>t.status==="done").length;
+  const verified=tasks.filter(t=>t.status==="done"&&state.shards.some(sh=>sh.id===t.shardId&&sh.status==="accepted")).length;
   const projects=new Set(owned.map(sh=>sh.caseId));
   for(const t of tasks){const sh=state.shards.find(sh=>sh.id===t.shardId);if(sh)projects.add(sh.caseId)}
-  const xp=accepted*60+done*15;
+  const xp=accepted*60+verified*15;
   const next=[100,300,650].find(n=>n>xp)||650;
   const prev=xp>=300?300:xp>=100?100:0;
   const percent=xp>=650?100:Math.round(100*(xp-prev)/(next-prev));
   const badges=[];
   if(c.role===roles[0])badges.push(["shield-check","Координатор"]);
   if(accepted>0)badges.push(["check-circle","Первый Shard"]);
-  if(done>=5)badges.push(["list-checks","5 Tasks"]);
+  if(verified>=5)badges.push(["list-checks","5 принятых Tasks"]);
   if(accepted>=3)badges.push(["award","Надёжный партнёр"]);
-  return {accepted,assigned:owned.length,done,tasks:tasks.length,projects:projects.size,xp,next,percent,badges,level:communityLevel(xp)};
+  return {accepted,assigned:owned.length,done,verified,tasks:tasks.length,projects:projects.size,xp,next,percent,badges,level:communityLevel(xp)};
 }
 function memberAvatar(c,large=false){
   return '<span class="community-avatar'+(large?" is-large":"")+'">'+(c.avatar?'<img src="'+esc(c.avatar)+'" alt="">':'<span>'+esc((c.name||"?").trim().slice(0,1).toUpperCase())+'</span>')+'</span>';
@@ -263,7 +264,7 @@ function team(){
   if(view==="feed")return communityShell(view,social());
   if(view==="achievements"){
     const members=state.crew.map(c=>({c,stats:communityStats(c)})).sort((a,b)=>b.stats.xp-a.stats.xp);
-    const body='<section class="community-section"><div class="community-section-head"><h2>Путь мастерства</h2><small>Проверяемые результаты работ</small></div><p class="community-muted">XP — отдельная пилотная оценка прогресса. 60 XP за принятый Shard и 15 XP за завершённую Task. Финансовые Merit не затрагиваются.</p><div class="community-levels"><span>Новичок</span><span>Практик</span><span>Специалист</span><span>Эксперт</span></div><div class="community-rank-list">'+members.map((entry,i)=>'<button data-route="member/'+esc(entry.c.id)+'" class="community-rank-row"><b>#'+(i+1)+'</b>'+memberAvatar(entry.c)+'<span><strong>'+esc(entry.c.name)+'</strong><small>'+esc(entry.stats.level)+' · '+entry.stats.accepted+' Shards принято</small></span><strong>'+entry.stats.xp+' XP</strong></button>').join("")+'</div></section>';
+    const body='<section class="community-section"><div class="community-section-head"><h2>Путь мастерства</h2><small>Проверяемые результаты работ</small></div><p class="community-muted">XP — отдельная пилотная оценка прогресса. 60 XP за принятый Shard и 15 XP за выполненную Task внутри принятого Shard. Финансовые Merit не затрагиваются.</p><div class="community-levels"><span>Новичок</span><span>Практик</span><span>Специалист</span><span>Эксперт</span></div><div class="community-rank-list">'+members.map((entry,i)=>'<button data-route="member/'+esc(entry.c.id)+'" class="community-rank-row"><b>#'+(i+1)+'</b>'+memberAvatar(entry.c)+'<span><strong>'+esc(entry.c.name)+'</strong><small>'+esc(entry.stats.level)+' · '+entry.stats.accepted+' Shards принято</small></span><strong>'+entry.stats.xp+' XP</strong></button>').join("")+'</div></section>';
     return communityShell(view,body);
   }
   const roster=state.crew.map(c=>{
