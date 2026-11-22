@@ -87,7 +87,7 @@ with sync_playwright() as pw:
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Стоимость").fill("250");save()
         route("garage");fits();capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
-        expect(page.get_by_text("Остаток · 22")).to_be_visible()
+        expect(page.locator(".stockitem").filter(has_text="Einlegeschiene").get_by_text("22",exact=True)).to_be_visible()
         page.locator('.mode [data-route=field]').click()
         page.locator('#actor').select_option("member-0")
         task=page.locator("article.taskrow").filter(has_text="QA монтаж")
