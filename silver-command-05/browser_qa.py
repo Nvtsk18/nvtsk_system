@@ -38,6 +38,11 @@ with sync_playwright() as pw:
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
         # Approved reference v66: exact information architecture, live data and mobile fit.
         expect(page.locator(".ref66")).to_be_visible()
+        expect(page.locator(".ref66-map-wide .casemapviewport")).to_be_visible()
+        assert page.locator(".ref66-map-wide [data-route=projects]").count()==0, "Duplicate map navigation"
+        map_width=page.locator(".ref66-map-wide").bounding_box()["width"]
+        content_width=page.locator(".ref66").bounding_box()["width"]
+        assert map_width>=content_width-50, f"Map is too narrow: {map_width} vs {content_width}"
         expect(page.locator(".ref66-greeting h1")).to_have_text("NVTSK SYSTEM")
         expect(page.locator(".ref66-metrics .ref66-kpi")).to_have_count(5)
         expect(page.locator(".ref66-projects")).to_be_visible()
