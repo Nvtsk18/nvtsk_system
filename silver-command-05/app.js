@@ -77,11 +77,23 @@ function shardRow(s){
   if(s.status==="submitted" && lead() && state.actor!==s.assignee)actions+=button("Принять","accept",s.id)+button("На доработку","revise",s.id);
   return '<article class="taskrow"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small></div><div>'+actions+'</div></article>';
 }
+function caseMaterialHistory(caseId){
+ const related=new Set(state.shards.filter(s=>s.caseId===caseId).map(s=>s.id));
+ const moves=state.moves.filter(m=>related.has(m.shardId)).slice().reverse();
+ if(!moves.length)return '<p>Движений материалов нет</p>';
+ return moves.map(m=>{
+  const item=state.garage.find(x=>x.id===m.itemId);
+  const shard=state.shards.find(x=>x.id===m.shardId);
+  const operator=state.crew.find(x=>x.id===m.actor);
+  const kind={issue:"Выдача",return:"Возврат",receive:"Приход"}[m.type]||m.type;
+  return '<div class="taskrow"><div><strong>'+esc(kind)+' · '+esc(item?.title||"Материал")+' · '+esc(m.qty)+'</strong><small>'+esc(shard?.title||"Shard")+' · '+esc(operator?.name||"Участник")+'</small></div></div>';
+ }).join("");
+}
 function detail(id){
   const c=state.cases.find(x=>x.id===id);
   if(!c)return heading("Case не найден");
   const shards=state.shards.filter(s=>s.caseId===id);
-  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="garage">Garage</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section>';
+  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="garage">Garage</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section><section class="panel"><h2>Материалы Case · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 function garage(){
   const moves=state.moves.slice().reverse();
