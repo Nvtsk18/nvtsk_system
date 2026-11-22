@@ -78,3 +78,24 @@ main{margin:0;padding:8px 1.55vw 0;min-height:0;max-width:1920px;margin-inline:a
 
 /* Prevent 768px grid chips from extending outside the viewport. */
 @media(min-width:701px) and (max-width:900px){.future{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.future>*{min-width:0;max-width:100%;gap:5px;padding:5px 7px;overflow:hidden;font-size:11px}.future small{min-width:0;max-width:100%;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;padding:2px 4px}.future .ui-icon{width:20px;height:20px;flex-shrink:0}}
+
+/* Silver Command design refinement: consistent depth, hierarchy, and controls */
+:root{--surface-raised:#162b39;--line-soft:#416073;--glow:#00dbe926}
+button,a,input,select,textarea{transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.panel,.stat,.mobiletile{border-color:var(--line-soft);box-shadow:inset 0 1px #ffffff18,0 9px 24px #0004}
+.panelhead h2,.panelhead h3{letter-spacing:.015em}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+button:active{transform:translateY(1px)}
+#dialog{border-color:#66899b;background:linear-gradient(160deg,#172c3b,#0d1b27 70%);box-shadow:0 28px 90px #000d,inset 0 1px #ffffff1b}
+#dialog h2{font-size:clamp(19px,2vw,24px);line-height:1.25;letter-spacing:-.02em;margin:0;padding:0 0 13px;border-bottom:1px solid #456578}
+#dialog #fields>label{font-weight:650;letter-spacing:.01em}
+#dialog #fields input:not([type=file]):hover,#dialog #fields select:hover,#dialog #fields textarea:hover{border-color:#7a9aaa}
+#dialog #fields input:focus,#dialog #fields select:focus,#dialog #fields textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--glow);outline:0}
+#dialog #fields input::placeholder,#dialog #fields textarea::placeholder{color:#819cac}
+#dialog #fields [type=file]{border-style:dashed;background:#102735;padding:12px}
+#dialog .buttons{border-top:1px solid #39586b;background:#101f2bf5;backdrop-filter:blur(8px)}
+#dialog .buttons button{min-height:44px;min-width:105px;border-radius:9px;padding:10px 16px;font-weight:750}
+#dialog .buttons .primary{background:linear-gradient(140deg,#05dce8,#0796b4);border-color:#54e6ee;color:#031820;box-shadow:0 4px 18px #00c8df35}
+#dialog .buttons .primary:hover{filter:brightness(1.08)}
+@media(max-width:600px){#dialog .buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}#dialog .buttons button{min-width:0}}
+@media(prefers-reduced-motion:reduce){button,a,input,select,textarea{transition:none}button:active{transform:none}}
