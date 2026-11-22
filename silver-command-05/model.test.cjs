@@ -63,5 +63,34 @@ roleAct('accept',{shardId:'roleshard'});
 deny('move',{id:'closedkeeperissue',type:'issue',qty:1,itemId:'roleitem',shardId:'roleshard'});
 assert.equal(rolesState.garage[0].qty,8);
 validate(rolesState);
+
+/* Explicit hierarchy: Project -> Shard -> Task; legacy records keep their case IDs. */
+let work=validate(migrate({version:1,cases:[],garage:[],crew:[{name:"Worker"}],tasks:[],shards:[]}));
+const w=(type,p)=>{work=apply(work,type,p)};
+const reject=(type,p,re)=>{const snapshot=JSON.stringify(work);assert.throws(()=>w(type,p),re);assert.equal(JSON.stringify(work),snapshot)};
+w("case",{id:"project-1",title:"PV roof",city:"Stockach",price:1000});
+w("shard",{id:"shard-dc",caseId:"project-1",title:"DC installation",kind:"DC",price:600,assignee:"member-0"});
+w("shard",{id:"shard-ac",caseId:"project-1",title:"AC work",kind:"AC",price:400,assignee:null});
+w("task",{id:"task-a",shardId:"shard-dc",title:"Install rails",notes:"Roof safety",assignee:"member-0"});
+w("task",{id:"task-b",shardId:"shard-dc",title:"Lay panels",notes:"",assignee:null});
+assert.equal(work.tasks.length,2);
+assert.equal(work.cases.length,1);
+assert.equal(work.shards.length,2);
+assert.equal(work.shards[0].price,600);
+reject("task",{id:"orphan",shardId:"missing",title:"Impossible",assignee:null},/недоступно/);
+w("actor",{id:"member-0"});
+reject("submit",{shardId:"shard-dc"},/Завершите все задачи/);
+w("task-status",{taskId:"task-a",status:"doing"});
+w("task-status",{taskId:"task-a",status:"done"});
+w("task-status",{taskId:"task-b",status:"done"});
+assert.equal(work.tasks.every(t=>t.status==="done"),true);
+w("submit",{shardId:"shard-dc"});
+reject("task-status",{taskId:"task-a",status:"todo"},/недоступно/);
+w("actor",{id:"lead"});
+w("accept",{shardId:"shard-dc"});
+assert.equal(work.shards[0].status,"accepted");
+assert.equal(work.tasks.length,2);
+assert.equal(work.cases[0].price,1000,"Tasks cannot mint Merit or alter project budget");
+
 assert.equal(base.cases.length,0);
 console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, three-role conflict matrix, seed=42');
