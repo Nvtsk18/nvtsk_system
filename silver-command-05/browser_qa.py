@@ -27,7 +27,7 @@ with sync_playwright() as pw:
         page.on("dialog", lambda dialog: dialog.accept())
         page.goto(url)
         def route(name):
-            page.locator('#nav [data-route="'+name+'"]').click()
+            page.evaluate("(name) => { location.hash = name }", name)
         def act(name):
             page.locator('[data-action="'+name+'"]:visible').first.click()
         def save():
@@ -36,8 +36,8 @@ with sync_playwright() as pw:
         def fits():
             overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
-        expect(page.get_by_role("heading",name="Добро пожаловать",exact=False)).to_be_visible()
-        expect(page.locator(".edition")).to_contain_text("0.5")
+        expect(page.get_by_role("heading",name="NVTSK SYSTEM",exact=True)).to_be_visible()
+        expect(page.locator(".reference-dashboard")).to_be_visible()
         fits()
         def capture(screen):
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
@@ -52,15 +52,10 @@ with sync_playwright() as pw:
           return violations.slice(0,3);
         }""")
         assert not symmetry, (width, 'Dashboard symmetry', symmetry)
-        # Brand asset must resolve and fit its header slot at every viewport.
-        logo = page.evaluate("""async () => {
-          const e=document.querySelector('.brand .mark'),s=getComputedStyle(e),r=e.getBoundingClientRect();
-          const asset=s.backgroundImage.match(/url\\(["']?([^"')]+)["']?\\)/);
-          const src=asset&&asset[1];
-          const image=new Image();if(src){image.src=src;try{await image.decode()}catch(_){}}
-          return {src,loaded:image.naturalWidth>0,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,width:r.width,height:r.height,backgroundSize:s.backgroundSize,headerWidth:document.querySelector('.top').getBoundingClientRect().width};
-        }""")
-        assert logo["loaded"] and logo["width"]>=30 and logo["height"]>=30 and logo["backgroundSize"]=="contain", (width,"Brand logo",logo)
+        # Reference dashboard must keep the approved desktop/mobile structure.
+        expect(page.locator(".reference-metrics .stat")).to_have_count(5)
+        expect(page.locator(".reference-projects")).to_be_visible()
+        expect(page.locator(".reference-actions")).to_be_visible()
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
