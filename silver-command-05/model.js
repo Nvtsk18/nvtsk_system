@@ -49,7 +49,7 @@ globalThis.NVModel = (() => {
     if(p.model3d&&!/^https:\/\/[^\s"'<>]{1,450}$/.test(p.model3d))return false;
     if(!["declaredModules","panelWp","declaredKwp","slopeDeg","eaveHeightM","rafterSpacingCm","roofLengthM"].every(k=>optQty(p[k])))return false;
     const list=(v,max,fn)=>v===undefined||(Array.isArray(v)&&v.length<=max&&v.every(fn)&&new Set(v.map(x=>x.id)).size===v.length);
-    if(!list(p.zones,30,z=>z&&ident(z.id)&&label(z.name)&&optional(z.direction,80)&&optional(z.moduleType,140)&&optional(z.notes,600)&&optQty(z.modules)&&optQty(z.hooks)))return false;
+    if(!list(p.zones,30,z=>z&&ident(z.id)&&label(z.name)&&optional(z.direction,80)&&optional(z.moduleType,140)&&optional(z.roofType,140)&&optional(z.mounting,140)&&optional(z.notes,600)&&optQty(z.modules)&&optQty(z.hooks)&&optQty(z.panelWp)))return false;
     if(!list(p.materials,120,m=>m&&ident(m.id)&&label(m.name)&&optional(m.unit,20)&&optional(m.sku,90)&&optQty(m.qty)))return false;
     if(!list(p.documents,35,d=>d&&ident(d.id)&&label(d.name)&&optional(d.kind,70)&&optional(d.revision,70)&&optional(d.url,700)&&(!d.url||/^https:\/\/[^\s"'<>]{1,680}$/.test(d.url))))return false;
     if(p.checks!==undefined&&(!p.checks||typeof p.checks!=="object"||Object.keys(p.checks).some(k=>!pvChecks.includes(k)||typeof p.checks[k]!=="boolean")))return false;
@@ -166,7 +166,7 @@ globalThis.NVModel = (() => {
         requireValue(["zones","materials","documents"].includes(type),"Некорректный раздел PV");
         const current=c.pvPlan||{},list=(current[type]||[]).slice();
         const item={id:p.id};
-        if(type==="zones")Object.assign(item,{name:p.name,direction:p.direction||"",modules:p.modules===""?null:Number(p.modules),hooks:p.hooks===""?null:Number(p.hooks),moduleType:p.moduleType||"",notes:p.notes||""});
+        if(type==="zones")Object.assign(item,{name:p.name,direction:p.direction||"",modules:p.modules===""?null:Number(p.modules),hooks:p.hooks===""?null:Number(p.hooks),moduleType:p.moduleType||"",roofType:p.roofType||"",mounting:p.mounting||"",panelWp:p.panelWp===""?null:Number(p.panelWp),notes:p.notes||""});
         if(type==="materials")Object.assign(item,{name:p.name,unit:p.unit||"St.",qty:Number(p.qty),sku:p.sku||""});
         if(type==="documents")Object.assign(item,{name:p.name,kind:p.kind||"Andere",url:p.url||"",revision:p.revision||""});
         list.push(item);
