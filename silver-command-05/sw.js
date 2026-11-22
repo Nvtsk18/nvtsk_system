@@ -7,7 +7,7 @@ self.addEventListener("activate",event=>event.waitUntil((async()=>{
 })()));
 self.addEventListener("fetch",event=>{
  if(event.request.method!=="GET"||!event.request.url.startsWith(self.registration.scope))return;
- if(event.request.mode==="navigate"&&!["", "index.html"].includes(event.request.url.split("?")[0].slice(self.registration.scope.length)))return;
+ if(event.request.mode==="navigate"&&!["", "index.html"].includes(new URL(event.request.url).pathname.slice(new URL(self.registration.scope).pathname.length)))return;
  event.respondWith((async()=>{
  const cache=await caches.open(cacheName);
  return await cache.match(event.request.mode==="navigate"?new URL("index.html",self.registration.scope):event.request)||fetch(event.request);
