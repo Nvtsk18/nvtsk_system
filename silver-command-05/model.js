@@ -19,13 +19,14 @@ globalThis.NVModel = (() => {
   }
   function validate(d) {
     requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
-    for (const list of [d.cases,d.shards,d.crew,d.garage,d.moves]) {
+    for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves]) {
       requireValue(list.every(x => x && ident(x.id)) && new Set(list.map(x=>x.id)).size === list.length,"Ошибка идентификаторов");
     }
     const has = (list,id) => list.some(x=>x.id===id);
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников");
-    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Case");
+    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка проекта");
     requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
+    requireValue(d.tasks.every(t=>label(t.title)&&has(d.shards,t.shardId)&&["todo","doing","done"].includes(t.status)&&optional(t.notes,2000)&&(t.assignee===null||has(d.crew,t.assignee))),"Ошибка задачи");
     requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
     const skuKey=m=>m.sku?.trim().toUpperCase();
     const codes=d.garage.map(skuKey).filter(Boolean);
@@ -46,15 +47,29 @@ globalThis.NVModel = (() => {
     const d = JSON.parse(JSON.stringify(source)), actor = d.crew.find(c=>c.id===d.actor);
     const lead = actor.role===roles[0], stock = lead || actor.role===roles[2];
     const s = d.shards.find(s=>s.id===p.shardId);
+    const t = d.tasks.find(t=>t.id===p.taskId);
     const allowed = ok => requireValue(ok,"Действие недоступно для этой роли или статуса");
     switch(action) {
       case "actor": d.actor=p.id; break;
       case "crew": allowed(lead); d.crew.push({id:p.id,name:p.title,role:p.role}); break;
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[]}); break;
       case "shard": allowed(lead);
-        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Стоимость Shard превышает остаток бюджета Case"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
+        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Стоимость Shard превышает остаток бюджета проекта"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
       case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; break;
-      case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); s.status="submitted"; break;
+      case "task": {
+        allowed(s && s.status==="draft" && (lead || s.assignee===actor.id));
+        requireValue(label(p.title)&&optional(p.notes,2000),"Укажите название и описание задачи");
+        d.tasks.push({id:p.id,shardId:s.id,title:p.title.trim(),notes:p.notes||"",status:"todo",assignee:p.assignee||null});
+        break;
+      }
+      case "task-status": {
+        const parent=t&&d.shards.find(sh=>sh.id===t.shardId);
+        allowed(t && parent && parent.status==="draft" && (lead || t.assignee===actor.id || (t.assignee===null&&parent.assignee===actor.id)));
+        requireValue(["todo","doing","done"].includes(p.status),"Неизвестный статус задачи");
+        t.status=p.status;
+        break;
+      }
+      case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); requireValue(d.tasks.filter(t=>t.shardId===s.id).every(t=>t.status==="done"),"Завершите все задачи Shard перед отправкой на приёмку"); s.status="submitted"; break;
       case "accept": case "revise": allowed(lead && s && s.status==="submitted" && actor.id!==s.assignee); s.status=action==="accept"?"accepted":"draft"; break;
       case "material": {
         allowed(stock);
