@@ -135,7 +135,8 @@ function projectHubMembership(c){
  const ownShard=shards.some(sh=>sh.assignee===state.actor);
  const ownTask=tasks.some(t=>t.assignee===state.actor);
  const ownStock=state.moves.some(m=>m.actor===state.actor&&ids.has(m.shardId));
- const participation=[...(ownShard?["Shard"]:[]),...(ownTask?["Task"]:[]),...(ownStock?["Склад"]:[])];
+ const ownTeam=shards.some(sh=>state.teams.some(t=>t.id===sh.teamId&&t.memberIds.includes(state.actor)));
+ const participation=[...(ownShard?["Shard"]:[]),...(ownTask?["Task"]:[]),...(ownTeam?["Team"]:[]),...(ownStock?["Склад"]:[])];
  const status=shards.some(sh=>sh.status==="submitted")?"review":shards.some(sh=>sh.status==="draft")?"active":shards.length?"accepted":"planning";
  return {c,shards,tasks,participation,joined:participation.length>0,managed:lead(),status,percent:pct(c.id)};
 }
@@ -270,10 +271,10 @@ const options=(items,value)=>items.map(([id,name])=>'<option value="'+esc(id)+'"
 const teamOptions=()=>state.crew.map(c=>[c.id,displayMemberName(c)+" · "+displayRole(c)]);
 function shardRow(s){
   let actions="";
-  if(s.status==="draft" && lead())actions+=button("Назначить","assign",s.id);
+  if(s.status==="draft" && lead())actions+=button("Назначить","assign",s.id)+(state.teams.length?button("Назначить Team","assign-team",s.id):"");
   if(s.status==="draft" && state.actor===s.assignee)actions+=button("На проверку","submit",s.id);
   if(s.status==="submitted" && lead() && state.actor!==s.assignee)actions+=button("Принять","accept",s.id)+button("На доработку","revise",s.id);
-  return '<article class="taskrow shard-work-card"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small><p>'+esc(s.notes||'')+'</p><div>'+fileLinks(s.files)+'</div></div><div><button data-route="shard/'+esc(s.id)+'">Открыть Shard →</button>'+actions+'</div>'+taskRows(s)+'</article>';
+  return '<article class="taskrow shard-work-card"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+(s.teamId?' · Team: '+esc(state.teams.find(t=>t.id===s.teamId)?.name||''):'')+'</small><p>'+esc(s.notes||'')+'</p><div>'+fileLinks(s.files)+'</div></div><div><button data-route="shard/'+esc(s.id)+'">Открыть Shard →</button>'+actions+'</div>'+taskRows(s)+'</article>';
 }
 function shardDetail(id){
  const sh=state.shards.find(x=>x.id===id);
@@ -494,7 +495,7 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
  if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number");
@@ -504,6 +505,22 @@ function edit(kind,id){
   if(kind==="task")fields+='<p class="hint">Task входит в выбранный Shard. Бюджет и Merit не изменяются.</p><label>Исполнитель<select name="assignee"><option value="">Исполнитель Shard</option>'+options(teamOptions())+'</select></label><label>Описание<textarea name="notes" maxlength="2000" rows="3" placeholder="Что нужно сделать и как проверить результат"></textarea></label>';
  if(kind==="material")fields+=`<label>Артикул / Artikelnummer<input required name="sku" maxlength="80" placeholder="2004260"></label><label>Производитель<input name="brand" maxlength="100" placeholder="K2 Systems / novotegra"></label>`;
  if(kind==="crew")fields+=select("role","Роль",roles.map(r=>[r,r===roles[0]?"Капитан":r]),roles[1]);
+ if(kind==="team"||kind==="team-update"){
+   if(!lead())return;
+   const old=kind==="team-update"?state.teams.find(t=>t.id===id):null;
+   const selected=new Set(old?.memberIds||[]);
+   fields='<label>Название Team<input name="title" required maxlength="120" value="'+esc(old?.name||"")+'" placeholder="DC Team Bodensee"></label>'+
+    '<label>Капитан бригады<select name="captainId" required>'+options(teamOptions(),old?.captainId||state.crew.find(c=>c.id!==state.actor)?.id||state.actor)+'</select></label>'+
+    '<label>Описание<textarea name="description" maxlength="500" rows="3" placeholder="Специализация, регион, оборудование">'+esc(old?.description||"")+'</textarea></label>'+
+    '<fieldset class="company-team-picker"><legend>Участники Team</legend>'+
+    state.crew.map(c=>'<label><input type="checkbox" name="memberIds" value="'+esc(c.id)+'" '+(selected.has(c.id)?"checked":"")+'><span>'+esc(displayMemberName(c))+' · '+esc(displayRole(c))+'</span></label>').join("")+'</fieldset>'+
+    '<p class="hint">Выбранный капитан автоматически включается в Team. При назначении Team на Shard капитан становится ответственным за сдачу работ.</p>';
+ }
+ if(kind==="assign-team"){
+   if(!lead()||!state.teams.length)return;
+   fields='<p class="hint">Team будет привязана к Shard. Капитан бригады станет ответственным за сдачу работ.</p>'+
+     select("teamId","Выберите Team",state.teams.filter(t=>t.captainId!==state.actor).map(t=>[t.id,t.name+" · "+member(t.captainId)]));
+ }
  if(kind==="profile"){
   const member=state.crew.find(c=>c.id===id);
   if(!member||member.id!==state.actor)return;
@@ -551,6 +568,8 @@ document.addEventListener("click",async e=>{
    return;
  }
  if(a==="edit-profile"){edit("profile",id);return}
+ if(a==="team-edit"){edit("team-update",id);return}
+ if(a==="assign-team"){edit("assign-team",id);return}
  if(a.startsWith("new-")||a==="assign"||a==="move"){edit(a.replace("new-",""),id);return}
  if(["accept","submit","revise"].includes(a))await change(()=>apply(state,a,{shardId:id}));
   if(a==="task-next"){const t=state.tasks.find(t=>t.id===id);if(t)await change(()=>apply(state,"task-status",{taskId:id,status:t.status==="todo"?"doing":t.status==="doing"?"done":"todo"}));}
@@ -578,6 +597,11 @@ $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
  const selected=e.target.elements.media?.files;
  const avatarFile=e.target.elements.avatarFile?.files?.[0];
+ if(kind==="team"||kind==="team-update"){
+   p.memberIds=new FormData(e.target).getAll("memberIds");
+   if(kind==="team-update")p.teamId=id;
+ }
+ if(kind==="assign-team")p.shardId=id;
  if(kind==="profile"){
   p.memberId=id;
   p.skills=String(p.skillsText||"").split(",").map(x=>x.trim()).filter(Boolean);
@@ -609,7 +633,7 @@ $("#editor").onsubmit=async e=>{
      }));
    }
    const operation=()=>{
-     if(kind!=="electrical")return apply(state,kind,p);
+     if(kind!=="electrical")return apply(state,kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p);
      const caseId=p.id;
      let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files});
      const steps=[
@@ -627,7 +651,7 @@ $("#editor").onsubmit=async e=>{
      });
      return next;
    };
-   if(await change(operation)){$("#dialog").close();if(kind==="case"||kind==="electrical")location.hash="case/"+p.id}
+   if(await change(operation)){$("#dialog").close();if(kind==="case"||kind==="electrical")location.hash="case/"+p.id;else if(kind==="team"||kind==="team-update")location.hash="team/teams"}
  }catch(error){alert(error.message||"Ошибка вложения")}
  finally{submit.disabled=false}
 };
