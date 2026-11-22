@@ -1,35 +1,30 @@
-# NVTSK Merit economics — agreed rules (2026-11-21)
+# Merit economics — final agreed rules (2026-11-22)
 
-Status: SPECIFICATION ONLY. Not deployed, not a payment or securities system. Stable browser MVP has priority.
+**SPECIFICATION ONLY. NOT IMPLEMENTED.** This supersedes all earlier descriptions of Shard allocation, 2% Shard fee, or 80/20 fee split. No payment, minting, wallet, accounting, legal or tax-ready implementation is authorized in Silver Command 0.4. Merit does not exempt anyone from taxes.
 
-## Events and invariants
+## Agreed event rules
 
-1. A Case creates the base Merit allocation **once** at Case creation. Nominal mapping: €1 of Case value = 1 base Merit. Example: €1,000 Case creates 1,000 base Merit.
-2. An additional **10 founder Merit** were discussed for the €1,000 Case example. Record these as a separate founder allocation/event, never as executor Merit, and do not silently infer a universal formula from one example. Clarify exact issuance trigger and dilution treatment before implementing.
-3. Creating a Shard never mints Merit. A €250 Shard carved out of the €1,000 Case reserves/transfers **250 of the existing 1,000 base Merit** to the Shard executor under the agreed workflow. The parent Case's unallocated balance decreases by 250; total base Merit remains 1,000. Avoid assigning funds before executor/award rules are resolved.
-4. Sum of active child Shard allocations must never exceed the parent Case base Merit. No negative balances, duplicate issue/transfer events, replayed rewards, or creation of Merit from a Shard.
-5. Case fee **1%**, Shard fee **2%**. Per latest verbal decision, **100% of each applicable fee** is allocated toward Merit backing / offsetting dilution. There is **no 80/20 split**. These are accounting policy requirements, not evidence of real escrow, asset backing, or an executed transfer.
-6. Keep EUR fee amounts, Merit units, founder issuance, executor allocations, and backing entries as separate ledger dimensions. Never treat fees in EUR as new Merit minted or as automatic balance increases.
+- **Case nominal €1,000:** creates **1,010 NEW Merit**, including **10 additional Merit awarded to the PLATFORM CREATOR**, NOT the Case creator. Case fee **1% = €10**.
+- **Shard nominal €250:** creates **250 ADDITIONAL NEW Merit**; it does **not** transfer or deduct Merit from the parent Case. The **Shard creator** pays the **1.2% = €3** fee. The earlier 2% fee is cancelled.
+- **Combined example:** total **1,260 NEW Merit** and **€13 fees**. EUR fees and Merit supply are distinct units. **100% of both fees** goes toward Merit backing / compensation for dilution, **without any 80/20 split**. This earmark is a rule, not proof that real collateral or payments exist.
 
-## Worked example (subject to fee base clarification)
+| Event | New Merit | Fee EUR |
+|---|---:|---:|
+| Case €1,000 | 1,010 | 10 |
+| Shard €250 | 250 | 3 |
+| **Total** | **1,260** | **13** |
 
-- Create Case €1,000: base Merit issued = 1,000; founder event = +10 Merit separately if the agreed founder rule applies.
-- Create Shard €250: 250 Merit allocated from Case; base Merit issued by Shard = 0; parent base Merit remaining = 750.
-- If fees are computed on gross nominal value, 1% × €1,000 = €10 and 2% × €250 = €5, each fully designated to backing/dilution-offset. **This fee base is an assumption for illustration only**, not a final rule.
+## Explicitly unresolved: do not invent answers
 
-## Open questions before code/real money
+1. Recipient(s) of the 1,000 base Case Merit and the 250 newly minted Shard Merit.
+2. Exact issuance timing, acceptance/finality and reversal rules.
+3. Child Shard creation/nominal limits and resulting maximum supply.
+4. Idempotency, duplicate creation, replay, cancellation, rollback and import handling.
+5. Actual backing, custody, redemption, legal obligations, taxation and regulatory treatment.
 
-- Does 1% apply to Case nominal value, platform payment, or another basis, and when is it charged? Does 2% apply to every Shard and when?
-- Is the founder +10 Merit per €1,000, per Case, or a one-time special allocation? What event authorizes it?
-- Does executor allocation occur at Shard creation, assignment, acceptance, or payment? How do cancellation/refund/reversal and disputes work?
-- What precisely constitutes Merit backing and who holds it? Legal, tax and payment-service implications need professional review.
+## Future acceptance criteria (NOT runtime tests)
 
-## Required tests before implementation
-
-- Creating Case €1,000 produces exactly 1,000 base Merit once; idempotent replay adds zero.
-- Splitting into €250 Shard moves exactly 250 existing base Merit; total supply unchanged; remaining Case allocation = 750.
-- Four €250 Shards consume exactly 1,000; fifth fails; duplicate Shard ID fails.
-- Case and Shard fees each allocate 100% to the backing ledger with no 80/20 branch, but never mint new Merit.
-- Failed, rolled-back, cancelled and imported duplicate events do not double-credit or lose allocations.
-
-Do not claim this spec is live in Silver Command 0.4 until implementation, regression tests and browser checks exist.
+- Example arithmetic: Case 1,010 + Shard 250 = 1,260 minted Merit; fees €10 + €3 = €13.
+- Shard mint is additional, not a transfer from Case; Case founder increment goes only to platform creator.
+- Shard creator pays 1.2%; 2% and 80/20 are never used.
+- No implementation until unresolved questions are settled and MVP is stable.
