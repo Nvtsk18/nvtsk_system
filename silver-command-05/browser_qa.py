@@ -88,11 +88,10 @@ with sync_playwright() as pw:
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
         page.reload();route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         page.evaluate("navigator.serviceWorker.ready");page.wait_for_function("!!navigator.serviceWorker.controller")
-        if server:
-            server.shutdown()
-            server.server_close()
-        else:
-            ctx.set_offline(True)
+        # Keep the local server running for the other viewport cases.
+        # Offline emulation is isolated to this browser context and does not
+        # affect the remaining Chromium/WebKit test matrix.
+        ctx.set_offline(True)
         page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         route("settings");act("sandbox")
         expect(page.get_by_text("Тестовая копия · изменения изолированы")).to_be_visible()
@@ -104,5 +103,4 @@ with sync_playwright() as pw:
         assert not errors, errors
         print(f"PASS {engine.name} {width}×{height}: layout, Case, Shard, Garage, Field, acceptance, export/import, undo, persistence, offline",flush=True)
         ctx.close()
-        if server: server=start_server(port)
     browser.close()
