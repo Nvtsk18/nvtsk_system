@@ -71,7 +71,7 @@ with sync_playwright() as pw:
         expect(page.get_by_text("Остаток · 22")).to_be_visible()
         page.locator('.mode [data-route=field]').click()
         page.locator('#actor').select_option("member-0")
-        task=page.locator("article").filter(has_text="QA монтаж")
+        task=page.locator("article.taskrow").filter(has_text="QA монтаж")
         task.get_by_role("button",name="На проверку").click()
         expect(task).to_contain_text("На проверке")
         page.locator('#actor').select_option("lead");route("tasks");act("accept")
