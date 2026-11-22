@@ -171,7 +171,7 @@ with sync_playwright() as pw:
         # budget-balanced Shards without changing the PV workflow.
         route("projects");act("new-electrical")
         page.get_by_label("Название").fill("QA Elektro Rohbau")
-        page.get_by_label("Город").fill("Stockach")
+        page.locator("#editor [name=city]").fill("Stockach")
         page.get_by_label("Адрес объекта").fill("Hauptstraße 1, 78333 Stockach")
         page.get_by_label("Описание и инструкции").fill("Черновая электропроводка и щит")
         page.locator('input[name="media"]').set_input_files({"name":"plan.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.4\n%%EOF"})
@@ -221,7 +221,7 @@ with sync_playwright() as pw:
         page.locator(".ph-tabs [data-tab=mine]").click()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
-        page.get_by_label("Город").fill("Demo")
+        page.locator("#editor [name=city]").fill("Demo")
         page.get_by_label("Бюджет").fill("1000");save()
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
@@ -387,7 +387,7 @@ with sync_playwright() as pw:
         expect(page.get_by_text("Тестовая копия · изменения изолированы")).to_be_visible()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("Sandbox only")
-        page.get_by_label("Город").fill("Demo");page.get_by_label("Бюджет").fill("0");save()
+        page.locator("#editor [name=city]").fill("Demo");page.get_by_label("Бюджет").fill("0");save()
         route("settings");act("sandbox");route("projects")
         expect(page.get_by_role("heading",name="Sandbox only")).to_have_count(0)
         assert not errors, errors
