@@ -63,16 +63,12 @@ function render(c,state,canEdit){
  const warnings='<section id="pv-overview" class="pv-block pv-preflight"><div class="pv-section-heading"><div><small>ENGINEERING PRE-FLIGHT</small><h3>Проверка комплекта документации</h3></div><span class="pv-counter '+(w.some(x=>x.level==="danger")?"pv-counter-danger":"")+'">'+(w.length?w.length+" замечаний":"Расхождений в заполненных полях нет")+'</span></div>'+
  (w.map(x=>'<div class="pv-issue pv-'+x.level+'"><strong>'+esc(x.title)+'</strong><p>'+esc(x.text)+'</p></div>').join("")||'<p class="pv-info">Автоматические проверки заполненных чисел пройдены. Это не заменяет проверку проекта инженером и осмотр объекта.</p>')+
  '<p class="pv-qualification">Внимание: автоматические совпадения чисел не подтверждают безопасность креплений, электрическую пригодность или корректность всех чертежей.</p></section>';
- const facts='<section id="pv-roof" class="pv-block"><div class="pv-section-heading"><div><small>BAUSTELLE · DACHAUFBAU</small><h3>Паспорт объекта</h3></div>'+(canEdit?'<button data-action="pv-tech" data-id="'+esc(c.id)+'">Редактировать</button>':"")+'</div>'+
- '<div class="pv-facts">'+infoRow("Bauherr",p.bauherr||"Не указан")+infoRow("PDF / Revision",p.sourcePlan||"Не указана")+
- infoRow("Модулей, Anlagenübersicht",techValue(p.declaredModules,"St."))+infoRow("Anlagenleistung",techValue(p.declaredKwp,"kWp"))+
- infoRow("Модуль",p.moduleType||"—")+infoRow("Modulleistung",techValue(p.panelWp,"Wp"))+
- infoRow("Dacheindeckung",p.roofType||"—")+infoRow("Ziegel / Material",p.tileType||"—")+
- infoRow("Dachneigung",techValue(p.slopeDeg,"°"))+infoRow("Höhe Traufe",techValue(p.eaveHeightM,"m"))+
- infoRow("Höhe in Schräge",techValue(p.roofLengthM,"m"))+infoRow("Sparrenabstand",techValue(p.rafterSpacingCm,"cm"))+
- infoRow("Aufdachdämmung",p.insulation||"—")+infoRow("Unterkonstruktion",p.mounting||"—")+
- infoRow("Leitungsführung",p.cableRoute||"—")+infoRow("AC Zuständigkeit",p.acScope||"—")+
- '</div>'+((p.hazards||p.safetyPlan)?'<div class="pv-roof-notes"><strong>Особенности объекта и Sicherheit</strong><p>'+esc(p.hazards||"")+'</p><p>'+esc(p.safetyPlan||"")+'</p></div>':"")+'</section>';
+ const facts='<section id="pv-roof" class="pv-block"><div class="pv-section-heading"><div><small>ОБЪЕКТ · PV</small><h3>Паспорт объекта</h3></div>'+(canEdit?'<button data-action="pv-tech" data-id="'+esc(c.id)+'">Изменить</button>':"")+'</div>'+
+ '<div class="pv-facts">'+infoRow("Модулей",techValue(p.declaredModules,"шт."))+infoRow("Мощность",techValue(p.declaredKwp,"kWp"))+infoRow("Модуль",p.moduleType||"—")+infoRow("Крыша",p.roofType||"—")+infoRow("Крепление",p.mounting||"—")+infoRow("Высота карниза",techValue(p.eaveHeightM,"m"))+'</div>'+
+ '<details class="pv-extra-details"><summary>Все технические параметры</summary><div class="pv-facts">'+
+ infoRow("Bauherr",p.bauherr||"—")+infoRow("PDF / Revision",p.sourcePlan||"—")+infoRow("Modulleistung",techValue(p.panelWp,"Wp"))+infoRow("Ziegel / Material",p.tileType||"—")+
+ infoRow("Dachneigung",techValue(p.slopeDeg,"°"))+infoRow("Höhe in Schräge",techValue(p.roofLengthM,"m"))+infoRow("Sparrenabstand",techValue(p.rafterSpacingCm,"cm"))+infoRow("Aufdachdämmung",p.insulation||"—")+infoRow("Leitungsführung",p.cableRoute||"—")+infoRow("AC Zuständigkeit",p.acScope||"—")+'</div></details>'+
+ ((p.hazards||p.safetyPlan)?'<div class="pv-roof-notes"><strong>Особенности и безопасность</strong><p>'+esc(p.hazards||"")+'</p><p>'+esc(p.safetyPlan||"")+'</p></div>':"")+'</section>';
  const zoneList=zones.map((z,i)=>'<div class="pv-zone"><div class="pv-zone-number">'+(i+1)+'</div><div><strong>'+esc(z.name)+'</strong><small>'+esc(z.direction||"Ориентация не указана")+'</small><p>'+esc(z.moduleType||p.moduleType||"")+(z.roofType?" · Dach: "+esc(z.roofType):"")+(z.mounting?" · UK: "+esc(z.mounting):"")+(z.panelWp?" · "+fmt(z.panelWp)+" Wp":"")+(z.notes?" · "+esc(z.notes):"")+'</p></div><div class="pv-zone-metrics"><b>'+techValue(z.modules)+" мод.</b><small>"+techValue(z.hooks)+" Haken</small></div>"+(canEdit?'<button class="pv-icon-button" data-action="pv-remove" data-id="'+esc(c.id)+'" data-list="zones" data-row="'+esc(z.id)+'" aria-label="Удалить зону">×</button>':"")+'</div>').join("");
  const areas='<section id="pv-fields" class="pv-block"><div class="pv-section-heading"><div><small>MODULFLÄCHE / STRINGPLAN</small><h3>Монтажные зоны</h3></div>'+(canEdit?'<button data-action="pv-zone" data-id="'+esc(c.id)+'">＋ Зона</button>':"")+'</div><p class="pv-subtitle">Здесь фиксируются физические участки крыши. Электрические Strings указываются отдельно, чтобы не смешивать две разные схемы.</p><div class="pv-zone-list">'+(zoneList||'<div class="pv-empty">Зоны из PDF пока не внесены. Добавьте каждую Modulfläche/String отдельно.</div>')+'</div></section>';
 
@@ -99,17 +95,19 @@ const num=(label,name,val,step="1")=>'<label>'+esc(label)+'<input name="'+name+'
 const area=(label,name,val,max=1000)=>'<label>'+esc(label)+'<textarea name="'+name+'" maxlength="'+max+'" rows="3">'+esc(val??"")+'</textarea></label>';
 function form(kind,c){
  const p=c?.pvPlan||{};
- if(kind==="pv-tech")return '<p class="hint">Поля повторяют структуру монтажного PDF; не придумывайте недостающие значения.</p>'+
- field("Bauherr (если нужен)","bauherr",p.bauherr)+field("Номер/ревизия PDF","sourcePlan",p.sourcePlan)+field("Ревизия","revision",p.revision)+
- num("Всего модулей по Anlagenübersicht","declaredModules",p.declaredModules)+num("Мощность Anlagenleistung, kWp","declaredKwp",p.declaredKwp,"0.01")+
- field("Modul-Typ","moduleType",p.moduleType)+num("Modulleistung, Wp","panelWp",p.panelWp)+field("Dacheindeckung","roofType",p.roofType)+
- field("Ziegel Typ / Материал крыши","tileType",p.tileType)+num("Dachneigung, °","slopeDeg",p.slopeDeg,"0.1")+
- num("Höhe Traufe, m","eaveHeightM",p.eaveHeightM,"0.01")+num("Höhe in Schräge, m","roofLengthM",p.roofLengthM,"0.01")+
- num("Sparrenabstand, cm","rafterSpacingCm",p.rafterSpacingCm,"0.1")+field("Aufdachdämmung","insulation",p.insulation)+
- field("UK / Einlegesystem","mounting",p.mounting)+field("3D-Modell HTTPS","model3d",p.model3d,500)+
- field("Leitungsführung","cableRoute",p.cableRoute,500)+field("Наш scope DC","dcScope",p.dcScope,500)+
- field("AC / Elektro — другая сторона","acScope",p.acScope,500)+area("Критические монтажные особенности","hazards",p.hazards,2000)+
- area("План безопасного доступа и работы","safetyPlan",p.safetyPlan,2000);
+ if(kind==="pv-tech")return '<p class="hint">Основные данные сверху. Дополнительные параметры можно раскрыть при необходимости.</p>'+
+ num("Модулей, шт.","declaredModules",p.declaredModules)+num("Мощность, kWp","declaredKwp",p.declaredKwp,"0.01")+
+ field("Тип модуля","moduleType",p.moduleType)+num("Мощность модуля, Wp","panelWp",p.panelWp)+
+ field("Тип крыши / Dacheindeckung","roofType",p.roofType)+field("Крепление / Unterkonstruktion","mounting",p.mounting)+
+ num("Высота карниза, м","eaveHeightM",p.eaveHeightM,"0.01")+
+ area("Особенности монтажа","hazards",p.hazards,2000)+
+ '<details class="pv-extra-details"><summary>Дополнительные технические поля</summary>'+
+ field("Bauherr","bauherr",p.bauherr)+field("Номер PDF","sourcePlan",p.sourcePlan)+field("Ревизия","revision",p.revision)+
+ field("Материал кровли","tileType",p.tileType)+num("Уклон, °","slopeDeg",p.slopeDeg,"0.1")+
+ num("Длина ската, м","roofLengthM",p.roofLengthM,"0.01")+num("Шаг стропил, см","rafterSpacingCm",p.rafterSpacingCm,"0.1")+
+ field("Утепление","insulation",p.insulation)+field("3D-модель HTTPS","model3d",p.model3d,500)+
+ field("Кабельный маршрут","cableRoute",p.cableRoute,500)+field("Наш DC scope","dcScope",p.dcScope,500)+
+ field("AC scope","acScope",p.acScope,500)+area("План безопасности","safetyPlan",p.safetyPlan,2000)+'</details>';
  if(kind==="pv-zone")return field("Modulfläche/String — название","name","")+field("Ausrichtung (SW, NO, Süd...)","direction","")+
  num("Anzahl Module","modules","")+num("Anzahl Haken","hooks","")+field("Modul-Typ этой зоны","moduleType","")+num("Modulleistung этой зоны, Wp","panelWp","")+field("Dacheindeckung этой зоны","roofType","")+field("UK / Montagesystem этой зоны","mounting","")+area("Особенности этой зоны","notes","",600);
  if(kind==="pv-string")return field("String / группа — название","name","")+field("Ausrichtung (Süd, Südwest ...)","direction","")+num("Anzahl Module","modules","")+field("MPPT / цепь, если подтверждено","mppt","")+area("По источнику: один String или группа?","notes","",600);
