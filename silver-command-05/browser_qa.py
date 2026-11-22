@@ -36,85 +36,21 @@ with sync_playwright() as pw:
         def fits():
             overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
-        expect(page.locator(".command-brand")).to_contain_text("NVTSK SYSTEM")
-        expect(page.locator(".command-center")).to_be_visible()
-        expect(page.locator(".command-brand")).to_contain_text("SolAn Plus GmbH")
-        expect(page.locator(".command-brand")).to_contain_text("NVTSK SYSTEM")
-        # The hero must place TWO independent actions vertically to the left
-        # of a project map, on both desktop and mobile.
-        expect(page.locator(".command-home-actions .command-home-action")).to_have_count(2)
-        expect(page.locator(".command-home-action.is-open")).to_contain_text("Projects")
-        expect(page.locator(".command-home-action.is-create")).to_contain_text("Project")
-        expect(page.locator(".command-home-map .casemap")).to_be_visible()
-        expect(page.locator(".command-home-map .casemap-schematic svg")).to_be_visible()
-        expect(page.locator(".command-home-map .mapcasepin")).to_have_count(4)
-        assert page.locator(".command-home-map iframe").count() == 0, "Map must not depend on an external iframe"
-        expect(page.locator(".command-home-map .casemapnote")).to_contain_text("схематическая")
-        home = page.evaluate("""() => {
-           const bounds=s=>document.querySelector(s).getBoundingClientRect().toJSON();
-           return {open:bounds('.command-home-action.is-open'),
-             create:bounds('.command-home-action.is-create'),
-             map:bounds('.command-home-map'),
-             main:bounds('.command-home-hero'),
-             lead:document.querySelector('.command-title')?.textContent?.trim()||''}
-        }""")
-        assert home["open"]["right"] <= home["map"]["left"] + 2, (width,"Actions must be left of project map",home)
-        assert home["create"]["right"] <= home["map"]["left"] + 2, (width,"Create action must be left of map",home)
-        assert home["create"]["top"] >= home["open"]["bottom"] - 2, (width,"Project actions must stack vertically",home)
-        assert home["map"]["height"] >= 175, (width,"Project map panel too short",home)
-        assert not home["lead"], (width,"Remove repeated NVTSK hero heading",home)
-        # The real office photograph must be independent of the actual UI.
-        # The screenshot reference must never be drawn underneath duplicated controls.
-        office = page.evaluate("""() => ({
-          background:getComputedStyle(document.querySelector('.command-stage'),'::before').backgroundImage,
-          dock:document.querySelector('.command-dock').getBoundingClientRect().toJSON(),
-          panels:document.querySelector('.command-panels').getBoundingClientRect().toJSON(),
-          projects:getComputedStyle(document.querySelector('.command-myprojects')).display
-        })""")
-        assert "office-command-v40.png" in office["background"], (width, "Real office image missing",office["background"])
-        if width > 720:
-            assert office["dock"]["left"] >= office["panels"]["right"] - 4 and office["dock"]["top"] < office["panels"]["bottom"], (width, "Desktop side dock misplaced",office)
-        else:
-            assert office["dock"]["top"] < height and office["dock"]["bottom"] >= height - 5, (width, "Mobile dock not fixed",office)
-            assert office["projects"] != "none", (width,"Personal project list not visible")
-        fits()
-        def capture(screen):
-            folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
-            folder.mkdir(parents=True,exist_ok=True)
-            page.screenshot(path=str(folder/f"{engine.name}-{width}-{screen}.png"))
-        # Geometry audit: blocks sharing a visual row must align on both edges.
-        symmetry = page.evaluate("""() => {
-          const rects = selector => [...document.querySelectorAll(selector)].filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&r.width>0&&r.height>0}).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}});
-          const groups = [rects('.command-metrics .command-metric'),rects('.command-panels .command-panel')];
-          const violations=[];
-          for(const group of groups){const rows=new Map();for(const r of group){const k=Math.round(r.top/3)*3;if(!rows.has(k))rows.set(k,[]);rows.get(k).push(r)}for(const row of rows.values()){if(row.length<2)continue;const top=row[0].top,bottom=row[0].bottom;for(const r of row){if(Math.abs(r.top-top)>2||Math.abs(r.bottom-bottom)>2)violations.push({row,reason:'uneven row edges'})}}}
-          return violations.slice(0,3);
-        }""")
-        assert not symmetry, (width, 'Dashboard symmetry', symmetry)
-        # Reference dashboard must keep the approved desktop/mobile structure.
-        expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
-        expect(page.locator(".command-panels .command-panel")).to_have_count(2)
-        expect(page.locator(".command-myproject")).to_have_count(4)
-        assert page.locator(".command-mobile-tiles").count() == 0, "Duplicated navigation tiles must be removed"
-        expect(page.locator(".command-dock")).to_be_visible()
-        expect(page.locator(".command-dock")).to_contain_text("Shards")
-        expect(page.locator(".command-mission")).to_be_visible()
-        if width <= 720:
-            expect(page.locator(".command-myprojects")).to_be_visible()
-            order = page.evaluate("""() => {
-                const a=document.querySelector('.command-myprojects').getBoundingClientRect();
-                const b=document.querySelector('.command-metrics').getBoundingClientRect();
-                return {tileTop:a.top,metricTop:b.top}
-            }""")
-            assert order["tileTop"] < order["metricTop"], (width,"My Projects list must precede metrics on mobile",order)
-        # Platform identity must not be confused with the active company workspace.
-        expect(page.locator(".command-brand .nvtsk-brand-caption")).to_contain_text("NVTSK SYSTEM")
-        workspace = page.locator(".command-brand .workspace-switch")
-        expect(workspace).to_be_visible()
+        # Approved reference v66: exact information architecture, live data and mobile fit.
+        expect(page.locator(".ref66")).to_be_visible()
+        expect(page.locator(".ref66-greeting h1")).to_have_text("NVTSK SYSTEM")
+        expect(page.locator(".ref66-metrics .ref66-kpi")).to_have_count(5)
+        expect(page.locator(".ref66-projects")).to_be_visible()
+        expect(page.locator(".ref66-tasks")).to_be_visible()
+        expect(page.locator(".ref66-actions")).to_be_visible()
+        expect(page.locator(".ref66-project")).to_have_count(3)
+        expect(page.locator(".ref66-toolbar .workspace-switch")).to_be_visible()
+        workspace=page.locator(".ref66-toolbar .workspace-switch")
         workspace.locator("summary").click()
         expect(workspace.locator(".workspace-switch-current")).to_contain_text("SolAn Plus GmbH")
-        expect(workspace.locator(".workspace-switch-note")).to_contain_text("изолированного хранения")
         workspace.locator("summary").click()
+        assert "office-command-v40.png" in page.evaluate("getComputedStyle(document.querySelector('.ref66'),'::before').backgroundImage")
+        fits()
         capture("dashboard")
         # Social Team hub: actual member profiles, owner-editable details, feed,
         # searchable directory, experience and skill-based career progression.
