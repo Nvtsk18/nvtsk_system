@@ -94,7 +94,7 @@ with sync_playwright() as pw:
                 }
             });
         }""")
-        assert closed_guard, "Accepted Shard permitted stock mutation in browser model"
+        assert closed_guard, "Accepted Shard stock guard failed: "+str(page.evaluate("""() => {const r=JSON.parse(localStorage.getItem('nvtsk05_independent'));return {actor:r.data.actor,shards:r.data.shards.filter(s=>s.title==='QA монтаж'),item:r.data.garage.find(m=>m.id==='rail')};}"""))
 
         route("settings")
         with page.expect_download() as download:
