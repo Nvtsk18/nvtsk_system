@@ -268,3 +268,31 @@ button:active{transform:translateY(1px)}
 .visualtile span{display:grid;gap:7px;min-width:0}.visualtile strong{font-size:15px;line-height:1.25}.visualtile small{font-size:12px;line-height:1.4;color:#b6c1cb}
 @media(max-width:850px){.visualtiles{grid-template-columns:repeat(2,minmax(0,1fr))}.visualtile img{width:85px;height:75px}}
 @media(max-width:540px){.visualtiles{grid-template-columns:1fr 1fr;gap:9px}.visualtile{min-height:0;padding:9px;flex-direction:column;align-items:stretch;border-radius:16px;gap:9px}.visualtile img{width:100%;height:95px}.visualtile strong{font-size:13px}.visualtile small{font-size:11px}.visualtile span{gap:4px}}
+
+/* NVTSK Future Office homepage: illustrated environment and right-hand command rail */
+.office-shell{position:relative;isolation:isolate;overflow:hidden;border:1px solid #3c5361;border-radius:25px;background:linear-gradient(180deg,#101a24 0%,#17232b 48%,#0d161f 100%);padding:0 18px 20px;box-shadow:0 20px 75px #01050975}
+.office-shell:before{content:"";position:absolute;inset:0 0 auto;height:650px;background:linear-gradient(180deg,#06111c0a 0%,#09151c20 35%,#101b25d9 79%,#101b25 100%),url("art/future-office.svg") center top/cover no-repeat;z-index:-1;pointer-events:none}
+.office-hero{position:relative;min-height:310px;display:flex;align-items:flex-start;padding:42px 22px 30px}
+.office-welcome{max-width:550px;padding:20px 25px;border-radius:20px;background:#08121ac9;border:1px solid #7c9aa33a;backdrop-filter:blur(10px);box-shadow:0 12px 38px #0005}
+.office-welcome h1{font-size:clamp(29px,3.4vw,46px);line-height:1.15;margin:10px 0 12px;color:#f3f7f8}
+.office-welcome p{font-size:14px;color:#d3e0e6;line-height:1.5;margin:0 0 18px}
+.office-primary{border:1px solid #91cad1;border-radius:12px;background:#c2e6e6;color:#0b1c25;font-weight:750;padding:11px 18px}
+.office-scene-label{position:absolute;bottom:28px;right:25px;color:#d7e9ee;font-size:10px;letter-spacing:.22em;text-shadow:0 2px 10px #000}
+.office-stats{margin:0 0 15px;position:relative}
+.office-stats .stat{background:#172631dc;border:1px solid #7595a44d;backdrop-filter:blur(14px);border-radius:15px;box-shadow:0 8px 24px #0003}
+.office-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(275px,320px);gap:15px;align-items:start}
+.office-main,.office-side{display:grid;gap:15px;min-width:0}
+.office-glass{margin:0!important;background:#17232de9!important;border:1px solid #627a894d!important;border-radius:19px!important;box-shadow:0 9px 28px #02080d4d;backdrop-filter:blur(12px)}
+.office-action-panel .homeactions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.office-action-panel .homeactions button{min-height:93px;border-radius:14px;background:#273743;border:1px solid #5d74835c;padding:12px 8px}
+.office-action-panel .homeactions button:hover{background:#334a56}
+.office-action-panel .homeactions svg{width:25px;height:25px}
+.office-task{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:12px 7px;border-bottom:1px solid #405462}
+.office-task span{flex:1;display:grid;gap:4px}.office-task small{color:#a9c1cd;font-size:11px}
+.office-empty{color:#a9c1cd;font-size:13px;padding:10px 0}
+.office-shell .homeprojectmain>img{width:105px;height:76px;border-radius:12px}
+.office-shell .homeprojectshards{margin-left:117px}
+.office-shell .homeproject{padding:13px 0}
+@media(max-width:1000px){.office-workspace{grid-template-columns:minmax(0,1fr) 270px}.office-hero{min-height:280px}.office-action-panel .homeactions{grid-template-columns:1fr 1fr}}
+@media(max-width:740px){.office-shell{padding:0 11px 14px;border-radius:18px}.office-hero{min-height:275px;padding:18px 3px 20px;align-items:flex-start}.office-welcome{padding:17px;max-width:90%}.office-welcome h1{font-size:28px}.office-scene-label{bottom:15px;right:9px}.office-workspace{grid-template-columns:1fr}.office-side{grid-row:1}.office-action-panel .homeactions{grid-template-columns:repeat(3,minmax(0,1fr))}.office-action-panel .homeactions button{min-height:80px}.office-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.office-shell:before{height:580px;background-position:center top}.office-shell .homeprojectmain>img{width:72px;height:66px}.office-shell .homeprojectshards{margin-left:83px}}
+@media(max-width:380px){.office-action-panel .homeactions{grid-template-columns:repeat(2,minmax(0,1fr))}.office-welcome{max-width:100%}}
