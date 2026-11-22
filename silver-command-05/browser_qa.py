@@ -272,7 +272,7 @@ with sync_playwright() as pw:
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         # PV technical dossier: source plan vs Modulfläche and kWp consistency.
         expect(page.locator(".pv-cockpit")).to_be_visible()
-        expect(page.locator(".pv-cockpit-nav button")).to_have_count(7)
+        expect(page.locator(".pv-cockpit-nav button")).to_have_count(9)
         act("pv-tech")
         for key,val in [
             ("sourcePlan","Montageplanung Rev A"),("declaredModules","15"),
@@ -296,6 +296,21 @@ with sync_playwright() as pw:
         expect(page.locator(".pv-issue.pv-danger")).to_contain_text("15")
         expect(page.locator(".pv-issue.pv-danger")).to_contain_text("14")
         expect(page.locator(".pv-issue.pv-warning")).to_contain_text("6,44")
+        act("pv-string")
+        page.locator("#editor [name=name]").fill("DC String 1")
+        page.locator("#editor [name=direction]").fill("Südwest")
+        page.locator("#editor [name=modules]").fill("14")
+        page.locator("#editor [name=mppt]").fill("MPPT 1")
+        save()
+        expect(page.locator("#pv-strings .pv-zone")).to_have_count(1)
+        expect(page.locator(".pv-issue.pv-warning")).to_contain_text("DC Strings")
+        act("pv-cut")
+        page.locator("#editor [name=name]").fill("C-N-Schiene 37")
+        page.locator("#editor [name=stockLengthMm]").fill("5900")
+        page.locator("#editor [name=requiredLengthMm]").fill("5786")
+        page.locator("#editor [name=qty]").fill("4")
+        save()
+        expect(page.locator(".pv-cut")).to_contain_text("Остаток 114 мм")
         act("pv-material")
         page.locator("#editor [name=name]").fill("Dachhaken")
         page.locator("#editor [name=qty]").fill("24")
@@ -314,7 +329,7 @@ with sync_playwright() as pw:
         assert page.evaluate("""() => {
            const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
            const p=d.cases.find(c=>c.title==='QA Roof')?.pvPlan;
-           return p?.checks?.risk===true && p?.zones?.length===1 && p?.materials?.length===1 && p?.documents?.length===1;
+           return p?.checks?.risk===true && p?.zones?.length===1 && p?.strings?.length===1 && p?.cuts?.length===1 && p?.materials?.length===1 && p?.documents?.length===1;
         }"""), "PV project dossier must persist with linked source fields"
         page.evaluate("window.scrollTo(0,0)")
         capture("case-pv-dossier")
