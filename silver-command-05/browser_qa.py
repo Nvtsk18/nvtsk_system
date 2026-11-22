@@ -344,7 +344,7 @@ with sync_playwright() as pw:
         else:
             # WebKit Playwright offline navigation is unstable; verify cached shell directly.
             assert page.evaluate("""async () => !!(await caches.match(new URL("index.html",navigator.serviceWorker.controller.scriptURL)))"""), "Offline shell missing in WebKit cache"
-        route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        route("projects");expect(page.locator(".ph-card").filter(has_text="QA Roof")).to_be_visible()
         assert page.evaluate("""() => {
             const record=JSON.parse(localStorage.getItem('nvtsk05_independent'));
             return record.data.cases.some(c=>c.title==='QA Roof') &&
