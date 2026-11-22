@@ -37,7 +37,7 @@ with sync_playwright() as pw:
             overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
         expect(page.get_by_role("heading",name="NVTSK SYSTEM",exact=True)).to_be_visible()
-        expect(page.locator(".reference-dashboard")).to_be_visible()
+        expect(page.locator(".command-center")).to_be_visible()
         fits()
         def capture(screen):
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
@@ -46,16 +46,16 @@ with sync_playwright() as pw:
         # Geometry audit: blocks sharing a visual row must align on both edges.
         symmetry = page.evaluate("""() => {
           const rects = selector => [...document.querySelectorAll(selector)].filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&r.width>0&&r.height>0}).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}});
-          const groups = [rects('.stats.desktopmetrics .stat'),rects('.stats.phonemetrics .stat'),rects('.mobiletiles .mobiletile')];
+          const groups = [rects('.command-metrics .command-metric'),rects('.command-panels .command-panel')];
           const violations=[];
           for(const group of groups){const rows=new Map();for(const r of group){const k=Math.round(r.top/3)*3;if(!rows.has(k))rows.set(k,[]);rows.get(k).push(r)}for(const row of rows.values()){if(row.length<2)continue;const top=row[0].top,bottom=row[0].bottom;for(const r of row){if(Math.abs(r.top-top)>2||Math.abs(r.bottom-bottom)>2)violations.push({row,reason:'uneven row edges'})}}}
           return violations.slice(0,3);
         }""")
         assert not symmetry, (width, 'Dashboard symmetry', symmetry)
         # Reference dashboard must keep the approved desktop/mobile structure.
-        expect(page.locator(".reference-metrics .stat")).to_have_count(5)
-        expect(page.locator(".reference-projects")).to_be_visible()
-        expect(page.locator(".reference-actions")).to_be_visible()
+        expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
+        expect(page.locator(".command-panels .command-panel")).to_have_count(3)
+        expect(page.locator(".command-dock")).to_be_visible()
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
@@ -74,12 +74,11 @@ with sync_playwright() as pw:
                 shards.every(s=>s.status==='draft' && s.assignee===null) &&
                 Math.round(shards.reduce((n,s)=>n+s.price,0)*100)===100000;
         }"""), "Electrical Case template failed to create five balanced Shards"
-        # Dashboard map: demo pins are clickable, real un-geocoded cases are not fabricated.
+        # Dashboard dock navigation must reach its linked workspace.
         route("dashboard")
-        expect(page.locator(".casemap")).to_be_visible()
-        expect(page.locator(".mapcasepin")).to_have_count(4)
-        page.locator(".mapcasepin").first.click()
-        expect(page.locator("#app")).to_contain_text("PV Dachmontage")
+        expect(page.locator(".command-dock button")).to_have_count(5)
+        page.locator(".command-dock [data-route=projects]").first.click()
+        expect(page.get_by_role("heading",name="Проекты и задачи")).to_be_visible()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
@@ -124,12 +123,13 @@ with sync_playwright() as pw:
           return cases.every((p,i)=>{try{NVModel.apply(d,'move',{id:'guard-'+i,itemId:item.id,...p});return false}catch{return true}})&&item.qty===22;
         }""")
         assert stock_guards, (width,"Stock movement invariants failed")
-        page.locator('.mode [data-route=field]').click()
-        page.locator('#actor').select_option("member-0")
-        task=page.locator("article.taskrow").filter(has_text="QA монтаж")
-        task.get_by_role("button",name="На проверку").click()
+        route("team")
+        page.locator("#actor").select_option("member-0")
+        route("field")
+        task=page.locator("article.fieldtask").filter(has_text="QA монтаж")
+        task.get_by_role("button",name="Передать на приёмку").click()
         expect(task).to_contain_text("На проверке")
-        page.locator('#actor').select_option("lead");route("tasks");act("accept")
+        route("team");page.locator('#actor').select_option("lead");route("tasks");act("accept")
         page.wait_for_function("""() => {const r=JSON.parse(localStorage.getItem('nvtsk05_independent'));return r?.data?.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')}""")
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
         # Browser-runtime regression: an accepted Shard cannot consume or return stock,
