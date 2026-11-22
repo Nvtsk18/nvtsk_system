@@ -530,3 +530,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Checks executed:** fetched current app.js and AUDIT_LOG.md; exact unique source anchor and lock-before-save ordering PASS; GitHub update succeeded; fetched committed app.js and parsed complete source with V8 Function constructor PASS. Static check confirmed combined exporter rejects recoveryLock. No browser reload, storage fault injection, three-role authorization, actual iPhone Safari or end-to-end test this run. These remain NOT RUN. The UI still has potentially misleading legacy text, and the combined import remains unimplemented.
 
 **Next:** validated combined Case/Shard/Garage restore with crash-safe journal or one-envelope storage migration; verify old backups without truncation; execute actual browser persistence, role-conflict and navigation tests. Keep original records and separate backups. MVP not ready.
+
+
+## Iteration · 2026-11-22 06:00 CET · preserve audit history
+
+**Code commit:** `ab126506ae8fa6b12bd75e0f646ce98623e51b99` (`silver-command/app.js` only).
+
+**Issue:** `normalize()` accepted up to 3000 audit records but silently retained only the last 300, losing up to 2700 entries on load, export, or restore. Subsequent `log()` and import also truncated to 300.
+
+**Fix:** normalize preserves all validated audit entries (up to existing 3000-record validation limit); routine log and import retention raised to 3000. This removes silent 300-record truncation during normal round trips. The 3000-record bounded retention policy still drops oldest entries when new events exceed the limit and must be disclosed or redesigned for archival-grade audit; this is NOT tamper-resistant audit logging.
+
+**Checks executed:** fetched current code and audit before edit; updated app.js via GitHub; fetched committed source and parsed complete JavaScript using V8 Function constructor PASS; static assertions for all three retention paths PASS. **NOT RUN:** actual browser export/import/reload, three-role runtime conflict tests, iPhone Safari, full workflow. No claim of full audit durability. Root files unchanged.
+
+**P0 remaining:** crash-safe combined Case/Shard/Garage restore, strict lossless legacy migration, actual browser persistence and authorization tests. Keep separate backups. MVP NOT ready.
