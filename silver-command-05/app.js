@@ -713,6 +713,7 @@ function edit(kind,id){
  if(kind==="move")fields+=`<label>Причина списания<input name="reason" maxlength="300" placeholder="Брак, потеря, инвентаризация"></label>`;
  if(kind==="material"||kind==="move")fields+=input("qty","Количество, шт.","number").replace('step=".01"','step="1"').replace('min="0"','min="1"');
  if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ, всего до 2 МБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Project и Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
+ if(kind==="case-media")fields+='<label>Выбрать фото / PDF<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple required></label>';
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
