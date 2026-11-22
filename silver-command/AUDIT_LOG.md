@@ -552,3 +552,14 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Critical discrepancy found:** existing specification still said Shard transfers existing Case Merit and charges 2%; this directly contradicted the user's final agreed rules. Corrected documentation: €1,000 Case mints 1,010 Merit (10 additional to platform creator), €250 Shard mints 250 additional Merit, Shard creator pays 1.2%=€3, Case fee €10, combined mint 1,260 Merit and fees €13, all fees to backing without 80/20. Explicitly preserved unresolved issuance recipients, timing, Shard limits, idempotency and real backing questions. No payment code or UI added.
 
 **Checks performed:** read current `app.js` and `AUDIT_LOG.md` before change; checked arithmetic 1010+250=1260 and 10+3=13; GitHub spec update succeeded. **NOT RUN:** JS parser, runtime tests, three role scenarios, combined import/export/reload, browser or iPhone testing (no executable code changed). Current MVP remains blocked on atomic combined restore and full workflow verification. Root 0.3 untouched. Next: resume P0 combined import work; do not confuse specification correction with MVP readiness.
+
+
+## Iteration · 2026-11-22 08:00 CET · malformed route resilience
+
+**Code commit:** `0d67a7d7e57707970f64abab2a3271a2dfe9023c` (`silver-command/app.js` only). Root 0.3 untouched.
+
+**Bug fixed:** `restoreRoute()` previously called `decodeURIComponent(location.hash.slice(1))` without exception handling. A malformed percent-encoded fragment such as `#lot/%ZZ/1` would throw during route restoration, potentially blanking navigation. Invalid encoding now falls back to dashboard, retaining the existing valid-route parser and top-of-screen reset. No stored data is touched.
+
+**Checks actually run:** fetched source after commit; V8 `new Function(app.js)` full-source syntax parse PASS; static guard presence PASS. **NOT RUN:** browser URL test, iPhone Safari, 3-role runtime conflicts, combined import/export/reload or end-to-end Case→Shard→Garage→acceptance. No claim of a tested browser MVP.
+
+**Remaining P0:** atomic crash-recoverable combined restore, lossless migration, actual browser flow and role-conflict tests. Next iteration should prioritise those rather than cosmetic work. Existing combined export is archival only; preserve separate backups.
