@@ -49,6 +49,14 @@ const iconPaths={
  field:"M3 16h18 M5 16v-3c0-5 3-8 7-8s7 3 7 8v3 M10 4v8 M14 4v8 M2 17v3h20v-3",
  clock:"M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0 M12 6v7l4 2"};
 const icon=name=>'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'+iconPaths[name]+'"/></svg>';
+const demoCaseLocations={Stockach:[47.851,9.012],Singen:[47.760,8.841],"Überlingen":[47.769,9.171],Konstanz:[47.660,9.175]};
+function caseMiniMap(){
+ const bounds={west:8.68,east:9.37,south:47.52,north:47.98};
+ const placed=state.cases.map(c=>({c,coord:c.id.startsWith("demo-")?demoCaseLocations[c.city]:null})).filter(x=>x.coord);
+ const pins=placed.map(({c,coord})=>{const x=100*(coord[1]-bounds.west)/(bounds.east-bounds.west),y=100*(bounds.north-coord[0])/(bounds.north-bounds.south);return '<button class="mapcasepin" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%" data-route="case/'+esc(c.id)+'" title="'+esc(c.title+' · '+c.city)+'" aria-label="Открыть '+esc(c.title)+'"><span></span></button>'}).join('');
+ const bbox=[bounds.west,bounds.south,bounds.east,bounds.north].join('%2C');
+ return '<section class="panel casemap"><div class="panelhead"><h2>Карта кейсов</h2><small>'+placed.length+' с отметками · '+state.cases.length+' всего</small></div><div class="casemapviewport"><iframe loading="lazy" title="OpenStreetMap · регион Bodensee" src="https://www.openstreetmap.org/export/embed.html?bbox='+bbox+'&layer=mapnik" referrerpolicy="no-referrer" tabindex="-1"></iframe><div class="casemappins">'+pins+'</div><span class="casemapcredit">© OpenStreetMap contributors</span></div><div class="casemaplegend"><span><i></i> Демо-кейсы по центру города</span><button data-route="projects">Все кейсы →</button></div><p class="casemapnote">Точки показывают только демо-кейсы. Для реальных адресов координаты пока не определяются — ложные точки не создаются.</p></section>';
+}
 function dashboard(){
  const open=state.shards.filter(s=>s.status!=="accepted");
  const fleet=state.garage.filter(m=>["van","car","trailer"].includes(m.art));
@@ -64,7 +72,7 @@ function dashboard(){
  const quick='<div class="actions">'+action("layers","Новый кейс","new-case")+action("box","Новый шард",state.cases.length?"new-shard":"new-case",null)+action("check","Приёмка",null,"tasks")+action("van","Выдача со склада",null,"garage")+action("settings","Учёт материалов",null,"garage")+action("screen","Задания монтажника",null,"field")+'</div>';
  const tasks=open.slice(0,3).map((s,i)=>'<button class="tasklink" data-route="case/'+esc(s.caseId)+'"><span class="taskcheck">'+""+'</span><span>'+esc(s.title)+'</span><small>'+esc(statusName[s.status])+'</small></button>').join("")||"<p>Очередь пуста</p>";
  const footer='<div class="future"><span>'+icon("layers")+' Академия <small>Скоро</small></span><button data-route="settings">'+icon("team")+' Документы</button><button data-route="pulse">'+icon("coins")+' Токеномика (Merit)</button><span>'+icon("pulse")+' Синхронизация <small>Скоро</small></span><span>'+icon("settings")+' Интеграции <small>Скоро</small></span></div>';
- return '<section class="hero"><div><h1>Добро пожаловать в NVTSK <em>//</em></h1><p>Оперативное управление PV-проектами</p></div></section><div class="stats desktopmetrics">'+statsHtml+'</div><div class="columns">'+panel("Активные кейсы ("+state.cases.length+")","projects",caseRows)+'<div>'+panel("Шарды (в работе)","tasks",shardRows)+panel("Гараж / Автопарк","garage",'<div class="fleet">'+cars+'</div>')+'</div><div>'+panel("Быстрые действия","projects",quick)+panel("Ближайшие задачи","tasks",tasks)+'</div></div>'+footer;
+ return '<section class="hero"><div><h1>Добро пожаловать в NVTSK <em>//</em></h1><p>Оперативное управление PV-проектами</p></div></section><div class="stats desktopmetrics">'+statsHtml+'</div><div class="columns">'+panel("Активные кейсы ("+state.cases.length+")","projects",caseRows)+'<div>'+panel("Шарды (в работе)","tasks",shardRows)+panel("Гараж / Автопарк","garage",'<div class="fleet">'+cars+'</div>')+'</div><div>'+panel("Быстрые действия","projects",quick)+panel("Ближайшие задачи","tasks",tasks)+'</div></div>'+caseMiniMap()+footer;
 }
 const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+action+'</div>';
 function projects(){return heading("Case / Проекты",button("＋ Новый Case","new-case")+button("⚡ Электромонтаж","new-electrical"))+'<div class="cards">'+state.cases.map(c=>'<section class="panel item"><h2>'+esc(c.title)+'</h2><p>⌖ '+esc(c.city)+' · '+money(c.price)+' €</p><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div><button class="action" data-route="case/'+esc(c.id)+'">Открыть Case →</button></section>').join("")+'</div>'}
