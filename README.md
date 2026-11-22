@@ -1,8 +1,8 @@
-# NVTSK SYSTEM — Silver Command 0.4
+# NVTSK SYSTEM 0.5
 
-**Единственная актуальная версия:** [Открыть приложение](https://nvtsk18.github.io/nvtsk_system/silver-command/).
+[Открыть Silver Command 0.5](https://nvtsk18.github.io/nvtsk_system/silver-command-05/). Рабочая директория — `silver-command-05/`.
 
-Корневой URL GitHub Pages автоматически перенаправляет в `silver-command/`. Разработка ведётся только в этой директории.
+## Архивная документация 0.4
 
 ## Назначение
 
