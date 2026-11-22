@@ -86,7 +86,18 @@ with sync_playwright() as pw:
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Стоимость").fill("250");save()
-        route("garage");fits();capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
+        route("garage");fits();
+        # Audit every warehouse image: local assets are required; supplier-hosted
+        # images are reported separately because third-party networks may block CI.
+        photos = page.evaluate("""async () => {
+          const imgs=[...document.querySelectorAll('.stockitem img,.stockcataloguecard img')];
+          await Promise.all(imgs.map(img=>img.decode().catch(()=>null)));
+          return imgs.map(img=>({src:img.currentSrc||img.src,alt:img.alt,ok:img.naturalWidth>0,width:img.naturalWidth}));
+        }""")
+        broken_local=[p for p in photos if not p["ok"] and "/art/" in p["src"]]
+        assert not broken_local, (width,"Broken local warehouse images",broken_local)
+        print("WAREHOUSE_PHOTOS",engine.name,width,json.dumps(photos,ensure_ascii=False))
+        capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
         expect(page.locator(".stockitem").filter(has_text="Einlegeschiene").get_by_text("22",exact=True)).to_be_visible()
         page.locator('.mode [data-route=field]').click()
         page.locator('#actor').select_option("member-0")
