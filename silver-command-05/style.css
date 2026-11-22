@@ -200,3 +200,17 @@ button:active{transform:translateY(1px)}
 .socialteaser img{width:115px;height:80px;object-fit:cover;border-radius:8px}
 .socialteaser p{font-size:12px;opacity:.7}
 @media(max-width:600px){.socialhero>img{width:35%;height:125px}.socialhero h2{font-size:18px}.socialteaser img{width:85px}.socialpost{padding:12px}}
+
+
+/* Unified Projects / Shards */
+.unifiedstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.projectgroups{display:grid;gap:13px;margin-top:16px}
+.projectgroup{overflow:hidden}
+.projectgrouphead{display:flex;align-items:center;gap:14px}
+.projectgrouphead>img{width:110px;height:83px;object-fit:cover;border-radius:9px}
+.projectgrouphead>div{flex:1;min-width:0}
+.projectgrouphead h2{margin:0 0 5px;font-size:16px}
+.projectgrouphead small{display:block;margin-bottom:10px}
+.projectgrouphead>button{white-space:nowrap}
+.projectshards{margin-top:14px;border-top:1px solid #35404c;padding-top:8px}
+@media(max-width:650px){.unifiedstats{grid-template-columns:repeat(3,minmax(0,1fr))}.projectgrouphead{flex-wrap:wrap}.projectgrouphead>img{width:75px;height:70px}.projectgrouphead>button{margin-left:auto}.unifiedstats .stat{padding:9px 5px}}
