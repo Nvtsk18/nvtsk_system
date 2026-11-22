@@ -13,3 +13,30 @@
 .pulse-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#7d9cb0,#b6d2dd);transition:width .2s ease}
 @media(max-width:740px){.pulse{padding:12px}.pulse .small{font-size:12px}}
 \n.garage-scroll{overflow-x:auto}.garage-table{width:100%;border-collapse:collapse;min-width:420px}.garage-table th,.garage-table td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}.garage-table th{color:var(--soft);font-size:11px}.garage-entry{padding:10px 0;border-bottom:1px solid var(--line)}\n
+
+/* SILVER COMMAND / visual pass 2026-11-22
+   Presentation only: keep routing, demo data and local persistence unchanged. */
+:root{--bg:#06090d;--graphite:#0a0f15;--panel:rgba(17,24,32,.91);--pane2:rgba(24,34,45,.88);--inner:rgba(24,34,44,.9);--line:rgba(196,214,227,.18);--steel:#8798a6;--soft:#9bacba;--mint:#65ddca;--shadow:0 22px 56px rgba(0,0,0,.48)}
+body{background:radial-gradient(ellipse 65% 38% at 76% -12%,rgba(73,106,125,.26),transparent 75%),radial-gradient(ellipse 42% 34% at 0% 80%,rgba(27,58,71,.23),transparent 80%),#06090d}
+.layout{max-width:1920px;grid-template-columns:252px minmax(0,1fr)}
+.sidebar{background:linear-gradient(155deg,rgba(23,32,42,.98),rgba(7,11,16,.98));border-right:1px solid #afc8d02c;padding:29px 17px}
+.brand{margin:0 8px 42px;gap:14px}.brandN{width:53px;height:53px;border-radius:16px;box-shadow:0 0 0 4px #c4d9e30b,0 12px 35px #0009,inset 0 2px 2px #fff9}
+.brandName{font-size:22px;letter-spacing:3.5px}.brandSub{letter-spacing:2.2px}
+.snav{gap:9px}.snav a{min-height:49px;padding:13px 17px;border-radius:12px;font-size:13px;transition:background .18s,border-color .18s}
+.snav a.active{background:linear-gradient(90deg,rgba(104,173,193,.19),rgba(53,75,91,.11));border-color:#a3d7e259;box-shadow:inset 3px 0 #83d4e4,0 7px 19px #0004}
+.content{padding:34px clamp(20px,3.2vw,54px) 100px}.header{padding:0 1px 18px;border-bottom:1px solid #d6e5eb19;margin-bottom:25px}.header h1{font-size:clamp(26px,2.7vw,37px);font-weight:790;letter-spacing:-1.2px}
+.overline{font-size:10px;letter-spacing:2.7px;color:#8caebd}
+.glass{border-radius:21px;border:1px solid #c6dce43b;background:linear-gradient(155deg,rgba(70,91,107,.17),transparent 55%),linear-gradient(135deg,rgba(23,33,43,.95),rgba(10,17,24,.94));box-shadow:0 20px 48px #0008,inset 0 1px #ffffff1a;backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}
+.glass.hero{min-height:245px;padding:clamp(23px,3vw,37px);background:radial-gradient(ellipse 55% 105% at 95% 20%,rgba(92,148,165,.27),transparent 72%),linear-gradient(120deg,#1a2b38 0%,#101b25 55%,#0b141d 100%);border-color:#bdd9e65c;box-shadow:0 25px 60px #0009,inset 0 1px #ffffff24}
+.hero:after{content:"";width:38%;height:130%;right:-4%;top:-15%;background:repeating-linear-gradient(125deg,transparent 0 29px,rgba(168,215,231,.055) 30px 32px,transparent 33px 61px);transform:skew(-10deg)}
+.glass.work{background:linear-gradient(145deg,rgba(61,83,99,.22),transparent 55%),rgba(15,23,31,.94);border:1px solid #a9c7d52c;border-radius:17px;box-shadow:0 14px 35px #0006,inset 0 1px #ffffff14}
+.glass.inner,.tile{background:linear-gradient(145deg,rgba(43,62,76,.55),rgba(19,30,40,.65));border-color:#b8d4e331}
+.stat{font-size:clamp(27px,3.2vw,37px);color:#f3f8fa;letter-spacing:-1px}.statlabel{text-transform:uppercase;letter-spacing:1.1px;font-size:10px;font-weight:760}
+.btn{border-radius:10px;background:linear-gradient(150deg,#344958,#1a2a35);border-color:#b9d6e74b;box-shadow:inset 0 1px #ffffff15,0 6px 16px #0004}
+.btn.primary{background:linear-gradient(125deg,#eaf4f8,#a8c4d1);color:#10212c;box-shadow:0 5px 22px #a9d4e022,inset 0 1px #fff}
+.pill.green{color:#91efcf;background:#123b32;border-color:#327f6b}
+.progress,.pulse-track{background:#22323d}.progress>i,.pulse-fill{background:linear-gradient(90deg,#5aa4ba,#c1e3ec)}
+input,textarea,select{background:#0d1922;border-color:#9dbdcc4a}
+.modal{background:linear-gradient(150deg,#253847,#0a121a);box-shadow:0 32px 90px #000d}
+@media(max-width:1020px){.layout{grid-template-columns:200px minmax(0,1fr)}.content{padding:24px 18px 90px}}
+@media(max-width:740px){.layout{display:block}.content{padding:19px 13px calc(100px + env(safe-area-inset-bottom))}.header{padding-bottom:14px;margin-bottom:17px}.header h1{font-size:25px}.glass.hero{min-height:210px;padding:20px}.glass{border-radius:17px}.glass.work{padding:15px}.bottomnav{background:rgba(10,17,24,.94);border-top:1px solid #a7d3df55;box-shadow:0 -15px 36px #000b}.bottomnav a{color:#a6bbc8;border:1px solid transparent}.bottomnav a.active{color:#ecf9fc;border-color:#8dd2e351;background:#5eafc21b}.bottomnav .ico{font-size:22px}.modalback{padding:12px}}
