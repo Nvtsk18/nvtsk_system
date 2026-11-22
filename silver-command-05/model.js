@@ -2,6 +2,23 @@
 globalThis.NVModel = (() => {
   const roles = ["Руководитель", "Монтажник", "Кладовщик"];
   // Business-card sourced company contact; system Captain is an app role, not a legal job title.
+  // Legal/contact details sourced from sunpaur.com/impressum; service split supplied by operator.
+  const sunpaurProfile=Object.freeze({
+    id:"sunpaur-gmbh",name:"Sunpaur GmbH",category:"Auftraggeber",
+    address:"Zur Gottwies 6, 78315 Radolfzell am Bodensee",
+    city:"Radolfzell am Bodensee",phone:"+49 7732 987 99 00",
+    email:"info@sunpaur.com",website:"https://sunpaur.com",
+    register:"HRB 729086 · Amtsgericht Freiburg i.Br.",
+    vatId:"DE361857259",
+    directors:["Patrick Kohler","Christian Hertkorn"],
+    services:["Photovoltaik","Energiemanagement","Elektrotechnik"],
+    relationship:{from:"sunpaur-gmbh",to:"SolAn Plus GmbH",service:"DC-Montage",ac:"Sunpaur GmbH · eigene Elektriker",status:"Рабочий контрагент"},
+    sources:["https://sunpaur.com/impressum/","https://sunpaur.com/"]
+  });
+  const seedCounterparties=list=>{
+    const out=Array.isArray(list)?list:[];
+    return out.some(x=>x?.id===sunpaurProfile.id)?out:[...out,JSON.parse(JSON.stringify(sunpaurProfile))];
+  };
   const companyCaptain=Object.freeze({name:"Roman Eppinger",headline:"SolAn Plus GmbH",location:"Überlingen, Baden-Württemberg",address:"Hauptstraße 29, 88662 Überlingen",phone:"+49 160 784 19 43",email:"romaneppinger@solanplus.de",website:"https://www.solanplus.de",company:"SolAn Plus GmbH"});
   const upgradeCaptain=old=>{
     const crew=old?.crew;
@@ -22,7 +39,7 @@ globalThis.NVModel = (() => {
   const attachments = list => list===undefined || (Array.isArray(list)&&list.length<=8&&list.every(a=>a&&ident(a.id)&&optional(a.name,180)&&a.name&&typeof a.data==="string"&&/^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(a.data)&&a.data.length<=900000));
   const ident = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
   function migrate(old) {
-    if (old.version === 2) return upgradeCaptain(Array.isArray(old.teams) ? old : {...old,teams:[]});
+    if (old.version === 2) return upgradeCaptain({...old,teams:Array.isArray(old.teams)?old.teams:[],counterparties:seedCounterparties(old.counterparties)});
     if (old.version !== 1) return old;
     const data = JSON.parse(JSON.stringify(old));
     requireValue(["cases","garage","tasks","crew","shards"].every(k => Array.isArray(data[k])), "Неверная схема v1");
@@ -30,18 +47,20 @@ globalThis.NVModel = (() => {
     data.actor = "lead";
     data.moves = [];
     data.teams = [];
+    data.counterparties=seedCounterparties(data.counterparties);
     data.version = 2;
     return data;
   }
   function validate(d) {
-    requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
-    for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams]) {
+    requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams","counterparties"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
+    for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams,d.counterparties]) {
       requireValue(list.every(x => x && ident(x.id)) && new Set(list.map(x=>x.id)).size === list.length,"Ошибка идентификаторов");
     }
     const has = (list,id) => list.some(x=>x.id===id);
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
     requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
-    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Project");
+    requireValue(d.counterparties.every(p=>label(p.name)&&optional(p.category,80)&&optional(p.address,240)&&optional(p.city,120)&&optional(p.phone,50)&&optional(p.email,160)&&optional(p.website,180)&&optional(p.register,180)&&optional(p.vatId,80)&&Array.isArray(p.directors)&&p.directors.length<=8&&p.directors.every(x=>label(x))&&Array.isArray(p.services)&&p.services.length<=15&&p.services.every(x=>typeof x==="string"&&x.length<=100)&&(!p.relationship||(typeof p.relationship==="object"&&optional(p.relationship.service,150)&&optional(p.relationship.ac,150)&&optional(p.relationship.status,120)))&&(!p.sources||(Array.isArray(p.sources)&&p.sources.length<=8&&p.sources.every(x=>typeof x==="string"&&x.startsWith("https://")&&x.length<=250)))),"Ошибка карточки контрагента");
+    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)&&(c.counterpartyId===undefined||c.counterpartyId===null||has(d.counterparties,c.counterpartyId))),"Ошибка Project");
     requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))&&(s.teamId===undefined||s.teamId===null||has(d.teams,s.teamId))),"Ошибка Shard");
     requireValue(d.tasks.every(t=>label(t.title)&&has(d.shards,t.shardId)&&["todo","doing","done"].includes(t.status)&&optional(t.notes,2000)&&(t.assignee===null||has(d.crew,t.assignee))),"Ошибка задачи");
     requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
@@ -111,7 +130,15 @@ globalThis.NVModel = (() => {
         if(p.avatar!==undefined)target.avatar=p.avatar;
         break;
       }
-      case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[]}); break;
+      case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
+      case "link-counterparty": {
+        allowed(lead);
+        const project=d.cases.find(c=>c.id===p.caseId);
+        allowed(project);
+        requireValue(p.counterpartyId===null||has(d.counterparties,p.counterpartyId),"Неизвестный контрагент");
+        project.counterpartyId=p.counterpartyId;
+        break;
+      }
       case "shard": allowed(lead);
         requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
       case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; s.teamId=null; break;
