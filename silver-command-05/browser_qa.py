@@ -79,6 +79,12 @@ with sync_playwright() as pw:
                 shards.every(s=>s.status==='draft' && s.assignee===null) &&
                 Math.round(shards.reduce((n,s)=>n+s.price,0)*100)===100000;
         }"""), "Electrical Case template failed to create five balanced Shards"
+        # Dashboard map: demo pins are clickable, real un-geocoded cases are not fabricated.
+        route("dashboard")
+        expect(page.locator(".casemap")).to_be_visible()
+        expect(page.locator(".mapcasepin")).to_have_count(4)
+        page.locator(".mapcasepin").first.click()
+        expect(page.locator("#app")).to_contain_text("PV Dachmontage")
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
