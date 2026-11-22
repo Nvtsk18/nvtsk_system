@@ -419,6 +419,7 @@ function render(){
  $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("team/")?team():Object.hasOwn(pages,r)?pages[r]():dashboard());
  document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/"))&&b.dataset.route==="projects")||(b.closest("#nav")&&(r.startsWith("member/")||r.startsWith("team/"))&&b.dataset.route==="team")));
  if(!lead())document.querySelectorAll('[data-action="new-case"],[data-action="new-electrical"]').forEach(b=>b.remove());
+ if(r==="projects")filterProjectHub();
 }
 const input=(name,text,type="text")=>'<label>'+text+'<input required name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="1000000000000" step=".01"':'maxlength="120"')+'></label>';
 const select=(name,text,items,value)=>'<label>'+text+'<select required name="'+name+'">'+options(items,value)+'</select></label>';
@@ -455,6 +456,10 @@ function edit(kind,id){
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
+ const phTab=e.target.closest('[data-action="project-tab"]');
+ if(phTab){projectHubTab=phTab.dataset.tab;projectHubFilter="all";projectHubQuery="";render();return}
+ const phFilter=e.target.closest('[data-action="project-filter"]');
+ if(phFilter){projectHubFilter=phFilter.dataset.filter;render();return}
  if(e.target.closest('[data-action="feed-view"]')){const view=e.target.closest("[data-action]").dataset.view;if(["all","posts","work"].includes(view)){communityFeedView=view;render()}return}
  if(e.target.closest('[data-action="social-delete"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p&&p.author===state.actor&&confirm("Удалить свою публикацию и комментарии?")){d.posts=d.posts.filter(x=>x.id!==id);try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
  if(e.target.closest('[data-action="social-like"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
@@ -489,7 +494,7 @@ document.addEventListener("change",async e=>{if(e.target.name==="type"&&pending?
  if(confirm("Заменить локальные данные данными из файла?"))await change(()=>data,false,true);
  }catch(err){alert(err.message)}finally{e.target.value=""}}
 });
-document.addEventListener("input",e=>{if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()));if(e.target.id==="member-search")document.querySelectorAll("[data-membersearch]").forEach(el=>el.hidden=!el.dataset.membersearch.includes(e.target.value.toLowerCase()))});
+document.addEventListener("input",e=>{if(e.target.id==="project-hub-search"){projectHubQuery=e.target.value;filterProjectHub()}if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()));if(e.target.id==="member-search")document.querySelectorAll("[data-membersearch]").forEach(el=>el.hidden=!el.dataset.membersearch.includes(e.target.value.toLowerCase()))});
 $("#cancel").onclick=()=>$("#dialog").close();
 $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
