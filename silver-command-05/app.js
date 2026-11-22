@@ -193,42 +193,61 @@ function filterProjectHub(){
  if(result)result.textContent=shown+" найдено";
  if(empty)empty.hidden=shown>0||cards.length===0;
 }
+function projectHubAccounting(){
+ const budget=state.cases.reduce((sum,c)=>sum+Number(c.price||0),0);
+ const allocated=state.shards.reduce((sum,sh)=>sum+Number(sh.price||0),0);
+ const accepted=state.shards.filter(sh=>sh.status==="accepted").reduce((sum,sh)=>sum+Number(sh.price||0),0);
+ const waiting=state.shards.filter(sh=>sh.status==="submitted");
+ const rows=state.cases.map(c=>{
+   const shards=state.shards.filter(sh=>sh.caseId===c.id),planned=shards.reduce((n,sh)=>n+Number(sh.price||0),0);
+   const done=shards.filter(sh=>sh.status==="accepted").reduce((n,sh)=>n+Number(sh.price||0),0);
+   return '<button type="button" class="ph-account-row" data-route="case/'+esc(c.id)+'">'+
+   '<span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city)+' · '+shardCount(shards.length)+'</small></span>'+
+   '<span><small>Бюджет</small><b>'+money(c.price)+' €</b></span>'+
+   '<span><small>Распределено</small><b>'+money(planned)+' €</b></span>'+
+   '<span><small>Принято</small><b>'+money(done)+' €</b></span></button>';
+ }).join("");
+ return '<div class="ph-account">'+
+ '<div class="ph-account-stats">'+
+ '<div><small>Бюджет всех Projects</small><strong>'+money(budget)+' €</strong></div>'+
+ '<div><small>Распределено по Shards</small><strong>'+money(allocated)+' €</strong></div>'+
+ '<div><small>Принято работ</small><strong>'+money(accepted)+' €</strong></div>'+
+ '<div><small>Shards ожидают приёмки</small><strong>'+waiting.length+'</strong></div></div>'+
+ '<div class="ph-local-note"><strong>Управленческая сводка</strong><span>Это плановые бюджеты и стоимость принятых работ, а не подтверждённые поступления денег, расходы или выплаты. Для полноценного финансового учёта потребуется отдельный журнал операций.</span></div>'+
+ '<div class="ph-account-title"><h3>По объектам</h3><button data-route="pulse">Обзор Merit и бюджетов →</button></div>'+
+ '<div class="ph-account-list">'+(rows||'<p class="ph-empty">Создайте первый Project, чтобы начать учёт.</p>')+'</div></div>';
+}
 function projects(){
- const all=state.cases.map(projectHubMembership);
- const mine=all.filter(x=>x.managed||x.joined).sort((a,b)=>projectHubStatusOrder[a.status]-projectHubStatusOrder[b.status]);
- const joined=all.filter(x=>x.joined).sort((a,b)=>projectHubStatusOrder[a.status]-projectHubStatusOrder[b.status]);
- const market=projectHubOfferProjects(all);
- const views=[["mine","Мои",mine.length],["joined","Участвую",joined.length],["market","Рынок",market.length]];
- const tab=["mine","joined","market"].includes(projectHubTab)?projectHubTab:"mine";
+ const all=state.cases.map(projectHubMembership),joined=all.filter(x=>x.joined);
+ const own=lead()?all:joined;
+ const tabs=lead()?[["mine","Мои",own.length],["joined","Участвую",joined.length],["accounting","Учёт",all.length]]:
+ [["mine","Мои",own.length],["joined","Участвую",joined.length]];
+ const tab=["mine","joined","accounting"].includes(projectHubTab)&&!(projectHubTab==="accounting"&&!lead())?projectHubTab:"mine";
  projectHubTab=tab;
- const tabs={
-  mine:["Мои Projects","Все проекты, которыми вы управляете или в работе которых участвуете.","Пока нет ваших проектов."],
-  joined:["Моё участие","Только проекты, где вы назначены на Shard, Task или проводили складские операции.","Вам пока не назначили работы."],
-  market:["Рынок · предпросмотр","Поиск объектов со свободными Shards в локальной базе.","Свободных рабочих предложений пока нет."]
+ const titles={
+  mine:["Мои Projects",lead()?"Все объекты компании: работа, назначения и готовность.":"Все объекты, где у вас есть назначенные работы.","Ваших Projects пока нет."],
+  joined:["Моё участие","Назначения на Shards и Tasks, а также участие в складских операциях.","Вас ещё не назначили на работы."],
+  accounting:["Управление и учёт","Бюджеты и приёмка работ по объектам вашей компании.","Проектов пока нет."]
  };
- const listings=tab==="mine"?mine:tab==="joined"?joined:market;
- const saved=projectHubSaved();
- const cards=tab==="market"?market.map(x=>projectHubMarketCard(x,saved)).join(""):listings.map(projectHubProjectCard).join("");
- const cities=[...new Set(listings.map(x=>x.c.city))].sort((a,b)=>a.localeCompare(b,"ru"));
- const kinds=tab==="market"?[...new Set(market.flatMap(x=>x.offers.map(sh=>sh.kind)))].sort():[];
- const tabInfo=tabs[tab];
- const emptyHelp=tab==="mine"?"Капитан может создать Project. Остальные проекты появятся после назначения на Shard или Task.":tab==="joined"?"Назначения и выполненные работы появятся здесь автоматически.":"Открытые предложения появятся после создания Shard без исполнителя.";
- const marketNote=tab==="market"?'<div class="ph-local-note ph-market-warning"><strong>Локальный прототип рынка</strong><span>Это не онлайн-биржа. Здесь показаны только свободные Shards из данных данного устройства. Кнопка «Сохранить» добавляет предложение в закладки на этом устройстве, но не отправляет отклик.</span></div>':"";
- const statusFilters=tab==="market"?[["all","Все"],["saved","Сохранённые"]]:[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершены"]];
- return '<div class="ph-root ph-v56">'+
- '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">NVTSK · WORKSPACE</span><h1>Projects</h1><p>Мои объекты, мои назначения и возможности для новых работ.</p>'+
- '<div class="ph-hero-metrics"><span><strong>'+mine.length+'</strong> моих</span><span><strong>'+joined.length+'</strong> участвую</span><span><strong>'+market.length+'</strong> предложений</span></div></div>'+
+ const list=(tab==="joined"?joined:own).slice().sort((a,b)=>projectHubStatusOrder[a.status]-projectHubStatusOrder[b.status]);
+ const info=titles[tab],cities=[...new Set(list.map(x=>x.c.city))].sort((a,b)=>a.localeCompare(b,"ru"));
+ const cards=list.map(projectHubProjectCard).join("");
+ const emptyHelp=tab==="mine"?"Создайте Project или дождитесь назначения на Shard.":"Назначения от Капитана появятся здесь автоматически.";
+ const filters=[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершённые"]];
+ const right=tab==="accounting"?projectHubAccounting():(
+ '<div class="ph-searchline"><label class="ph-search"><span>'+icon("search")+'</span><input id="project-hub-search" type="search" aria-label="Поиск по проектам" maxlength="120" placeholder="Название, город, DC, AC, монтаж…" value="'+esc(projectHubQuery)+'" autocomplete="off"></label><span id="ph-result-count">'+list.length+' найдено</span></div>'+
+ '<div class="ph-filterbar"><label class="ph-filter-select">Город<select id="ph-city" aria-label="Выбрать город"><option value="all">Все города</option>'+cities.map(city=>'<option value="'+esc(city.toLocaleLowerCase())+'" '+(projectHubCity===city.toLocaleLowerCase()?"selected":"")+'>'+esc(city)+'</option>').join("")+'</select></label></div>'+
+ '<div class="ph-filters" role="group" aria-label="Фильтр проектов">'+filters.map(([id,label])=>'<button type="button" data-action="project-filter" data-filter="'+id+'" class="'+(projectHubFilter===id?"is-active":"")+'" aria-pressed="'+(projectHubFilter===id)+'">'+label+'</button>').join("")+'</div>'+
+ '<div class="ph-list">'+(cards||'<div class="ph-empty"><strong>'+info[2]+'</strong><p>'+emptyHelp+'</p>'+(lead()&&tab==="mine"?button("＋ Создать Project","new-case"):"")+'</div>')+'</div>'+
+ '<div id="ph-no-match" class="ph-empty" hidden><strong>Нет подходящих объектов</strong><p>Попробуйте другой запрос или фильтр.</p></div>'
+ );
+ return '<div class="ph-root ph-v56 ph-internal">'+
+ '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">NVTSK · COMPANY WORKSPACE</span><h1>Projects</h1>'+
+ '<p>Объекты компании, личные назначения и управленческий учёт.</p>'+
+ '<div class="ph-hero-metrics"><span><strong>'+own.length+'</strong> мои объекты</span><span><strong>'+joined.length+'</strong> участвую</span><span><strong>'+state.teams.length+'</strong> Teams</span></div></div>'+
  '<div class="ph-hero-actions">'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
- '<nav class="ph-tabs" aria-label="Разделы Projects">'+views.map(([id,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+id+'" class="'+(tab===id?"is-active":"")+'" aria-current="'+(tab===id?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
- '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="market"?"OPPORTUNITIES":tab==="joined"?"MY PARTICIPATION":"MY WORKSPACE")+'</span><h2>'+tabInfo[0]+'</h2><p>'+tabInfo[1]+'</p></div></div>'+
- marketNote+
- '<div class="ph-searchline"><label class="ph-search"><span>'+icon("search")+'</span><input id="project-hub-search" type="search" aria-label="Поиск по проектам" maxlength="120" placeholder="Название, город, DC, AC, монтаж…" value="'+esc(projectHubQuery)+'" autocomplete="off"></label><span id="ph-result-count">'+listings.length+' найдено</span></div>'+
- '<div class="ph-filterbar"><label class="ph-filter-select">Город<select id="ph-city" aria-label="Выбрать город"><option value="all">Все города</option>'+cities.map(city=>'<option value="'+esc(city.toLocaleLowerCase())+'" '+(projectHubCity===city.toLocaleLowerCase()?"selected":"")+'>'+esc(city)+'</option>').join("")+'</select></label>'+
- (tab==="market"?'<label class="ph-filter-select">Вид работ<select id="ph-kind" aria-label="Вид работ"><option value="all">Все виды</option>'+kinds.map(kind=>'<option value="'+esc(kind)+'" '+(projectHubKind===kind?"selected":"")+'>'+esc(kind)+'</option>').join("")+'</select></label>':"")+'</div>'+
- '<div class="ph-filters" role="group" aria-label="Фильтр проектов">'+statusFilters.map(([id,label])=>'<button type="button" data-action="project-filter" data-filter="'+id+'" class="'+(projectHubFilter===id?"is-active":"")+'" aria-pressed="'+(projectHubFilter===id)+'">'+label+'</button>').join("")+'</div>'+
- '<div class="ph-list">'+(cards||'<div class="ph-empty"><strong>'+tabInfo[2]+'</strong><p>'+emptyHelp+'</p>'+(lead()&&tab==="mine"?button("＋ Создать Project","new-case"):"")+'</div>')+'</div>'+
- '<div id="ph-no-match" class="ph-empty" hidden><strong>Нет подходящих результатов</strong><p>Измените поиск, город или фильтры.</p></div>'+
- '</section></div>';
+ '<nav class="ph-tabs" aria-label="Разделы Projects">'+tabs.map(([id,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+id+'" class="'+(tab===id?"is-active":"")+'" aria-current="'+(tab===id?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
+ '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="accounting"?"MANAGEMENT":tab==="joined"?"MY PARTICIPATION":"MY PROJECTS")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+right+'</section></div>';
 }
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
 const taskStatusName={todo:"К выполнению",doing:"В работе",done:"Готово"};
