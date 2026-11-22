@@ -63,3 +63,9 @@
 .ref66-finance-row small{color:#9eb8c6}
 .ref66-finance-unknown{font-size:11px;color:#d3c4a2}
 @media(max-width:650px){.ref66-section{padding:12px}.ref66-finance-cards{grid-template-columns:1fr}.ref66-finance-row{flex-wrap:wrap}.ref66-finance-unknown{width:100%}}
+
+/* Unique actions only: do not duplicate sidebar or mobile dock navigation */
+.command-home-actions:has(> .is-create:only-child){grid-template-rows:1fr}
+.command-home-actions>.is-create:only-child{min-height:180px}
+.ref66-action-grid:has(>button:nth-child(3):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
+.ref66-bottom{justify-content:flex-end}
