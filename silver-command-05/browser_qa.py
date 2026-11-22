@@ -52,6 +52,15 @@ with sync_playwright() as pw:
           return violations.slice(0,3);
         }""")
         assert not symmetry, (width, 'Dashboard symmetry', symmetry)
+        # Brand asset must resolve and fit its header slot at every viewport.
+        logo = page.evaluate("""async () => {
+          const e=document.querySelector('.brand .mark'),s=getComputedStyle(e),r=e.getBoundingClientRect();
+          const asset=s.backgroundImage.match(/url\\(["']?([^"')]+)["']?\\)/);
+          const src=asset&&asset[1];
+          const image=new Image();if(src){image.src=src;try{await image.decode()}catch(_){}}
+          return {src,loaded:image.naturalWidth>0,naturalWidth:image.naturalWidth,naturalHeight:image.naturalHeight,width:r.width,height:r.height,backgroundSize:s.backgroundSize,headerWidth:document.querySelector('.top').getBoundingClientRect().width};
+        }""")
+        assert logo["loaded"] and logo["width"]>=30 and logo["height"]>=30 and logo["backgroundSize"]=="contain", (width,"Brand logo",logo)
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
