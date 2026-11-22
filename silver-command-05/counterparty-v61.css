@@ -1,0 +1,109 @@
+/* Sunpaur GmbH external Auftraggeber profile · separate from SolAn Plus internal Team */
+.ph-internal .ph-tabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cp-profile{padding-bottom:22px}
+.cp-profile .back{margin:12px 0 16px}
+.cp-hero{position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:184px;padding:22px 30px;border-radius:19px;overflow:hidden;border:1px solid #65b7b5;background:radial-gradient(ellipse at 84% 3%,#286870 0%,transparent 40%),linear-gradient(112deg,#102632 4%,#1b434c 75%,#133945);box-shadow:inset 0 1px #f4ffff4d,0 12px 25px #020c1382}
+.cp-hero:before{content:"";position:absolute;left:-30px;top:-120px;width:235px;height:235px;border:2px solid #7be6d02e;border-radius:50%;box-shadow:0 0 0 35px #72dbc20a,0 0 0 71px #7ae8d209;pointer-events:none}
+.cp-hero-title{position:relative;display:flex;flex-direction:column;gap:10px;min-width:0;z-index:1}
+.cp-eyebrow{font-size:10px;letter-spacing:.16em;color:#a0eddb;font-weight:830}
+.cp-hero h1{margin:0;font-size:clamp(25px,4.5vw,42px);line-height:1.13;letter-spacing:-.02em;color:#f4fffc}
+.cp-hero p{margin:0;font-size:13px;color:#c2dce1}
+.cp-badge-mark{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:142px;min-height:112px;border-radius:17px;border:1px solid #8ad2bda0;background:linear-gradient(145deg,#246c63cc,#143d47cc);box-shadow:inset 0 1px #dbfff356,0 10px 20px #001d1c8c}
+.cp-badge-mark span{font-size:clamp(17px,2.8vw,26px);font-weight:830;letter-spacing:-.045em;color:#dcfff1}
+.cp-badge-mark small{font-size:9px;letter-spacing:.14em;color:#9ddedb}
+.cp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:13px 0}
+.cp-stats>div{display:flex;flex-direction:column;align-items:center;gap:5px;border-radius:13px;padding:15px 8px;background:linear-gradient(150deg,#1c4451,#12313f);border:1px solid #84c6bc94}
+.cp-stats b{font-size:clamp(20px,3vw,29px);color:#e9fff2;font-variant-numeric:tabular-nums}
+.cp-stats small{font-size:11px;color:#bad7dc;text-align:center}
+.cp-profile .community-section{margin:13px 0}
+.cp-rel-graph{display:flex;align-items:center;flex-direction:column;gap:7px;padding:9px 0}
+.cp-rel-box{display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;width:min(430px,100%);padding:16px 12px;background:linear-gradient(120deg,#27535d,#173846);border:1px solid #94d4c3a0;border-radius:13px}
+.cp-rel-box small{font-size:10px;font-weight:800;letter-spacing:.12em;color:#a4ecdb}
+.cp-rel-box strong{color:#f6fffe;font-size:19px}
+.cp-rel-box span{color:#b6d8df;font-size:11px}
+.cp-rel-sol{background:linear-gradient(120deg,#1a495a,#153244)}
+.cp-rel-arrow{font-size:12px;color:#b4f6d4;font-weight:800;line-height:1.8}
+.cp-scope-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:12px 0}
+.cp-scope-grid>div{display:flex;flex-direction:column;gap:8px;padding:16px;background:#153b47cc;border:1px solid #73b5ba75;border-radius:13px}
+.cp-scope-grid small{font-size:11px;color:#a9d6db}
+.cp-scope-grid strong{font-size:19px;color:#c0fbea}
+.cp-scope-grid p{font-size:12px;line-height:1.55;margin:0;color:#c5dfe5}
+.cp-note{margin:14px 0 0;font-size:11px;line-height:1.6;color:#a0c2ca}
+.cp-contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0}
+.cp-contact-grid .company-contact-detail{background:#173b48;border-color:#7bbcb58c}
+.cp-legal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:10px 0 16px}
+.cp-legal>div{display:flex;flex-direction:column;gap:8px;padding:13px;background:#153643b8;border-radius:11px;border:1px solid #7faeae8c}
+.cp-legal small{font-size:10px;color:#9dced1;letter-spacing:.05em}
+.cp-legal strong{font-size:12px;color:#e5f9f9;overflow-wrap:anywhere}
+.cp-contact-section h3{font-size:15px;margin:16px 0 10px;color:#e8f9f6}
+.cp-directors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cp-directors>div{display:flex;align-items:flex-start;flex-direction:column;gap:6px;padding:14px;border:1px solid #6faba9a0;background:#183d4a;border-radius:11px}
+.cp-directors span{font-size:9px;font-weight:850;color:#9bdfbf;letter-spacing:.12em}
+.cp-directors strong{font-size:14px;color:#f2fcff}
+.cp-directors small{font-size:10px;color:#bdd7df}
+.cp-source{font-size:11px;color:#9fc8cd;margin:14px 0 0}
+.cp-source a{color:#b3fae2}
+.cp-projects .community-section-head>button{font-size:12px;font-weight:750;padding:10px 12px;border:1px solid #b3ebd6;border-radius:9px;background:#235261;color:#e2fff3}
+.cp-project-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:13px;text-align:left;border:1px solid #81b8b0;border-radius:11px;background:#183948;color:#e3f8f9;margin:7px 0}
+.cp-project-row>span{display:flex;flex:1;flex-direction:column;gap:5px;min-width:0}
+.cp-project-row strong{font-size:13px;overflow-wrap:anywhere}
+.cp-project-row small{font-size:10px;color:#bdd5dc}
+.cp-project-row b{font-size:11px;white-space:nowrap;color:#b6f4da}
+.cp-empty{padding:24px;text-align:center;border-radius:13px;border:1px dashed #86c2b19e;background:#153b4790}
+.cp-empty strong{font-size:14px;color:#eefef7}
+.cp-empty p{font-size:12px;color:#bdd4dd;line-height:1.55}
+.cp-partners{min-width:0}
+.cp-list-heading{margin:12px 0 16px}
+.cp-list-heading h2{font-size:clamp(21px,2.4vw,27px);color:#effff9;margin:7px 0}
+.cp-list-heading p{font-size:12px;color:#b2d2da;line-height:1.5}
+.cp-list-card{display:flex;align-items:center;gap:13px;padding:15px;border:1px solid #84c4b9ab;background:linear-gradient(110deg,#1b4350,#133244);border-radius:16px;margin:10px 0}
+.cp-list-symbol{display:grid;place-items:center;flex:none;width:66px;height:66px;border-radius:15px;background:linear-gradient(125deg,#2c7670,#134954);font-size:31px;font-weight:900;color:#c9fbe7;border:1px solid #75cbb9}
+.cp-list-content{display:flex;flex:1;flex-direction:column;gap:6px;min-width:0}
+.cp-list-content>small{font-size:9px;color:#a0e8d5;letter-spacing:.11em;font-weight:850}
+.cp-list-content h3{font-size:18px;color:#fff;margin:0;overflow-wrap:anywhere}
+.cp-list-content p{font-size:11px;color:#bdcfd7;margin:0}
+.cp-list-tags{display:flex;gap:5px;flex-wrap:wrap}
+.cp-list-tags span{font-size:10px;color:#c5eede;background:#255a5970;border:1px solid #78bea47a;border-radius:6px;padding:4px 6px}
+.cp-list-card>button{padding:9px 13px;border:1px solid #91cdb8;border-radius:10px;background:#215567;color:#e6fbf4;font-size:12px;font-weight:750}
+.cp-case-link{margin:11px 0}
+.cp-case-partner{display:flex;width:100%;flex-direction:column;gap:7px;padding:13px 15px;text-align:left;border:1px solid #86cdb5a2;background:#1a4654;border-radius:11px;color:#f6fefd}
+.cp-case-partner strong{font-size:15px}
+.cp-case-partner span{font-size:12px;color:#c0dfdf}
+.cp-case-partner small{font-size:11px;color:#9fedd6}
+.cp-network-partners{display:flex;flex-direction:column;gap:8px;margin:12px 0 0;padding:12px;border:1px solid #83c2b591;border-radius:14px;background:#1b414c9a;width:100%}
+.cp-network-partner{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border:1px solid #8ac1b0b3;border-radius:10px;background:#22515d;text-align:left;color:#edfff4}
+.cp-network-partner>span{font-size:9px;font-weight:800;color:#b8eace;letter-spacing:.08em}
+.cp-network-partner>strong{font-size:14px}
+.cp-network-partner>small{font-size:11px;color:#b3dad8}
+.cp-profile button:focus-visible,.cp-partners button:focus-visible{outline:3px solid #b7ffdc;outline-offset:2px}
+@media(max-width:720px){
+ .ph-internal .ph-tabs{gap:3px}
+ .ph-internal .ph-tabs button{font-size:11px;padding:8px 2px}
+ .cp-hero{padding:17px 14px;gap:8px;min-height:146px}
+ .cp-hero h1{font-size:24px}
+ .cp-hero p{font-size:11px}
+ .cp-badge-mark{min-width:91px;min-height:83px;border-radius:11px}
+ .cp-badge-mark span{font-size:16px}
+ .cp-badge-mark small{font-size:7px}
+ .cp-stats{gap:5px}
+ .cp-stats>div{padding:10px 5px}
+ .cp-stats b{font-size:21px}
+ .cp-stats small{font-size:9px}
+ .cp-scope-grid{gap:7px}
+ .cp-scope-grid>div{padding:11px}
+ .cp-scope-grid strong{font-size:15px}
+ .cp-scope-grid small,.cp-scope-grid p{font-size:10px}
+ .cp-contact-grid{grid-template-columns:1fr}
+ .cp-legal{grid-template-columns:1fr;gap:7px}
+ .cp-directors{gap:7px}
+ .cp-directors>div{padding:10px}
+ .cp-directors strong{font-size:12px}
+ .cp-directors small{font-size:9px}
+ .cp-list-card{flex-wrap:wrap;gap:9px;padding:11px}
+ .cp-list-symbol{width:50px;height:50px;font-size:23px}
+ .cp-list-content h3{font-size:15px}
+ .cp-list-card>button{width:100%;min-height:36px}
+ .cp-list-tags span{font-size:9px}
+ .cp-projects .community-section-head{flex-wrap:wrap}
+ .cp-projects .community-section-head button{width:100%}
+}
