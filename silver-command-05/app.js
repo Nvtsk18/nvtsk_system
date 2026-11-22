@@ -77,7 +77,7 @@ function shardRow(s){
   if(s.status==="draft" && lead())actions+=button("Назначить","assign",s.id);
   if(s.status==="draft" && state.actor===s.assignee)actions+=button("На проверку","submit",s.id);
   if(s.status==="submitted" && lead() && state.actor!==s.assignee)actions+=button("Принять","accept",s.id)+button("На доработку","revise",s.id);
-  return '<article class="taskrow"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small></div><div>'+actions+'</div></article>';
+  return '<article class="taskrow"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small><p>'+esc(s.notes||'')+'</p><div>'+fileLinks(s.files)+'</div></div><div>'+actions+'</div></article>';
 }
 function caseMaterialHistory(caseId){
  const related=new Set(state.shards.filter(s=>s.caseId===caseId).map(s=>s.id));
@@ -95,7 +95,7 @@ function detail(id){
   const c=state.cases.find(x=>x.id===id);
   if(!c)return heading("Case не найден");
   const shards=state.shards.filter(s=>s.caseId===id);
-  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="garage">Garage</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section><section class="panel"><h2>Материалы Case · история</h2>'+caseMaterialHistory(id)+'</section>';
+  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="garage">Garage</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section><section class="panel"><h2>Материалы Case · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 function garage(){
   const moves=state.moves.slice().reverse();
@@ -149,24 +149,26 @@ function render(){
  $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
  $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+(r.startsWith("case/")?detail(r.slice(5)):Object.hasOwn(pages,r)?pages[r]():dashboard());
  document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",b.dataset.route===r||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&r.startsWith("case/")&&b.dataset.route==="projects")));
- if(!lead())document.querySelectorAll('[data-action="new-case"]').forEach(b=>b.remove());
+ if(!lead())document.querySelectorAll('[data-action="new-case"],[data-action="new-electrical"]').forEach(b=>b.remove());
 }
 const input=(name,text,type="text")=>'<label>'+text+'<input required name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="1000000000000" step=".01"':'maxlength="120"')+'></label>';
 const select=(name,text,items,value)=>'<label>'+text+'<select required name="'+name+'">'+options(items,value)+'</select></label>';
 const pairs=items=>items.map(x=>[x,x]);
 let pending;
+function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
  const titles={electrical:"Электромонтаж · новый Case",case:"Новый Case",shard:"Новый Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
- let fields=["case","shard","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
- if(kind==="case"||kind==="electrical")fields+=input("city","Город")+input("price","Бюджет, €","number");
+ let fields=["case","electrical","shard","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
+ if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number");
  if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
- if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Другое"]))+input("price","Стоимость Shard, €","number");
+ if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Elektro · Rohbau","Elektro · Kabel","Elektro · Installation","Elektro · Verteiler","Elektro · Prüfung","Другое"]))+input("price","Стоимость Shard, €","number");
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
  if(kind==="move")fields+=select("type","Операция",state.shards.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"]]:[["receive","Приход"]])+select("shardId","Case / Shard",(state.shards.length?[]:[["stock","Склад"]]).concat(state.shards.map(s=>[s.id,state.cases.find(c=>c.id===s.caseId).title+" / "+s.title])));
  if(kind==="material"||kind==="move")fields+=input("qty","Количество","number");
+ if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Case/Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
@@ -200,15 +202,26 @@ document.addEventListener("input",e=>{if(e.target.id==="stock-search")document.q
 $("#cancel").onclick=()=>$("#dialog").close();
 $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
+ const selected=e.target.elements.media?.files;
+ delete p.media;
  for(const k of ["title","city"])if(k in p)p[k]=p[k].trim();
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
  p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="assign")p.shardId=id;if(kind==="move")p.itemId=id;
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
  try{
+   if(selected){
+     if(selected.length>8)throw Error("Максимум 8 файлов");
+     p.files=await Promise.all(Array.from(selected,async file=>{
+       if(file.size>650000)throw Error("Файл "+file.name+" превышает 650 КБ");
+       if(!["image/png","image/jpeg","image/webp","image/gif","application/pdf"].includes(file.type))throw Error("Недопустимый тип файла");
+       const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error("Ошибка чтения файла"));reader.readAsDataURL(file)});
+       return {id:crypto.randomUUID(),name:file.name.slice(0,180),data};
+     }));
+   }
    const operation=()=>{
      if(kind!=="electrical")return apply(state,kind,p);
      const caseId=p.id;
-     let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price});
+     let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files});
      const steps=[
        ["Разметка, штробы и подготовка трасс","Elektro · Rohbau",20],
        ["Прокладка кабелей и крепление трасс","Elektro · Kabel",25],
