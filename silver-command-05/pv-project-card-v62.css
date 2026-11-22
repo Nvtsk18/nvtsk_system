@@ -111,3 +111,24 @@
 }
 @media(max-width:370px){.pv-facts{grid-template-columns:1fr 1fr}.pv-cockpit-hero{flex-wrap:wrap}.pv-cockpit-score{width:100%;flex-direction:row;justify-content:space-between}}
 @media(prefers-reduced-motion:reduce){.pv-cockpit-nav{scroll-behavior:auto}}
+
+/* Keep the Project dossier actionable above the fold on iPhone without removing the roof photograph. */
+@media(max-width:720px){
+ body:not(:has(.command-center)) .casehead{display:grid;grid-template-columns:118px minmax(0,1fr);align-items:start;gap:10px;min-height:0;padding:10px}
+ body:not(:has(.command-center)) .casehead>img{max-width:none;width:118px;height:119px;object-fit:cover;border-radius:10px}
+ body:not(:has(.command-center)) .casehead>div{display:flex;align-items:flex-start;justify-content:center;gap:4px;min-width:0;min-height:119px}
+ body:not(:has(.command-center)) .casehead h1{font-size:18px;line-height:1.2;margin:0}
+ body:not(:has(.command-center)) .casehead p{font-size:10px;line-height:1.4}
+ body:not(:has(.command-center)) .casehead .progress{margin:7px 0 0;max-width:100%}
+ body:not(:has(.command-center)) .casehead small{font-size:9px;margin:0}
+ body:not(:has(.command-center)) .details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:9px 0}
+ body:not(:has(.command-center)) .details .stat{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:9px 7px;min-height:65px}
+ body:not(:has(.command-center)) .details .stat .symbol{display:none}
+ body:not(:has(.command-center)) .details .stat strong{font-size:17px;line-height:1.12}
+ body:not(:has(.command-center)) .details .stat label{font-size:10px}
+ body:not(:has(.command-center)) .details .stat small{font-size:8px}
+}
+@media(max-width:365px){
+ body:not(:has(.command-center)) .casehead{grid-template-columns:94px minmax(0,1fr)}
+ body:not(:has(.command-center)) .casehead>img{width:94px;height:110px}
+}
