@@ -1,0 +1,128 @@
+/* NVTSK SYSTEM · Silver Command v43
+   Return to the early product direction: readable, inviting, photo-led,
+   warmer tactical accents, fewer ornamental meters. All UI remains live. */
+:root{--friendly-ice:#c9f1f6;--friendly-mint:#a0e7cb;--friendly-amber:#f5c57b}
+.command-center{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Arial,sans-serif}
+.command-top{height:74px;min-height:74px;background:linear-gradient(110deg,#162635,#101c2a 50%,#172b39);border-bottom:1px solid #7299ab80;box-shadow:0 7px 22px #020a1596}
+.command-brand strong{font-size:clamp(17px,1.55vw,23px);letter-spacing:.035em}
+.command-brand small{font-size:10px;letter-spacing:.16em;color:#b9d3db}
+.command-status span{border-color:#86adb066;background:#253c45a6;color:#d5e7eb}
+.command-status span:first-child{color:#b5eed4}
+.command-stage::before{
+ opacity:1;
+ background:linear-gradient(180deg,#07132130 0%,#091b2e18 36%,#0b1b2bb5 79%,#0a1825 100%),
+ linear-gradient(90deg,#081725a5 0%,#08172515 67%,#0c172640 100%),
+ url("art/office-command-v40.png") center 42%/cover no-repeat
+}
+.command-title{background:linear-gradient(107deg,#0e2233ea,#163347c7 68%,#0c263979);border:1px solid #b6dfe180;border-radius:23px;box-shadow:0 20px 43px #01091480,inset 0 1px #ffffff34;backdrop-filter:blur(9px)}
+.command-eyebrow{font-size:11px;letter-spacing:.15em;color:#b8eadb}
+.command-title h1{font-weight:800;font-size:clamp(31px,3.2vw,47px);color:#f4faff;letter-spacing:.015em}
+.command-title p{color:#e0f1f2;font-size:clamp(14px,1.15vw,17px);line-height:1.5}
+.command-hero-actions button{border-radius:13px;min-height:47px;background:linear-gradient(160deg,#d4f6ed,#9edbcf);border:1px solid #d9fff1;color:#142a30;box-shadow:0 8px 20px #0008,inset 0 1px #fff}
+.command-hero-actions button:nth-child(2){background:#254257d9;border-color:#85c9df;color:#f6fbff}
+.command-hero-actions button:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.command-health,.command-clock{background:linear-gradient(140deg,#18384ba8,#102437db);border-color:#8ebbc293;border-radius:17px;box-shadow:0 9px 24px #0007,inset 0 1px #dcf5ff4c}
+.command-health small{color:#cce6e7}
+.command-health span{color:#a8f0d7}
+.command-clock span{color:#c9e1e7}
+.command-metrics{gap:10px}
+.command-metric{background:linear-gradient(155deg,#294352ec,#102636ef);border:1px solid #9fc5ce8f;border-radius:17px;box-shadow:0 9px 20px #0007,inset 0 1px #fff3;transition:transform .16s ease,background .16s ease}
+.command-metric:hover{transform:translateY(-3px);background:linear-gradient(155deg,#37596c,#17364a)}
+.command-metric-glyph,.command-metric-glyph .ui-icon{color:#b7eef0;stroke:#b7eef0}
+.command-metric strong{font-weight:780}
+.command-metric>span:nth-child(2){color:#d4e9ec}
+.command-panel{border:1px solid #92bfc98a;background:linear-gradient(150deg,#213c4cfa,#102436f9);border-radius:20px;box-shadow:0 13px 23px #0007,inset 0 1px #e4fcff43}
+.command-panel h2{color:#f5fbfe;font-size:15px}
+.command-panel h2 .ui-icon{stroke:#a4f1e5}
+.command-panel-banner{opacity:1;filter:saturate(1.15) contrast(1.04);height:75px;border-radius:12px}
+.command-case-photo{opacity:1;filter:saturate(1.13);border-color:#9acbd188}
+.command-case-row{border-bottom-color:#7dafbf35}
+.command-case-row:hover{background:#34617444}
+.command-progress{background:#385466}
+.command-progress i{background:linear-gradient(90deg,#6fd8e1,#a1e6bb)}
+.command-dock{background:linear-gradient(180deg,#183344ed,#101d2bf8 80%)!important;border-left-color:#a4bfc26b!important}
+.command-dock button{border-radius:20px;background:linear-gradient(160deg,#315668,#183349 70%,#11283b);border:1px solid #82bcccb0;box-shadow:inset 0 1px #f2ffff65,0 5px 0 #0c2030,0 12px 24px #0008}
+.command-dock button:hover{transform:translateY(-3px);background:linear-gradient(150deg,#426e7e,#1b3d54);border-color:#cff4ee}
+.command-dock button.is-primary{background:linear-gradient(155deg,#82603e,#55452e 55%,#283a3e);border-color:#f5c981;box-shadow:inset 0 1px #ffefd0,0 5px 0 #4a2f19,0 10px 24px #0008}
+.command-dock button.is-primary:hover{background:linear-gradient(150deg,#9a7347,#594c35)}
+.command-dock button>span,.command-dock button>span .ui-icon{color:#c4f5ef;stroke:#c4f5ef}
+.command-dock button.is-primary>span,.command-dock button.is-primary>span .ui-icon{color:#ffe3ae;stroke:#ffe3ae}
+.command-dock small{color:#cbdee1}
+.command-mobile-tiles button{background:#1b3545;border:1px solid #a9cdd084;border-radius:18px;box-shadow:0 9px 22px #0008,inset 0 1px #ebffff43}
+.command-mobile-tiles button img{opacity:1;filter:saturate(1.16) contrast(1.04)}
+.command-mobile-tiles button strong{color:#f5fdff;font-size:14px}
+.command-mobile-tiles button small{color:#c7e7ea;font-size:11px}
+@media(min-width:721px){
+ .command-stage-head{min-height:250px!important;padding-top:0}
+ .command-title{max-width:540px;padding:23px 25px}
+ .command-eyebrow{margin-bottom:8px}
+ .command-title p{margin-top:9px}
+ .command-hero-actions{margin-top:17px}
+ .command-clock{padding:12px 15px}
+ .command-health{padding:12px 15px}
+ .command-metrics{margin:8px 0 15px}
+ .command-metric{min-height:94px;padding:8px 6px}
+ .command-metric-glyph .ui-icon{width:24px;height:24px}
+ .command-metric strong{font-size:24px}
+ .command-globe-scene{height:82px;margin:0 0 10px}
+ .command-globe{width:87px;height:87px;box-shadow:inset -9px -11px 19px #031426,0 0 16px #2ba6ec,0 0 35px #1399d940}
+ .command-globe span{font-size:37px}
+ .command-globe-base{width:130px;height:10px}
+ .command-panels{gap:13px}
+ .command-panel{padding:15px}
+ .command-case-row{min-height:65px}
+ .command-panel-banner{height:64px}
+ .command-dock{padding-top:13px}
+ .command-dock button{min-height:95px}
+}
+@media(min-width:721px) and (max-width:1000px){
+ .command-stage-head{min-height:255px!important}
+ .command-title{max-width:calc(100% - 190px);padding:19px}
+ .command-title h1{font-size:29px}
+ .command-metrics{gap:7px}
+ .command-panels{gap:8px}
+ .command-globe-scene{height:58px}
+}
+@media(max-width:720px){
+ .command-top{height:62px;min-height:62px;padding:6px 11px}
+ .command-brand-logo{width:38px;height:38px}
+ .command-brand strong{font-size:15px}
+ .command-brand small{font-size:8px}
+ .command-stage{padding:0 12px 24px}
+ .command-stage::before{height:510px;background:
+  linear-gradient(180deg,#07142210 0%,#0a1d2f32 42%,#081725ed 94%,#081725 100%),
+  linear-gradient(90deg,#081726a3,#091a2c24),
+  url("art/office-command-v40.png") 62% top/auto 510px no-repeat
+ }
+ .command-stage-head{min-height:265px!important;padding:49px 0 10px!important;gap:8px;grid-template-columns:1fr 1fr}
+ .command-title{padding:15px 14px;border-radius:17px;max-width:none}
+ .command-eyebrow{font-size:9px;letter-spacing:.11em;margin-bottom:7px}
+ .command-title h1{font-size:27px}
+ .command-title p{font-size:12px;margin-top:7px}
+ .command-hero-actions{margin-top:13px;gap:7px}
+ .command-hero-actions button{min-height:39px;padding:7px 10px;font-size:11px}
+ .command-health,.command-clock{padding:8px 10px;border-radius:12px;min-height:64px}
+ .command-health small{font-size:8px}
+ .command-health strong{font-size:22px}
+ .command-health span,.command-clock span{font-size:9px}
+ .command-clock strong{font-size:13px}
+ .command-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:11px 0 15px}
+ .command-metric{min-height:77px;border-radius:13px;padding:6px 8px}
+ .command-metric:nth-child(n+5){display:none!important}
+ .command-metric-glyph .ui-icon{width:22px;height:22px}
+ .command-metric strong{font-size:21px}
+ .command-mobile-tiles{gap:9px;margin-bottom:16px}
+ .command-mobile-tiles button{border-radius:15px;padding-bottom:11px}
+ .command-mobile-tiles button img{height:101px}
+ .command-dock{min-height:calc(74px + env(safe-area-inset-bottom));padding:7px 4px calc(8px + env(safe-area-inset-bottom))}
+ .command-dock button{min-height:56px;border-radius:12px;box-shadow:inset 0 1px #ecffff60}
+ .command-dock strong{font-size:10px}
+ .command-globe-scene{display:none}
+}
+@media(max-width:360px){
+ .command-title h1{font-size:24px}
+ .command-hero-actions button{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .command-hero-actions button,.command-metric,.command-dock button{transition:none;transform:none}
+}
