@@ -333,7 +333,7 @@ with sync_playwright() as pw:
         act("undo");route("tasks");expect(page.get_by_text("QA монтаж",exact=True)).to_be_visible()
         route("settings");page.locator('#import').set_input_files(path)
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
-        page.goto(url,wait_until="domcontentloaded");route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        page.goto(url,wait_until="domcontentloaded");route("projects");expect(page.locator(".ph-card").filter(has_text="QA Roof")).to_be_visible()
         page.evaluate("navigator.serviceWorker.ready");page.wait_for_function("!!navigator.serviceWorker.controller")
         # Keep the local server running for the other viewport cases.
         # Offline emulation is isolated to this browser context and does not
