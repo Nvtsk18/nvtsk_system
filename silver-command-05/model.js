@@ -8,24 +8,27 @@ globalThis.NVModel = (() => {
   const attachments = list => list===undefined || (Array.isArray(list)&&list.length<=8&&list.every(a=>a&&ident(a.id)&&optional(a.name,180)&&a.name&&typeof a.data==="string"&&/^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(a.data)&&a.data.length<=900000));
   const ident = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
   function migrate(old) {
+    if (old.version === 2) return Array.isArray(old.teams) ? old : {...old,teams:[]};
     if (old.version !== 1) return old;
     const data = JSON.parse(JSON.stringify(old));
     requireValue(["cases","garage","tasks","crew","shards"].every(k => Array.isArray(data[k])), "Неверная схема v1");
     data.crew = [{id:"lead",name:"Капитан",role:roles[0]}, ...data.crew.map((c,i) => ({id:"member-"+i,name:c.name,role:roles[1]}))];
     data.actor = "lead";
     data.moves = [];
+    data.teams = [];
     data.version = 2;
     return data;
   }
   function validate(d) {
-    requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
-    for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves]) {
+    requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
+    for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams]) {
       requireValue(list.every(x => x && ident(x.id)) && new Set(list.map(x=>x.id)).size === list.length,"Ошибка идентификаторов");
     }
     const has = (list,id) => list.some(x=>x.id===id);
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
+    requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
     requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Project");
-    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
+    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))&&(s.teamId===undefined||s.teamId===null||has(d.teams,s.teamId))),"Ошибка Shard");
     requireValue(d.tasks.every(t=>label(t.title)&&has(d.shards,t.shardId)&&["todo","doing","done"].includes(t.status)&&optional(t.notes,2000)&&(t.assignee===null||has(d.crew,t.assignee))),"Ошибка задачи");
     requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
     const skuKey=m=>m.sku?.trim().toUpperCase();
@@ -52,6 +55,33 @@ globalThis.NVModel = (() => {
     switch(action) {
       case "actor": d.actor=p.id; break;
       case "crew": allowed(lead); d.crew.push({id:p.id,name:p.title,role:p.role}); break;
+      case "team-create": {
+        allowed(lead);
+        requireValue(label(p.title)&&optional(p.description,500),"Укажите название Team");
+        const members=[...new Set([p.captainId,...(p.memberIds||[])])];
+        requireValue(has(d.crew,p.captainId)&&members.length<=40&&members.every(id=>has(d.crew,id)),"Выберите капитана и участников");
+        d.teams.push({id:p.id,name:p.title.trim(),description:(p.description||"").trim(),captainId:p.captainId,memberIds:members});
+        break;
+      }
+      case "team-update": {
+        allowed(lead);
+        const team=d.teams.find(t=>t.id===p.teamId);
+        allowed(team);
+        requireValue(label(p.title)&&optional(p.description,500),"Укажите название Team");
+        const members=[...new Set([p.captainId,...(p.memberIds||[])])];
+        requireValue(has(d.crew,p.captainId)&&members.length<=40&&members.every(id=>has(d.crew,id)),"Выберите капитана и участников");
+        // Reassigning a Team does not alter already accepted Shards.
+        Object.assign(team,{name:p.title.trim(),description:(p.description||"").trim(),captainId:p.captainId,memberIds:members});
+        break;
+      }
+      case "team-assign": {
+        allowed(lead && s && s.status==="draft");
+        const team=d.teams.find(t=>t.id===p.teamId);
+        allowed(team && team.captainId!==actor.id);
+        s.teamId=team.id;
+        s.assignee=team.captainId;
+        break;
+      }
       case "profile": {
         const target=d.crew.find(c=>c.id===p.memberId);
         allowed(target&&target.id===actor.id);
