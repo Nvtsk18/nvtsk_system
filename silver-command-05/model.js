@@ -50,6 +50,8 @@ globalThis.NVModel = (() => {
     if(!["declaredModules","panelWp","declaredKwp","slopeDeg","eaveHeightM","rafterSpacingCm","roofLengthM"].every(k=>optQty(p[k])))return false;
     const list=(v,max,fn)=>v===undefined||(Array.isArray(v)&&v.length<=max&&v.every(fn)&&new Set(v.map(x=>x.id)).size===v.length);
     if(!list(p.zones,30,z=>z&&ident(z.id)&&label(z.name)&&optional(z.direction,80)&&optional(z.moduleType,140)&&optional(z.roofType,140)&&optional(z.mounting,140)&&optional(z.notes,600)&&optQty(z.modules)&&optQty(z.hooks)&&optQty(z.panelWp)))return false;
+    if(!list(p.strings,60,t=>t&&ident(t.id)&&label(t.name)&&optional(t.direction,80)&&optional(t.mppt,80)&&optional(t.notes,600)&&optQty(t.modules)))return false;
+    if(!list(p.cuts,120,t=>t&&ident(t.id)&&label(t.name)&&optional(t.notes,600)&&optQty(t.stockLengthMm)&&optQty(t.requiredLengthMm)&&optQty(t.qty)))return false;
     if(!list(p.materials,120,m=>m&&ident(m.id)&&label(m.name)&&optional(m.unit,20)&&optional(m.sku,90)&&optQty(m.qty)))return false;
     if(!list(p.documents,35,d=>d&&ident(d.id)&&label(d.name)&&optional(d.kind,70)&&optional(d.revision,70)&&optional(d.url,700)&&(!d.url||/^https:\/\/[^\s"'<>]{1,680}$/.test(d.url))))return false;
     if(p.checks!==undefined&&(!p.checks||typeof p.checks!=="object"||Object.keys(p.checks).some(k=>!pvChecks.includes(k)||typeof p.checks[k]!=="boolean")))return false;
@@ -163,10 +165,12 @@ globalThis.NVModel = (() => {
         allowed(lead);
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
         const type=p.list;
-        requireValue(["zones","materials","documents"].includes(type),"Некорректный раздел PV");
+        requireValue(["zones","strings","cuts","materials","documents"].includes(type),"Некорректный раздел PV");
         const current=c.pvPlan||{},list=(current[type]||[]).slice();
         const item={id:p.id};
         if(type==="zones")Object.assign(item,{name:p.name,direction:p.direction||"",modules:p.modules===""?null:Number(p.modules),hooks:p.hooks===""?null:Number(p.hooks),moduleType:p.moduleType||"",roofType:p.roofType||"",mounting:p.mounting||"",panelWp:p.panelWp===""?null:Number(p.panelWp),notes:p.notes||""});
+        if(type==="strings")Object.assign(item,{name:p.name,direction:p.direction||"",mppt:p.mppt||"",modules:p.modules===""?null:Number(p.modules),notes:p.notes||""});
+        if(type==="cuts")Object.assign(item,{name:p.name,stockLengthMm:p.stockLengthMm===""?null:Number(p.stockLengthMm),requiredLengthMm:p.requiredLengthMm===""?null:Number(p.requiredLengthMm),qty:p.qty===""?null:Number(p.qty),notes:p.notes||""});
         if(type==="materials")Object.assign(item,{name:p.name,unit:p.unit||"St.",qty:Number(p.qty),sku:p.sku||""});
         if(type==="documents")Object.assign(item,{name:p.name,kind:p.kind||"Andere",url:p.url||"",revision:p.revision||""});
         list.push(item);
@@ -176,7 +180,7 @@ globalThis.NVModel = (() => {
       case "pv-remove": {
         allowed(lead);
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
-        requireValue(["zones","materials","documents"].includes(p.list),"Некорректный раздел PV");
+        requireValue(["zones","strings","cuts","materials","documents"].includes(p.list),"Некорректный раздел PV");
         const cur=c.pvPlan||{};
         c.pvPlan={...cur,[p.list]:(cur[p.list]||[]).filter(x=>x.id!==p.rowId)};
         break;
