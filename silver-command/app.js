@@ -219,8 +219,9 @@ function restoreRoute(){
  render();window.scrollTo(0,0);
 }
 let touchStart=null;
-document.addEventListener("touchstart",e=>{if(screen!=="lot"||e.touches.length!==1||e.target.closest("input,textarea,select,[contenteditable],.project-pages")){touchStart=null;return;}const t=e.touches[0];touchStart={x:t.clientX,y:t.clientY};},{passive:true});
-document.addEventListener("touchend",e=>{if(!touchStart||screen!=="lot"||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.abs(dx)<75||Math.abs(dx)<Math.abs(dy)*1.7)return;setProjectPage(projectPage+(dx>0?1:-1));},{passive:true});
+document.addEventListener("touchstart",e=>{if(screen!=="lot"||e.touches.length!==1||e.target.closest("input,textarea,select,button,a,label,[contenteditable],.project-pages,.modal,.garage-scroll")){touchStart=null;return;}const t=e.touches[0];touchStart={x:t.clientX,y:t.clientY};},{passive:true});
+document.addEventListener("touchcancel",()=>{touchStart=null;},{passive:true});
+document.addEventListener("touchend",e=>{if(!touchStart||screen!=="lot"||e.changedTouches.length!==1)return;const t=e.changedTouches[0],dx=t.clientX-touchStart.x,dy=t.clientY-touchStart.y;touchStart=null;if(Math.abs(dx)<90||Math.abs(dx)<Math.abs(dy)*1.7)return;setProjectPage(projectPage+(dx>0?1:-1));},{passive:true});
 function modal(html){$("#dialog").innerHTML=html;$("#dialogBackdrop").hidden=false}
 function close(){$("#dialogBackdrop").hidden=true}
 function create() {
