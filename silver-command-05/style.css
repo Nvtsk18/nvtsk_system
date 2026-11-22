@@ -65,3 +65,13 @@ main{margin:0;padding:8px 1.55vw 0;min-height:0;max-width:1920px;margin-inline:a
 #dialog #fields .hint{font-size:12px;line-height:1.5;color:#a9c1d0;margin:0}
 #dialog .buttons{position:sticky;bottom:-28px;background:#101f2b;padding:14px 0 2px;display:flex;justify-content:flex-end;gap:10px}
 @media(max-width:600px){#dialog{width:calc(100vw - 18px);max-height:92dvh;padding:15px}#dialog #fields{grid-template-columns:minmax(0,1fr);gap:10px}#dialog .buttons{bottom:-15px}}
+
+/* Tablet width: avoid desktop command grid and fixed sidebar overflow at 768px */
+@media (min-width:701px) and (max-width:900px){
+ .top{padding:8px 12px;gap:8px}.brand .mark{width:44px;height:42px}.brand b{font-size:17px}.brand i,.edition,.local{display:none}.mode button{padding:8px 10px}
+ main{margin-left:0;padding:14px 14px 28px;min-width:0}
+ .columns{grid-template-columns:minmax(0,1fr)}.columns>div:last-child{grid-column:auto;display:block}
+ #nav{position:sticky;top:auto;bottom:0;left:auto;right:auto;width:auto;height:auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:10px 0 0;padding:7px;background:#08131df5;border:0;overflow:visible}
+ #nav:before{display:none}#nav button{min-width:0;min-height:56px;max-width:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 2px;text-align:center}#nav button span{font-size:10px}
+ .stats.desktopmetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{min-height:145px}
+}
