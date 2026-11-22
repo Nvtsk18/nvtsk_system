@@ -142,3 +142,17 @@ body:has(.ref66){background:#05080d;color:#e1e5ea}
 .ref66-toolbar .workspace-switch summary{background:linear-gradient(145deg,#27323ded,#0b131bea)!important;border-color:#a1b0bc6b!important}
 .ref66-bottom{color:#8796a3}
 @media(max-width:600px){.ref66:before{background-image:linear-gradient(180deg,#020408b3 0%,#03060bc9 55%,#070b11 100%),url("art/silver-command-office.svg")!important}}
+
+/* v74 Case media gallery and compact technical passport */
+.case-media-panel{margin:16px 0;background:linear-gradient(145deg,#17212c,#0a111a);border:1px solid #7b8b9955}
+.case-media-panel .panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.case-media-panel .panelhead button{padding:10px 14px;border:1px solid #a7b8c477;border-radius:11px;background:linear-gradient(145deg,#34434f,#15202a);color:#eaf1f5;font-weight:600}
+.case-media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:11px;margin-top:12px}
+.case-media-item{min-width:0;display:flex;flex-direction:column;gap:7px;color:#dbe5ec;text-decoration:none;padding:8px;border:1px solid #7c8b9755;border-radius:12px;background:#101b25}
+.case-media-item img,.case-media-pdf{width:100%;height:95px;object-fit:cover;border-radius:7px}
+.case-media-pdf{display:grid;place-items:center;background:#26323e;font-size:21px;font-weight:800;color:#e2ebf1}
+.case-media-item small{font-size:11px;overflow-wrap:anywhere}
+.pv-extra-details{margin-top:12px;border:1px solid #71829055;border-radius:12px;padding:12px;background:#111a24}
+.pv-extra-details>summary{cursor:pointer;color:#d3dfe7;font-weight:650}
+.pv-extra-details[open]>.pv-facts{margin-top:14px}
+#editor .pv-extra-details label{display:block;margin-top:12px}
