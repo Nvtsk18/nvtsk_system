@@ -1,5 +1,5 @@
-const cacheName = "nvtsk-silver-05-release-6";
-const shell = ["./","index.html","app.js?v=5","model.js","style.css?v=6",...["hero","logo","roof","store","tile0","tile1","tile2","tile3","module","clamp","vertical","rail","van","car","trailer"].map(n=>"art/"+n+".webp")];
+const cacheName = "nvtsk-silver-05-release-7";
+const shell = ["./","index.html","app.js?v=7","model.js","style.css?v=6",...["hero","logo","roof","store","tile0","tile1","tile2","tile3","module","clamp","vertical","rail","van","car","trailer"].map(n=>"art/"+n+".webp")];
 self.addEventListener("install",event=>event.waitUntil(caches.open(cacheName).then(c=>c.addAll(shell)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil((async()=>{
  for(const key of await caches.keys())if(key.startsWith("nvtsk-silver-05-")&&key!==cacheName)await caches.delete(key);
