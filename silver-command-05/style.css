@@ -296,3 +296,69 @@ button:active{transform:translateY(1px)}
 @media(max-width:1000px){.office-workspace{grid-template-columns:minmax(0,1fr) 270px}.office-hero{min-height:280px}.office-action-panel .homeactions{grid-template-columns:1fr 1fr}}
 @media(max-width:740px){.office-shell{padding:0 11px 14px;border-radius:18px}.office-hero{min-height:275px;padding:18px 3px 20px;align-items:flex-start}.office-welcome{padding:17px;max-width:90%}.office-welcome h1{font-size:28px}.office-scene-label{bottom:15px;right:9px}.office-workspace{grid-template-columns:1fr}.office-side{grid-row:1}.office-action-panel .homeactions{grid-template-columns:repeat(3,minmax(0,1fr))}.office-action-panel .homeactions button{min-height:80px}.office-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.office-shell:before{height:580px;background-position:center top}.office-shell .homeprojectmain>img{width:72px;height:66px}.office-shell .homeprojectshards{margin-left:83px}}
 @media(max-width:380px){.office-action-panel .homeactions{grid-template-columns:repeat(2,minmax(0,1fr))}.office-welcome{max-width:100%}}
+
+/* v36 — approved reference: cinematic control office, functional dashboard */
+:root{--cyan:#75dfe3;--panel:#202830;--edge:#46515d}
+body{background:#0c1219;color:#f0f3f6}
+.top{display:none}
+#nav{top:0;width:198px;padding:0 16px 18px;background:linear-gradient(145deg,#151b22,#0e141b 72%);border-right:1px solid #49515c;gap:8px}
+#nav:before{display:none}
+#nav .nav-logo{display:grid;gap:0;padding:24px 10px 34px;text-align:center}
+#nav .nav-logo strong{font-size:30px;letter-spacing:.035em;font-weight:850}
+#nav .nav-logo span{font-size:14px;letter-spacing:.08em;color:#c1c8ce}
+#nav button{border-radius:13px;min-height:52px;padding:10px 12px;gap:13px;font-size:14px}
+#nav button>span:not(.nav-glyph){font-size:14px;font-weight:500;line-height:1.2}
+#nav button small{display:block;font-size:11px;color:#aab3be}
+#nav .nav-glyph{font-size:27px;font-weight:300;line-height:1;width:29px;flex:none;text-align:center;color:#c6eaf1}
+#nav button.active{background:linear-gradient(90deg,#295454,#26333d);border-color:transparent;box-shadow:inset 2px 0 #72e4cf}
+#nav .nav-spacer{flex:1;min-height:20px}
+main{margin-left:198px;padding:0;min-height:100vh}
+.reference-dashboard{position:relative;min-height:100vh;padding:0 24px 28px;isolation:isolate;background:linear-gradient(180deg,#0a121a00 0%,#10182100 39%,#151c25bd 55%,#121820 100%),url("art/future-office.svg") center top/100% auto no-repeat,#121820}
+.reference-hero{min-height:clamp(370px,35vw,490px);position:relative;padding:63px 36px 30px}
+.reference-intro{max-width:660px;text-shadow:0 2px 18px #050a0dd9}
+.reference-intro>p{font-size:clamp(23px,2.2vw,35px);margin:0 0 2px}
+.reference-intro h1{font-size:clamp(33px,3.6vw,57px);line-height:1.08;margin:0 0 15px;letter-spacing:.01em;color:#fff}
+.reference-intro>span:last-child{font-size:15px;color:#e5e9ec}
+.reference-spark{position:absolute;left:4px;top:68px;color:#b9e5dc;font-size:30px}
+.reference-toptools{position:absolute;right:2px;top:22px;display:flex;align-items:center;gap:10px}
+.reference-toptools button{height:44px;width:44px;display:grid;place-items:center;border-radius:50%;background:#111a23a8;border:1px solid #ffffff25}
+.reference-date{border-radius:14px;background:#17222ccc;border:1px solid #ffffff22;padding:14px;color:#d9e2e8;font-size:12px}
+.reference-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:15px;margin-bottom:20px}
+.reference-metrics .stat{min-width:0;min-height:102px;display:flex;align-items:center;gap:14px;padding:16px 14px;background:linear-gradient(140deg,#3c4752d9,#1b242dde);border:1px solid #83919b55;border-radius:17px;backdrop-filter:blur(18px);box-shadow:0 10px 30px #0005;text-align:left}
+.reference-metrics .stat .symbol{font-size:26px;color:#93e6f1}
+.reference-metrics .stat .symbol svg{width:35px;height:35px}
+.reference-metrics .statlabel{display:block;font-size:12px;color:#d7e0e6;line-height:1.2;margin-bottom:7px}
+.reference-metrics .stat strong{font-size:clamp(18px,2.1vw,30px);color:#fff;white-space:nowrap}
+.reference-bottom{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(220px,.9fr) minmax(225px,.88fr);gap:16px;align-items:stretch}
+.reference-panel{min-width:0;border-radius:18px;padding:16px;background:linear-gradient(145deg,#2b343eea,#1b242de9);border:1px solid #6c788456;box-shadow:0 12px 34px #0005;backdrop-filter:blur(18px)}
+.reference-panelhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.reference-panelhead h2{font-size:17px;margin:0;color:#f6f8fa}
+.reference-panelhead button{font-size:30px;color:#bdc9d3;border:0;background:transparent;line-height:1}
+.reference-project-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.office-project-card{display:flex;flex-direction:column;min-width:0;overflow:hidden;border-radius:14px;text-align:left;background:#212a33;border:1px solid #6c7b8557;padding:0 0 13px}
+.office-project-image{position:relative;display:block;height:130px;width:100%;overflow:hidden}
+.office-project-image img{width:100%;height:100%;object-fit:cover}
+.office-image-1 img{filter:sepia(.14) saturate(1.1) brightness(.9)}
+.office-image-2 img{filter:hue-rotate(16deg) saturate(.85) brightness(.82)}
+.office-project-status{position:absolute;bottom:8px;left:9px;padding:5px 10px;background:#81d8ba;color:#092820;font-weight:700;border-radius:20px;font-size:11px}
+.office-image-1 .office-project-status{background:#f3c879;color:#36220c}.office-image-2 .office-project-status{background:#80c5e7;color:#102a3b}
+.office-project-info{display:flex;flex-direction:column;gap:5px;padding:12px 11px 0}
+.office-project-info>small{color:#d1d8df;font-size:12px}
+.office-project-info>strong{font-size:16px;color:#fff}
+.office-project-info>span:not(.office-project-progress){font-size:11px;color:#b7c3cb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.office-project-progress{height:6px;border-radius:6px;background:#3e4854;overflow:hidden;margin-top:9px}
+.office-project-progress i{height:100%;display:block;background:#70d9df;border-radius:6px}
+.office-project-percent{align-self:flex-end;font-weight:650}
+.reference-task{width:100%;min-height:62px;display:flex;align-items:center;gap:11px;border-bottom:1px solid #6b76813b;text-align:left;background:transparent}
+.reference-task>span:nth-child(2){flex:1;line-height:1.4;font-size:12px}
+.reference-task>b{font-size:22px;color:#b3c2cc}
+.reference-checkbox{width:21px;height:21px;display:grid;place-items:center;border:2px solid #66717c;border-radius:5px;flex:none}
+.reference-checkbox.checked{background:#7de0c0;color:#103c31;border-color:#7de0c0}
+.reference-actions .homeactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.reference-actions .homeactions button{min-height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;padding:12px 8px;background:#2d3742;border:1px solid #57667560;border-radius:17px}
+.reference-actions .homeactions button:hover{background:#394a58}
+.reference-actions .homeactions svg{width:29px;height:29px}
+.reference-actions .homeactions span{font-size:12px;text-align:center;line-height:1.25}
+@media(max-width:1250px){.reference-bottom{grid-template-columns:minmax(0,1.4fr) minmax(220px,1fr)}.reference-actions{grid-column:2;grid-row:1}.reference-tasks{grid-column:1/-1}.reference-hero{min-height:360px}.reference-metrics{gap:9px}.reference-metrics .stat{padding:11px;gap:7px}}
+@media(max-width:850px){#nav{width:74px;padding:0 8px 10px}#nav .nav-logo{padding:16px 0 26px}#nav .nav-logo strong{font-size:12px}#nav .nav-logo span{font-size:9px}#nav button{justify-content:center;padding:9px}#nav button>span:not(.nav-glyph){display:none}#nav .nav-glyph{font-size:25px}main{margin-left:74px}.reference-dashboard{padding:0 13px 22px}.reference-hero{padding:52px 16px 20px;min-height:340px}.reference-intro>p{font-size:23px}.reference-intro h1{font-size:36px}.reference-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.reference-metrics .stat:nth-child(n+4){display:flex}.reference-bottom{grid-template-columns:1fr}.reference-actions,.reference-tasks{grid-column:auto;grid-row:auto}.reference-actions{grid-row:1}.reference-actions .homeactions{grid-template-columns:repeat(4,minmax(0,1fr))}.reference-actions .homeactions button{min-height:85px}}
+@media(max-width:600px){#nav{top:auto;bottom:0;left:0;right:0;width:100%;height:66px;display:flex;flex-direction:row;align-items:center;justify-content:space-around;gap:0;padding:4px 5px calc(4px + env(safe-area-inset-bottom)/3);overflow-x:auto;border-top:1px solid #65717b;border-right:0;z-index:30}#nav .nav-logo,#nav .nav-spacer{display:none}#nav button{min-width:52px;flex:1;min-height:51px;padding:4px 5px;border-radius:11px}#nav button:nth-of-type(n+6){display:none}#nav .nav-glyph{font-size:23px}main{margin-left:0;padding-bottom:75px}.reference-dashboard{min-height:calc(100vh - 75px);padding:0 11px 22px;background-size:auto 450px;background-position:center top}.reference-hero{min-height:300px;padding:58px 11px 15px}.reference-intro>p{font-size:20px}.reference-intro h1{font-size:32px}.reference-intro>span:last-child{font-size:11px;line-height:1.4}.reference-spark{left:0;top:60px}.reference-toptools{top:10px;right:0;gap:5px}.reference-toptools button{height:32px;width:32px}.reference-date{padding:8px;font-size:10px}.reference-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}.reference-metrics .stat{min-height:77px;padding:10px;border-radius:13px}.reference-metrics .stat .symbol svg{width:24px;height:24px}.reference-metrics .stat strong{font-size:20px}.reference-metrics .statlabel{font-size:10px}.reference-metrics .stat:last-child{grid-column:1/-1}.reference-panel{padding:12px;border-radius:15px}.reference-project-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.office-project-image{height:82px}.office-project-info{padding:8px 6px 0}.office-project-info>strong{font-size:12px}.office-project-info>small{font-size:10px}.office-project-status{font-size:9px;padding:3px 5px;left:4px;bottom:4px}.reference-actions .homeactions{grid-template-columns:repeat(2,minmax(0,1fr))}.reference-actions .homeactions button{min-height:78px}.reference-bottom{gap:11px}}
