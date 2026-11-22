@@ -91,6 +91,7 @@ with sync_playwright() as pw:
         expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
         expect(page.locator(".command-panels .command-panel")).to_have_count(3)
         expect(page.locator(".command-dock")).to_be_visible()
+        expect(page.locator(".command-dock")).to_contain_text("Пакеты")
         expect(page.locator(".command-mission")).to_be_visible()
         if width <= 720:
             expect(page.locator(".command-mobile-tiles")).to_be_visible()
@@ -141,7 +142,7 @@ with sync_playwright() as pw:
           const t=d.tasks.find(t=>t.title==='QA закрепить рельсы');
           return !!sh && !!t && t.shardId===sh.id && t.status==='todo' && d.cases.some(c=>c.id===sh.caseId);
         }"""), "Task must belong to Shard and Shard to project"
-        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Открыть Shard").click()
+        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Открыть пакет").click()
         expect(page.get_by_role("heading",name="QA монтаж")).to_be_visible()
         expect(page.get_by_text("QA закрепить рельсы")).to_be_visible()
         fits()
