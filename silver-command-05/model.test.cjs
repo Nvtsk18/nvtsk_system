@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 require('./model.js');
 const {apply,validate,migrate} = NVModel;
 const base = validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Worker'}],tasks:[],shards:[]}));
+assert.equal(base.crew.find(c=>c.id==='lead').name,'Капитан');
+assert.equal(base.crew.find(c=>c.id==='lead').role,'Руководитель','Underlying role remains stable for permissions');
 let d=base;
 function act(a,p){d=apply(d,a,p)}
 act('case',{id:'c',city:'Demo',title:'Roof',price:100});
