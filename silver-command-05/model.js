@@ -26,14 +26,19 @@ globalThis.NVModel = (() => {
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников");
     requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Case");
     requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
-    requireValue(d.garage.every(m=>label(m.title)&&amount(m.qty)),"Ошибка количества");
+    requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
+    const skuKey=m=>m.sku?.trim().toUpperCase();
+    const codes=d.garage.map(skuKey).filter(Boolean);
+    requireValue(new Set(codes).size===codes.length,"Артикул уже существует на складе");
     const held = new Map();
+    const skuMovements=new Map();
     for (const m of d.moves) {
-      requireValue((m.type==="receive" ? m.shardId===null : has(d.shards,m.shardId))&&has(d.garage,m.itemId)&&has(d.crew,m.actor)&&amount(m.qty)&&m.qty>0&&["issue","return","receive"].includes(m.type),"Ошибка движения");
+      requireValue((["receive","writeoff"].includes(m.type) ? m.shardId===null : has(d.shards,m.shardId))&&has(d.garage,m.itemId)&&has(d.crew,m.actor)&&Number.isSafeInteger(m.qty)&&m.qty>0&&["issue","return","receive","writeoff"].includes(m.type),"Ошибка движения");
       const key = m.shardId+"/"+m.itemId;
       const balance = (held.get(key)||0) + (m.type==="issue"?m.qty:m.type==="return"?-m.qty:0);
       requireValue(balance>=-0.000001,"Возврат превышает выдачу");
       held.set(key,balance);
+      skuMovements.set(m.itemId,(skuMovements.get(m.itemId)||0)+(m.type==="receive"||m.type==="return"?m.qty:-m.qty));
     }
     return d;
   }
@@ -51,20 +56,28 @@ globalThis.NVModel = (() => {
       case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; break;
       case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); s.status="submitted"; break;
       case "accept": case "revise": allowed(lead && s && s.status==="submitted" && actor.id!==s.assignee); s.status=action==="accept"?"accepted":"draft"; break;
-      case "material": allowed(stock); d.garage.push({id:p.id,title:p.title,qty:p.qty}); break;
+      case "material": {
+        allowed(stock);
+        requireValue(label(p.title)&&Number.isSafeInteger(p.qty)&&p.qty>=0,"Укажите название и целое количество");
+        requireValue(typeof p.sku==="string"&&p.sku.trim().length>0&&p.sku.length<=80,"Укажите артикул (Artikelnummer)");
+        requireValue(!d.garage.some(m=>m.sku?.trim().toUpperCase()===p.sku.trim().toUpperCase()),"Такой артикул уже есть на складе");
+        d.garage.push({id:p.id,title:p.title,qty:p.qty,sku:p.sku.trim(),brand:(p.brand||"").trim(),unit:"шт."});
+        break;
+      }
       case "move": {
         const item=d.garage.find(x=>x.id===p.itemId);
-        allowed(stock && item && (p.type==="receive" || (s && s.status!=="accepted")));
+        allowed(stock && item && (["receive","writeoff"].includes(p.type) || (s && s.status!=="accepted")));
         // Accepted work is closed: further stock movements require a new open Shard.
         requireValue(Number.isSafeInteger(p.qty)&&p.qty>0,"Количество должно быть положительным целым числом");
-        requireValue(["issue","return","receive"].includes(p.type),"Неизвестная складская операция");
-        if(p.type==="issue")requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
+        requireValue(["issue","return","receive","writeoff"].includes(p.type),"Неизвестная складская операция");
+        if(["issue","writeoff"].includes(p.type))requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
+        if(p.type==="writeoff")requireValue(typeof p.reason==="string"&&p.reason.trim().length>=3&&p.reason.length<=300,"Укажите причину списания");
         if(p.type==="return"){
           const outstanding=d.moves.filter(m=>m.itemId===item.id&&m.shardId===s.id).reduce((n,m)=>n+(m.type==="issue"?m.qty:m.type==="return"?-m.qty:0),0);
           requireValue(outstanding>=p.qty,"Нельзя вернуть больше, чем выдано этому Shard");
         }
-        item.qty=Math.round((item.qty+(p.type==="issue"?-p.qty:p.qty))*1e6)/1e6;
-        d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:p.type==="receive"?null:s.id,actor:actor.id});
+        item.qty=Math.round((item.qty+(["issue","writeoff"].includes(p.type)?-p.qty:p.qty))*1e6)/1e6;
+        d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,reason:p.type==="writeoff"?p.reason.trim():""});
         break;
       }
       default: throw Error("Неизвестная операция");
