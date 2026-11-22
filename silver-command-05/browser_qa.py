@@ -70,6 +70,15 @@ with sync_playwright() as pw:
         expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
         expect(page.locator(".command-panels .command-panel")).to_have_count(3)
         expect(page.locator(".command-dock")).to_be_visible()
+        expect(page.locator(".command-mission")).to_be_visible()
+        if width <= 720:
+            expect(page.locator(".command-mobile-tiles")).to_be_visible()
+            order = page.evaluate("""() => {
+                const a=document.querySelector('.command-mobile-tiles').getBoundingClientRect();
+                const b=document.querySelector('.command-metrics').getBoundingClientRect();
+                return {tileTop:a.top,metricTop:b.top}
+            }""")
+            assert order["tileTop"] < order["metricTop"], (width,"Photo navigation must precede metrics on mobile",order)
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
