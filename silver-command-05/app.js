@@ -273,21 +273,22 @@ function projectHubAccounting(){
 function projects(){
  const all=state.cases.map(projectHubMembership),joined=all.filter(x=>x.joined);
  const own=lead()?all:joined;
- const tabs=lead()?[["mine","Мои",own.length],["joined","Участвую",joined.length],["accounting","Учёт",all.length]]:
+ const tabs=lead()?[["mine","Мои",own.length],["joined","Участвую",joined.length],["accounting","Учёт",all.length],["partners","Партнёры",state.counterparties.length]]:
  [["mine","Мои",own.length],["joined","Участвую",joined.length]];
- const tab=["mine","joined","accounting"].includes(projectHubTab)&&!(projectHubTab==="accounting"&&!lead())?projectHubTab:"mine";
+ const tab=["mine","joined","accounting","partners"].includes(projectHubTab)&&!(["accounting","partners"].includes(projectHubTab)&&!lead())?projectHubTab:"mine";
  projectHubTab=tab;
  const titles={
   mine:["Мои Projects",lead()?"Все объекты компании: работа, назначения и готовность.":"Все объекты, где у вас есть назначенные работы.","Ваших Projects пока нет."],
   joined:["Моё участие","Назначения на Shards и Tasks, а также участие в складских операциях.","Вас ещё не назначили на работы."],
-  accounting:["Управление и учёт","Бюджеты и приёмка работ по объектам вашей компании.","Проектов пока нет."]
+  accounting:["Управление и учёт","Бюджеты и приёмка работ по объектам вашей компании.","Проектов пока нет."],
+  partners:["Контрагенты","Заказчики монтажных работ и связанные объекты.","Контрагентов пока нет."]
  };
  const list=(tab==="joined"?joined:own).slice().sort((a,b)=>projectHubStatusOrder[a.status]-projectHubStatusOrder[b.status]);
  const info=titles[tab],cities=[...new Set(list.map(x=>x.c.city))].sort((a,b)=>a.localeCompare(b,"ru"));
  const cards=list.map(projectHubProjectCard).join("");
  const emptyHelp=tab==="mine"?"Создайте Project или дождитесь назначения на Shard.":"Назначения от Капитана появятся здесь автоматически.";
  const filters=[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершённые"]];
- const right=tab==="accounting"?projectHubAccounting():(
+ const right=tab==="accounting"?projectHubAccounting():tab==="partners"?counterpartiesView():(
  '<div class="ph-searchline"><label class="ph-search"><span>'+icon("search")+'</span><input id="project-hub-search" type="search" aria-label="Поиск по проектам" maxlength="120" placeholder="Название, город, DC, AC, монтаж…" value="'+esc(projectHubQuery)+'" autocomplete="off"></label><span id="ph-result-count">'+list.length+' найдено</span></div>'+
  '<div class="ph-filterbar"><label class="ph-filter-select">Город<select id="ph-city" aria-label="Выбрать город"><option value="all">Все города</option>'+cities.map(city=>'<option value="'+esc(city.toLocaleLowerCase())+'" '+(projectHubCity===city.toLocaleLowerCase()?"selected":"")+'>'+esc(city)+'</option>').join("")+'</select></label></div>'+
  '<div class="ph-filters" role="group" aria-label="Фильтр проектов">'+filters.map(([id,label])=>'<button type="button" data-action="project-filter" data-filter="'+id+'" class="'+(projectHubFilter===id?"is-active":"")+'" aria-pressed="'+(projectHubFilter===id)+'">'+label+'</button>').join("")+'</div>'+
@@ -300,7 +301,7 @@ function projects(){
  '<div class="ph-hero-metrics"><span><strong>'+own.length+'</strong> мои объекты</span><span><strong>'+joined.length+'</strong> участвую</span><span><strong>'+state.teams.length+'</strong> Teams</span></div></div>'+
  '<div class="ph-hero-actions"><button class="ph-company-lead" data-route="member/lead">Капитан · '+esc(displayMemberName(state.crew.find(c=>c.id==="lead")))+' →</button>'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
  '<nav class="ph-tabs" aria-label="Разделы Projects">'+tabs.map(([id,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+id+'" class="'+(tab===id?"is-active":"")+'" aria-current="'+(tab===id?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
- '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="accounting"?"MANAGEMENT":tab==="joined"?"MY PARTICIPATION":"MY PROJECTS")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+right+'</section></div>';
+ '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="partners"?"COUNTERPARTIES":tab==="accounting"?"MANAGEMENT":tab==="joined"?"MY PARTICIPATION":"MY PROJECTS")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+right+'</section></div>';
 }
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
 const taskStatusName={todo:"К выполнению",doing:"В работе",done:"Готово"};
@@ -360,7 +361,10 @@ function detail(id){
   const c=state.cases.find(x=>x.id===id);
   if(!c)return heading("Project не найден");
   const shards=state.shards.filter(s=>s.caseId===id);
-  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
+  const partner=counterpartyForProject(c);
+  const partnerInfo='<section class="panel cp-case-link"><div class="panelhead"><h2>Заказчик / Auftraggeber</h2>'+(lead()?button("Связать контрагента","link-counterparty",id):"")+'</div>'+
+    (partner?'<button data-route="partner/'+esc(partner.id)+'" class="cp-case-partner"><strong>'+esc(partner.name)+'</strong><span>DC-монтаж · SolAn Plus · AC — электрики заказчика</span><small>Открыть профиль →</small></button>':'<p>Контрагент не назначен. Исторические проекты сохраняются без автоматически установленного заказчика.</p>')+'</section>';
+  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+partnerInfo+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 const warehousePhotos=[
  {name:"novotegra Einlegeschiene",brand:"novotegra",kind:"Einlegesystem · не привязано к артикулу",image:"https://www.novotegra.com/fileadmin/_processed_/d/9/csm_einlegeschiene-kombination-03-0013xx_e3262ee072.jpg",url:"https://www.novotegra.com/fileadmin/04_Downloads/Certificates/novotegra_system/Montagesystemkatalog/DE-novotegra-Montage-Systemkatalog.pdf",verified:false},
@@ -600,10 +604,10 @@ const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social:()
 function render(){
  const r=location.hash.slice(1)||"dashboard";
  $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
- const sectionName=r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Сообщество":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({projects:"Projects",tasks:"Приёмка",team:"Сообщество",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
+ const sectionName=r.startsWith("partner/")?"Контрагент":r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Сообщество":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({projects:"Projects",tasks:"Приёмка",team:"Сообщество",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
  const workbar=r==="dashboard"?"":'<header class="workspace-bar"><div class="workspace-brand"><img src="art/logo.webp" alt="NVTSK" width="40" height="40"><span><strong>'+esc(APP_BRAND.workspace)+'</strong><small>'+esc(sectionName)+' · NVTSK SYSTEM</small></span></div><div class="workspace-tools"><button data-route="dashboard">'+icon("home")+' Главная</button><button data-route="settings" aria-label="Настройки">'+icon("settings")+'</button></div></header>';
- $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("team/")?team():Object.hasOwn(pages,r)?pages[r]():dashboard());
- document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/"))&&b.dataset.route==="projects")||(b.closest("#nav")&&(r.startsWith("member/")||r.startsWith("team/"))&&b.dataset.route==="team")));
+ $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("team/")?team():Object.hasOwn(pages,r)?pages[r]():dashboard());
+ document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/")||r.startsWith("partner/"))&&b.dataset.route==="projects")||(b.closest("#nav")&&(r.startsWith("member/")||r.startsWith("team/"))&&b.dataset.route==="team")));
  if(!lead())document.querySelectorAll('[data-action="new-case"],[data-action="new-electrical"]').forEach(b=>b.remove());
  if(r==="projects")filterProjectHub();
 }
