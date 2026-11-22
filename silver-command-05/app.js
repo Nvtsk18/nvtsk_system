@@ -518,6 +518,8 @@ function captainRelations(c){
   '<div><small>PROJECTS · '+relatedProjectIds.length+'</small>'+relatedProjectIds.slice(0,5).map(pid=>{
    const p=state.cases.find(x=>x.id===pid);return p?'<button class="company-network-link" data-route="case/'+esc(p.id)+'"><span>PROJECT</span><strong>'+esc(p.title)+'</strong><small>'+esc(p.city)+'</small></button>':"";
   }).join("")+(relatedProjectIds.length>5?'<button class="company-network-more" data-route="projects">Все Projects →</button>':"")+'</div></div>'+
+  '<div class="cp-network-partners"><div class="company-network-people-header"><small>КОНТРАГЕНТЫ · '+state.counterparties.length+'</small><button data-route="projects">Projects / Партнёры →</button></div>'+
+  state.counterparties.map(p=>'<button class="cp-network-partner" data-route="partner/'+esc(p.id)+'"><span>AUFTRAGGEBER</span><strong>'+esc(p.name)+'</strong><small>Заказы на DC · AC выполняет партнёр</small></button>').join("")+'</div>'+
   '<div class="company-network-people"><div class="company-network-people-header"><small>УЧАСТНИКИ · '+people.length+'</small><button data-route="team">Все профили →</button></div>'+
   '<div class="company-network-people-list">'+(people.map(person=>'<button data-route="member/'+esc(person.id)+'" class="company-network-person">'+memberAvatar(person)+'<span><strong>'+esc(displayMemberName(person))+'</strong><small>'+esc(displayRole(person))+'</small></span></button>').join("")||'<span class="company-network-empty">Участники появятся здесь после добавления профилей</span>')+'</div></div></div>';
  return '<section class="community-section company-network-section"><div class="community-section-head"><h2>'+title+'</h2><small>Связи формируются из Teams, Projects и назначений</small></div>'+relations+'</section>';
