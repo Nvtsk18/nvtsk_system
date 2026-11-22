@@ -398,7 +398,7 @@ function communityShell(active,body){
   const c=actor(),stats=communityStats(c);
   return '<div class="community">'+
     '<section class="community-hero"><img src="art/hero.webp" alt="Фотография солнечных панелей" loading="eager"><div class="community-hero-inner"><span class="community-kicker">SOLAN PLUS · PEOPLE & TEAMS</span><h1>Сообщество</h1><p>Люди, опыт, результаты и достижения.</p><div class="community-hero-stats"><span><b>'+state.crew.length+'</b> участников</span><span><b>'+state.shards.filter(sh=>sh.status==="accepted").length+'</b> принятых Shards</span><span><b>'+state.tasks.filter(t=>t.status==="done").length+'</b> выполнено Tasks</span></div></div></section>'+
-    '<div class="community-identity">'+memberAvatar(c)+'<div class="community-identity-copy"><small>Ваш профиль · LOCAL FIRST</small><strong>'+esc(displayMemberName(c))+'</strong><span>'+esc(stats.level)+' · '+stats.xp+' XP</span></div><button data-route="member/'+esc(c.id)+'">Мой профиль</button>'+(lead()?button("＋ Участник","new-crew"):"")+'</div>'+
+    companyMainCaptain()+'<div class="community-identity">'+memberAvatar(c)+'<div class="community-identity-copy"><small>Ваш профиль · LOCAL FIRST</small><strong>'+esc(displayMemberName(c))+'</strong><span>'+esc(stats.level)+' · '+stats.xp+' XP</span></div><button data-route="member/'+esc(c.id)+'">Мой профиль</button>'+(lead()?button("＋ Участник","new-crew"):"")+'</div>'+
     '<div class="community-profile-switch">'+profile()+'</div>'+
     communityTabs(active)+body+
     '<p class="community-disclaimer">Пилот социальной системы: профили, публикации и достижения хранятся локально на этом устройстве. Это не общая сеть между телефонами; XP не является Merit и не влияет на оплату.</p></div>';
@@ -470,18 +470,35 @@ function captainRelations(c){
  return '<section class="community-section company-network-section"><div class="community-section-head"><h2>'+title+'</h2><small>Связи формируются из Teams, Projects и назначений</small></div>'+relations+'</section>';
 }
 function memberProfile(id){
-  const c=state.crew.find(x=>x.id===id);
-  if(!c)return heading("Профиль не найден");
-  const st=communityStats(c),own=c.id===state.actor;
-  const shardList=state.shards.filter(sh=>sh.assignee===c.id||state.tasks.some(t=>t.shardId===sh.id&&t.assignee===c.id));
-  const projectIds=new Set(shardList.map(sh=>sh.caseId));
-  const projectLinks=[...projectIds].map(pid=>{
-    const p=state.cases.find(x=>x.id===pid);
-    if(!p)return "";
-    return '<button data-route="case/'+esc(pid)+'" class="community-profile-project"><img src="art/roof.webp" alt=""><span><strong>'+esc(p.title)+'</strong><small>'+esc(p.city)+' · '+shardCount(shardList.filter(sh=>sh.caseId===pid).length)+'</small></span><b>›</b></button>';
-  }).join("");
-  const badges=st.badges.map(([kind,name])=>'<span class="community-earned-badge">'+esc(name)+'</span>').join("")||'<p class="community-muted">Достижений пока нет. Они появляются после приёмки Shards и завершения Tasks.</p>';
-  return '<div class="community community-profile"><button class="back" data-route="team">← Сообщество</button><section class="community-profile-hero"><div class="community-profile-cover"><img src="art/hero.webp" alt="PV-панели" loading="lazy"></div><div class="community-profile-summary">'+memberAvatar(c,true)+'<div><small>NVTSK MEMBER · '+esc(st.level)+'</small><h1>'+esc(displayMemberName(c))+'</h1><p>'+esc(c.headline||displayRole(c))+'</p><span>'+esc(c.location||"Город не указан")+'</span></div>'+(own?button("Редактировать профиль","edit-profile",c.id):"")+'</div></section><div class="community-profile-stats"><div><b>'+st.projects+'</b><small>Projects</small></div><div><b>'+st.assigned+'</b><small>Shards</small></div><div><b>'+st.done+'</b><small>Tasks готово</small></div><div><b>'+st.xp+'</b><small>XP</small></div></div><div class="community-profile-grid"><section class="community-section"><h2>О себе</h2><p class="community-about">'+esc(c.bio||"Участник ещё не добавил описание профиля.")+'</p><h3>Специализация</h3><div class="community-person-skills">'+((c.skills||[]).map(k=>'<em>'+esc(k)+'</em>').join("")||'<span class="community-muted">Навыки пока не указаны</span>')+'</div><h3>Участие в Projects</h3>'+(projectLinks||'<p class="community-muted">Пока нет назначений</p>')+'</section><aside class="community-section"><h2>Путь мастерства</h2><div class="community-progress"><strong>'+st.xp+' XP</strong><span>'+esc(st.level)+'</span><div class="community-progress-rail"><i style="width:'+st.percent+'%"></i></div><small>Следующий порог · '+st.next+' XP</small></div><h3>Достижения</h3><div class="community-badges">'+badges+'</div><small class="community-muted">Учёт XP локальный и не связан с Merit или выплатами.</small></aside></div><section class="community-section community-profile-activity"><div class="community-section-head"><div><h2>Подтверждённые работы</h2><small>История принятых Shards · без неподтверждённых оценок</small></div></div><div class="community-work-log">'+(communityWorkFeed(acceptedWorkEvents(c.id))||'<p class="community-muted">Принятых работ пока нет.</p>')+'</div></section></div>';
+ const c=state.crew.find(x=>x.id===id);
+ if(!c)return heading("Профиль не найден");
+ const st=communityStats(c),own=c.id===state.actor;
+ const captain=c.id==="lead"&&c.role===roles[0];
+ const groups=state.teams.filter(t=>t.memberIds.includes(c.id));
+ const shardList=state.shards.filter(sh=>sh.assignee===c.id||(sh.teamId&&groups.some(t=>t.id===sh.teamId))||state.tasks.some(t=>t.shardId===sh.id&&t.assignee===c.id));
+ const projectIds=captain?state.cases.map(p=>p.id):[...new Set(shardList.map(sh=>sh.caseId))];
+ const projectLinks=projectIds.map(pid=>{
+  const p=state.cases.find(x=>x.id===pid);
+  if(!p)return "";
+  return '<button data-route="case/'+esc(pid)+'" class="community-profile-project"><img src="art/roof.webp" alt=""><span><strong>'+esc(p.title)+'</strong><small>'+esc(p.city)+' · '+shardCount(state.shards.filter(sh=>sh.caseId===pid).length)+'</small></span><b>›</b></button>';
+ }).join("");
+ const badges=st.badges.map(([kind,name])=>'<span class="community-earned-badge">'+esc(name)+'</span>').join("")||'<p class="community-muted">Достижения появятся после приёмки Shards и выполненных Tasks.</p>';
+ const leadLabel=captain?'<span class="company-profile-role">КАПИТАН · NVTSK ROLE</span>':"";
+ const captainNote=captain?'<p class="company-role-note">«Капитан» — роль управления внутри NVTSK, а не официальная должность, указанная на визитке.</p>':"";
+ return '<div class="community community-profile"><button class="back" data-route="team">← Сообщество</button>'+
+ '<section class="community-profile-hero"><div class="community-profile-cover"><img src="art/hero.webp" alt="PV-панели" loading="lazy"></div>'+
+ '<div class="community-profile-summary">'+memberAvatar(c,true)+
+ '<div><small>'+(captain?'SOLAN PLUS · COMPANY PROFILE':'NVTSK MEMBER · '+esc(st.level))+'</small><h1>'+esc(displayMemberName(c))+'</h1><p>'+esc(c.headline||displayRole(c))+'</p><span>'+esc(c.location||"Город не указан")+'</span>'+leadLabel+'</div>'+
+ (own?button("Редактировать профиль","edit-profile",c.id):"")+'</div></section>'+
+ '<div class="community-profile-stats"><div><b>'+projectIds.length+'</b><small>Projects</small></div><div><b>'+st.assigned+'</b><small>Shards</small></div><div><b>'+st.done+'</b><small>Tasks готово</small></div><div><b>'+st.xp+'</b><small>XP</small></div></div>'+
+ captainNote+memberContacts(c)+captainRelations(c)+
+ '<div class="community-profile-grid"><section class="community-section"><h2>О себе</h2><p class="community-about">'+esc(c.bio||"Описание профиля пока не заполнено.")+'</p>'+
+ '<h3>Специализация</h3><div class="community-person-skills">'+((c.skills||[]).map(k=>'<em>'+esc(k)+'</em>').join("")||'<span class="community-muted">Навыки пока не указаны</span>')+'</div>'+
+ '<h3>'+(captain?"Projects компании":"Участие в Projects")+'</h3>'+(projectLinks||'<p class="community-muted">Пока нет назначений</p>')+'</section>'+
+ '<aside class="community-section"><h2>Путь мастерства</h2><div class="community-progress"><strong>'+st.xp+' XP</strong><span>'+esc(st.level)+'</span><div class="community-progress-rail"><i style="width:'+st.percent+'%"></i></div><small>Следующий порог · '+st.next+' XP</small></div>'+
+ '<h3>Достижения</h3><div class="community-badges">'+badges+'</div><small class="community-muted">XP не связан с Merit или выплатами.</small></aside></div>'+
+ '<section class="community-section community-profile-activity"><div class="community-section-head"><div><h2>Подтверждённые работы</h2><small>История принятых Shards</small></div></div><div class="community-work-log">'+
+ (communityWorkFeed(acceptedWorkEvents(c.id))||'<p class="community-muted">Принятых работ пока нет.</p>')+'</div></section></div>';
 }
 function profile(){return '<label>Локальный профиль<select id="actor">'+options(teamOptions(),state.actor)+'</select></label>'}
 function field(){
