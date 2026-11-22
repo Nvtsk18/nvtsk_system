@@ -502,3 +502,18 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Perspectives:** device owner trying combined archive, Garage operator avoiding stale stock after project-only import, field installer reading misleading backup label. These are reviewed scenarios, not runtime role authorization PASS.
 
 **Open P0:** validated two-store atomic restore with rollback/crash recovery; stage/post lossless migration; 3-role authorization conflicts; real browser flow and persistence tests. Preserve existing separate backups.
+
+
+## Iteration · 2026-11-22 04:00 CET · prevent orphaned Garage usage on project-only restore
+
+**Code commit:** `4572577eec5e85d6c486445dbe533559d96f795f` (`silver-command/app.js` only).
+
+**Priorities:** (1) guard project-only import against orphaning existing Garage consumption, (2) reject project import when Garage snapshot is missing, invalid or recovery-locked. This is a protective integrity change, not the requested atomic combined importer.
+
+**Change:** After validating the imported project state but **before confirmation and localStorage write**, request a validated Garage snapshot. Reject import if any existing Garage usage.project is absent from the imported lot IDs. Do not mutate either store on these rejection paths. Project-only restore remains permitted when no existing material usage is orphaned; Garage is not restored by it.
+
+**Verification actually executed:** fetched current GitHub app.js and audit before edits; exact insertion anchor found once; V8 `new Function(fullAppSource)` syntax parse PASS; post-edit guard presence assertion PASS; GitHub code update committed. **NOT RUN:** actual browser form submission/reload, injected storage failures, 3-role runtime conflicts, full workflow, physical iPhone Safari. Static guard order inspected; this is not proof of end-to-end runtime behaviour.
+
+**Perspectives reviewed, not runtime tested:** manager restoring a project backup that excludes a consumed-material project; warehouse custodian with corrupted/locked Garage; field installer encountering an import form. No real authentication is implemented.
+
+**Remaining P0:** combined atomic/crash-recoverable Case/Shard/Garage import with rollback; schema migration without silent truncation; three-role runtime security tests; real mobile browser navigation and full workflow. Preserve separate backups; do not claim MVP is ready.
