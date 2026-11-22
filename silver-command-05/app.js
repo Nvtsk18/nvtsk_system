@@ -612,7 +612,7 @@ function dashboardV66(){
  const materials=state.garage.filter(x=>!["van","car","trailer"].includes(x.art));
  const assigned=state.shards.filter(x=>x.assignee===state.actor&&x.status!=="accepted");
  const tasks=lead()?review.concat(state.shards.filter(x=>x.status==="draft").slice(0,3)):assigned;
- const kpis=[["layers","Активные Case",active,"projects"],["team","Участники",state.crew.length,"team"],["box","Lager",materials.length+" позиций","lager"],["coins","К выплате","Нет данных","pulse"],["coins","Merit",money(state.cases.reduce((n,c)=>n+Number(c.price||0),0)),"pulse"]];
+ const kpis=[["layers","Активные Case",active,"projects"],["team","Участники",state.crew.length,"team"],["box","Lager",materials.length+" позиций","lager"],["coins","К выплате","Нет данных","finance"],["coins","Merit",money(state.cases.reduce((n,c)=>n+Number(c.price||0),0)),"merit"]];
  const cards=state.cases.slice().reverse().slice(0,3).map((c,i)=>{
    const shards=state.shards.filter(x=>x.caseId===c.id),percent=pct(c.id);
    const status=percent===100?"Принято":shards.some(x=>x.status==="submitted")?"Приёмка":shards.length?"В работе":"Планирование";
@@ -857,7 +857,7 @@ $("#editor").onsubmit=async e=>{
 };
 document.querySelector('.mode [data-route="dashboard"]').innerHTML=icon("screen")+" Command Mode";
 document.querySelector('.mode [data-route="field"]').innerHTML=icon("field")+" Field Mode";
-const navIconNames={dashboard:"home",projects:"layers",team:"team",lager:"box",pulse:"coins",field:"field",social:"team",settings:"settings"};
+const navIconNames={dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"coins",analytics:"layers",pulse:"coins",field:"field",social:"team",settings:"settings"};
 document.querySelectorAll("#nav button[data-route]").forEach(b=>{const holder=b.querySelector(".nav-glyph");if(holder)holder.innerHTML=icon(navIconNames[b.dataset.route]||"box")});
 addEventListener("hashchange",()=>{render();scrollTo(0,0)});
 addEventListener("storage",e=>{if(e.key===KEY||e.key===null){try{readStore()}catch{damaged=true}$("#dialog").close();render()}});
