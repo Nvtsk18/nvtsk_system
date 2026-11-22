@@ -274,35 +274,28 @@ function projectHubAccounting(){
  '<div class="ph-account-list">'+(rows||'<p class="ph-empty">Создайте первый Project, чтобы начать учёт.</p>')+'</div></div>';
 }
 function projects(){
- const all=state.cases.map(projectHubMembership),joined=all.filter(x=>x.joined);
- const own=lead()?all:joined;
- const tabs=lead()?[["mine","Мои",own.length],["joined","Участвую",joined.length],["accounting","Учёт",all.length],["partners","Партнёры",state.counterparties.length]]:
- [["mine","Мои",own.length],["joined","Участвую",joined.length]];
- const tab=["mine","joined","accounting","partners"].includes(projectHubTab)&&!(["accounting","partners"].includes(projectHubTab)&&!lead())?projectHubTab:"mine";
- projectHubTab=tab;
- const titles={
-  mine:["Мои Projects",lead()?"Все объекты компании: работа, назначения и готовность.":"Все объекты, где у вас есть назначенные работы.","Ваших Projects пока нет."],
-  joined:["Моё участие","Назначения на Shards и Tasks, а также участие в складских операциях.","Вас ещё не назначили на работы."],
-  accounting:["Управление и учёт","Бюджеты и приёмка работ по объектам вашей компании.","Проектов пока нет."],
-  partners:["Контрагенты","Заказчики монтажных работ и связанные объекты.","Контрагентов пока нет."]
- };
- const list=(tab==="joined"?joined:own).slice().sort((a,b)=>projectHubStatusOrder[a.status]-projectHubStatusOrder[b.status]);
- const info=titles[tab],cities=[...new Set(list.map(x=>x.c.city))].sort((a,b)=>a.localeCompare(b,"ru"));
- const cards=list.map(projectHubProjectCard).join("");
- const emptyHelp=tab==="mine"?"Создайте Project или дождитесь назначения на Shard.":"Назначения от Капитана появятся здесь автоматически.";
- const filters=[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершённые"]];
- const right=tab==="accounting"?projectHubAccounting():tab==="partners"?counterpartiesView():(
- '<div class="ph-searchline"><label class="ph-search"><span>'+icon("search")+'</span><input id="project-hub-search" type="search" aria-label="Поиск по проектам" maxlength="120" placeholder="Название, город, DC, AC, монтаж…" value="'+esc(projectHubQuery)+'" autocomplete="off"></label><span id="ph-result-count">'+list.length+' найдено</span></div>'+
- '<div class="ph-list">'+(cards||'<div class="ph-empty"><strong>'+info[2]+'</strong><p>'+emptyHelp+'</p>'+(lead()&&tab==="mine"?button("＋ Создать Project","new-case"):"")+'</div>')+'</div>'+
- '<div id="ph-no-match" class="ph-empty" hidden><strong>Нет подходящих объектов</strong><p>Попробуйте другой запрос или фильтр.</p></div>'
- );
- return '<div class="ph-root ph-v56 ph-internal">'+
- '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">SOLAN PLUS · COMPANY WORKSPACE</span><h1>Projects</h1>'+
- '<p>Объекты SolAn Plus GmbH, личные назначения и управленческий учёт.</p>'+
- '<div class="ph-hero-metrics"><span><strong>'+own.length+'</strong> мои объекты</span><span><strong>'+joined.length+'</strong> участвую</span><span><strong>'+state.teams.length+'</strong> Teams</span></div></div>'+
- '<div class="ph-hero-actions"><button class="ph-company-lead" data-route="member/lead">Капитан · '+esc(displayMemberName(state.crew.find(c=>c.id==="lead")))+' →</button>'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
- '<nav class="ph-tabs" aria-label="Разделы Projects">'+tabs.map(([id,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+id+'" class="'+(tab===id?"is-active":"")+'" aria-current="'+(tab===id?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
- '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="partners"?"COUNTERPARTIES":tab==="accounting"?"MANAGEMENT":tab==="joined"?"MY PARTICIPATION":"MY PROJECTS")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+right+'</section></div>';
+ const all=state.cases.map(projectHubMembership);
+ const own=lead()?all:all.filter(x=>x.joined);
+ const list=own.slice().sort((a,b)=>(projectHubStatusOrder[a.status]??9)-(projectHubStatusOrder[b.status]??9));
+ const current=list.find(x=>x.c.id===projectHubSelectedCase)||list[0];
+ const mediaFor=c=>(c.files||[]).filter(f=>f.data&&f.data.startsWith("data:image/"));
+ const photo=c=>mediaFor(c)[0]?.data||"art/roof.webp";
+ const status=x=>projectHubStatusLabel[x.status]||"Планирование";
+ const cards=list.map(x=>'<button class="sc75-project'+(current&&current.c.id===x.c.id?' is-current':'')+'" data-action="project-select" data-id="'+esc(x.c.id)+'" data-hubsearch="'+esc(projectHubMeta(x).search)+'"><img src="'+photo(x.c)+'" alt=""><span class="sc75-card-info"><strong>'+esc(x.c.title)+'</strong><small>'+esc(x.c.city||x.c.address||"Объект")+'</small><span>'+x.shards.length+' Shards · '+x.tasks.length+' Tasks</span><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span></span><span class="sc75-card-end"><em>'+status(x)+'</em><b>'+x.percent+'%</b></span></button>').join("");
+ let pane='<section class="sc75-empty">Выберите Case, чтобы открыть паспорт, медиа и задачи.</section>';
+ if(current){
+  const x=current,c=x.c,p=c.pv||c.pvProject||{},images=mediaFor(c);
+  const facts=[["Мощность",p.declaredKwp?esc(String(p.declaredKwp))+" kWp":"—"],["Модули",p.declaredModules?esc(String(p.declaredModules))+" шт.":"—"],["Инвертор",esc(p.inverter||p.inverterType||"—")],["Крыша",esc(p.roofType||"—")],["Крепление",esc(p.mounting||"—")],["Уклон",p.slopeDeg!=null&&p.slopeDeg!==""?esc(String(p.slopeDeg))+"°":"—"]];
+  const files=(c.files||[]).slice(0,6).map(f=>'<a class="sc75-file" href="'+f.data+'" download="'+esc(f.name)+'">'+(f.data.startsWith("data:image/")?'<img src="'+f.data+'" alt="'+esc(f.name)+'">':'<span>PDF</span>')+'</a>').join("");
+  const stages=[["Подготовка",x.shards.length>0],["Монтаж",x.percent>0],["AC",x.shards.some(sh=>sh.kind==="AC"&&sh.status==="accepted")],["Приёмка",x.status==="review"||x.status==="accepted"],["Закрытие",x.status==="accepted"]];
+  pane='<section class="sc75-detail"><div class="sc75-detail-head"><div><h2>'+esc(c.title)+'</h2><p>'+esc([c.address,c.city].filter(Boolean).join(" · "))+'</p></div><span class="sc75-status">'+status(x)+'</span></div>'+
+   '<div class="sc75-case-top"><div class="sc75-cover"><img src="'+photo(c)+'" alt="Фото объекта"></div><div class="sc75-passport"><div class="sc75-section-head"><h3>Паспорт объекта</h3><button data-route="case/'+esc(c.id)+'">Открыть Case ↗</button></div><div class="sc75-facts">'+facts.map(([label,value])=>'<div><small>'+label+'</small><strong>'+value+'</strong></div>').join("")+'</div></div></div>'+
+   '<div class="sc75-actions"><button data-route="case/'+esc(c.id)+'">Обзор и Shards</button><button data-route="case/'+esc(c.id)+'">Задачи</button><button data-route="case/'+esc(c.id)+'">Документы</button><button data-route="case/'+esc(c.id)+'">Команда</button></div>'+
+   '<div class="sc75-progress"><div><strong>Прогресс проекта</strong><b>'+x.percent+'%</b></div><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span><div class="sc75-stages">'+stages.map(([label,done])=>'<span class="'+(done?'done':'')+'">'+(done?'●':'○')+' '+label+'</span>').join("")+'</div></div>'+
+   '<div class="sc75-media"><div class="sc75-section-head"><h3>Медиа объекта <small>('+(c.files||[]).length+')</small></h3>'+(lead()?'<button data-action="case-media" data-id="'+esc(c.id)+'">＋ Фото / PDF</button>':'')+'</div><div class="sc75-media-items">'+(files||'<p>Пока нет медиа. Добавьте фото крыши, монтажных работ или проектные PDF.</p>')+'</div></div>'+
+   '<div class="sc75-footer"><button data-route="case/'+esc(c.id)+'">Открыть полный паспорт и работы →</button></div></section>';
+ }
+ return '<div class="sc75-shell"><header class="sc75-header"><div><h1>Проекты</h1><p>Объекты, Case и задачи рабочего пространства</p></div>'+(lead()?'<button data-action="new-case">＋ Новый Case</button>':'')+'</header><div class="sc75-layout"><aside class="sc75-list"><label class="sc75-search">⌕ <input id="project-hub-search" type="search" placeholder="Название, адрес, клиент…" aria-label="Поиск проектов" value="'+esc(projectHubQuery)+'"></label><div class="sc75-cards">'+(cards||'<p>Проектов пока нет</p>')+'</div><p id="ph-no-match" hidden>Нет совпадений</p></aside>'+pane+'</div></div>';
 }
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
 const taskStatusName={todo:"К выполнению",doing:"В работе",done:"Готово"};
