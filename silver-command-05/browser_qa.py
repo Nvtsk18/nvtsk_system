@@ -48,12 +48,15 @@ with sync_playwright() as pw:
         route("projects");act("new-electrical")
         page.get_by_label("Название").fill("QA Elektro Rohbau")
         page.get_by_label("Город").fill("Stockach")
+        page.get_by_label("Адрес объекта").fill("Hauptstraße 1, 78333 Stockach")
+        page.get_by_label("Описание и инструкции").fill("Черновая электропроводка и щит")
+        page.locator('input[name="media"]').set_input_files({"name":"plan.pdf","mimeType":"application/pdf","buffer":b"%PDF-1.4\n%%EOF"})
         page.get_by_label("Бюджет").fill("1000");save()
         assert page.evaluate("""() => {
             const data=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
             const c=data.cases.find(c=>c.title==='QA Elektro Rohbau');
             const shards=data.shards.filter(s=>s.caseId===c?.id);
-            return !!c && shards.length===5 &&
+            return !!c && c.address==="Hauptstraße 1, 78333 Stockach" && c.files?.length===1 && c.files[0].name==="plan.pdf" && shards.length===5 &&
                 shards.every(s=>s.status==='draft' && s.assignee===null) &&
                 Math.round(shards.reduce((n,s)=>n+s.price,0)*100)===100000;
         }"""), "Electrical Case template failed to create five balanced Shards"
