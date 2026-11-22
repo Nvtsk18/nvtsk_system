@@ -106,7 +106,45 @@ with sync_playwright() as pw:
             }""")
             assert order["tileTop"] < order["metricTop"], (width,"My Projects list must precede metrics on mobile",order)
         capture("dashboard")
-        # Residential electrical template must create one Case and five
+        # Social Team hub: actual member profiles, owner-editable details, feed,
+        # searchable directory, experience and skill-based career progression.
+        route("team")
+        expect(page.locator(".community-hero")).to_be_visible()
+        expect(page.locator(".community-person")).to_have_count(2)
+        expect(page.locator(".community-tabs button")).to_have_count(3)
+        expect(page.locator("#actor")).to_have_value("lead")
+        capture("team")
+        page.locator(".community-person").filter(has_text="Demo Monteur").click()
+        expect(page.get_by_role("heading",name="Demo Monteur")).to_be_visible()
+        expect(page.locator(".community-profile-stats")).to_be_visible()
+        assert page.locator('[data-action="edit-profile"]').count()==0, "Other member profile must not be editable"
+        route("member/lead")
+        act("edit-profile")
+        page.locator('#editor [name=headline]').fill("PV Team Lead")
+        page.locator('#editor [name=location]').fill("Bodensee")
+        page.locator('#editor [name=skillsText]').fill("DC, K2, Lager")
+        page.locator('#editor [name=bio]').fill("Organizing PV work and safe commissioning")
+        save()
+        page.wait_for_function("""() => JSON.parse(localStorage.getItem('nvtsk05_independent')).data.crew.some(c=>c.id==='lead'&&c.headline==='PV Team Lead'&&c.skills.length===3)""")
+        expect(page.get_by_text("PV Team Lead")).to_be_visible()
+        route("team")
+        page.locator("#member-search").fill("nonexistent-member")
+        expect(page.locator(".community-person:visible")).to_have_count(0)
+        page.locator("#member-search").fill("Demo Monteur")
+        expect(page.locator(".community-person:visible")).to_have_count(1)
+        route("team/achievements")
+        expect(page.get_by_role("heading",name="Путь мастерства")).to_be_visible()
+        expect(page.locator(".community-rank-row")).to_have_count(2)
+        route("team/feed")
+        expect(page.locator("#social-compose")).to_be_visible()
+        page.locator("#social-compose textarea").fill("QA: DC installation complete")
+        page.locator("#social-compose button[type=submit]").click()
+        expect(page.locator(".socialpost")).to_contain_text("QA: DC installation complete")
+        page.locator('.socialpost [data-action="social-like"]').first.click()
+        assert page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent_social')).posts.some(p=>p.likes.includes('lead'))"""), "Feed likes not saved"
+        route("team")
+        assert page.locator('.community-update').count()>0, "Feed preview must show new post"
+                # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
         route("projects");act("new-electrical")
         page.get_by_label("Название").fill("QA Elektro Rohbau")
