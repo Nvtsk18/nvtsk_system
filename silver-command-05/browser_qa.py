@@ -169,10 +169,10 @@ with sync_playwright() as pw:
         task_btn=page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Начать")
         task_btn.click()
         page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Завершить").click()
-        assert page.evaluate("""() => {
+        page.wait_for_function("""() => {
           const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
           return d.tasks.some(t=>t.title==='QA закрепить рельсы' && t.status==='done');
-        }"""), "Worker task completion not stored"
+        }""")
         route("field")
         task=page.locator("article.fieldtask").filter(has_text="QA монтаж")
         task.get_by_role("button",name="Передать на приёмку").click()
