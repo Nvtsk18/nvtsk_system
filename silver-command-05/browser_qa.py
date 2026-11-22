@@ -43,6 +43,15 @@ with sync_playwright() as pw:
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
             folder.mkdir(parents=True,exist_ok=True)
             page.screenshot(path=str(folder/f"{engine.name}-{width}-{screen}.png"))
+        # Geometry audit: blocks sharing a visual row must align on both edges.
+        symmetry = page.evaluate("""() => {
+          const rects = selector => [...document.querySelectorAll(selector)].filter(e=>{const s=getComputedStyle(e),r=e.getBoundingClientRect();return s.display!=='none'&&r.width>0&&r.height>0}).map(e=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}});
+          const groups = [rects('.stats.desktopmetrics .stat'),rects('.stats.phonemetrics .stat'),rects('.mobiletiles .mobiletile')];
+          const violations=[];
+          for(const group of groups){const rows=new Map();for(const r of group){const k=Math.round(r.top/3)*3;if(!rows.has(k))rows.set(k,[]);rows.get(k).push(r)}for(const row of rows.values()){if(row.length<2)continue;const top=row[0].top,bottom=row[0].bottom;for(const r of row){if(Math.abs(r.top-top)>2||Math.abs(r.bottom-bottom)>2)violations.push({row,reason:'uneven row edges'})}}}
+          return violations.slice(0,3);
+        }""")
+        assert not symmetry, (width, 'Dashboard symmetry', symmetry)
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
