@@ -131,5 +131,6 @@ document.addEventListener("submit",e=>{
  try{transact(String(f.get("type")),String(f.get("item")),String(f.get("from")),String(f.get("to")),Number(f.get("qty")),String(f.get("project")||""));window.NVTSK_GARAGE_REFRESH?.();}
  catch(err){alert("Garage: "+err.message);}
 });
-window.NVTSK_GARAGE={render,validate,transact,importBackup,exportBackup,setProjects,setActor,canConsume,usageForProject};
+function snapshot(){return JSON.parse(JSON.stringify(validate(data)));}
+window.NVTSK_GARAGE={render,validate,snapshot,transact,importBackup,exportBackup,setProjects,setActor,canConsume,usageForProject};
 })();
