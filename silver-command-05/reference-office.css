@@ -84,3 +84,9 @@
 }
 @media(max-width:390px){.command-metrics{grid-template-columns:repeat(4,minmax(0,1fr))!important}.command-topbuttons button:nth-child(2){display:none}}
 @media(prefers-reduced-motion:reduce){.command-metric,.command-dock button{transition:none}}
+
+/* Visual alignment with screenshot geometry at desktop widths. */
+@media(min-width:1151px){
+ .command-stage{padding-top:43px!important}
+ .command-stage-head{min-height:133px}
+}
