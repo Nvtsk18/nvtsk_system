@@ -75,6 +75,7 @@ with sync_playwright() as pw:
         task.get_by_role("button",name="На проверку").click()
         expect(task).to_contain_text("На проверке")
         page.locator('#actor').select_option("lead");route("tasks");act("accept")
+        page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
         # Browser-runtime regression: an accepted Shard cannot consume or return stock,
         # even if the actor is the manager. The persisted local snapshot must stay intact.
         closed_guard = page.evaluate("""() => {
@@ -104,13 +105,13 @@ with sync_playwright() as pw:
         act("undo");route("tasks");expect(page.get_by_text("QA монтаж",exact=True)).to_be_visible()
         route("settings");page.locator('#import').set_input_files(path)
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
-        page.reload();route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        page.goto(url,wait_until="domcontentloaded");route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         page.evaluate("navigator.serviceWorker.ready");page.wait_for_function("!!navigator.serviceWorker.controller")
         # Keep the local server running for the other viewport cases.
         # Offline emulation is isolated to this browser context and does not
         # affect the remaining Chromium/WebKit test matrix.
         ctx.set_offline(True)
-        page.reload(wait_until="domcontentloaded");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        page.goto(url,wait_until="domcontentloaded");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         assert page.evaluate("""() => {
             const record=JSON.parse(localStorage.getItem('nvtsk05_independent'));
             return record.data.cases.some(c=>c.title==='QA Roof') &&
