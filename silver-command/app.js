@@ -349,11 +349,11 @@ if(f.id==="newForm"){
  const title=String(data.title||"").trim().slice(0,120),city=String(data.city||"").trim().slice(0,100),price=Number(data.price);
  if(!title||!city||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, город и сумму.");return;}
  const id=uuid();state.lots.push({id,title,city,client:"Создано пользователем",price,kind:["DC","AC","PLAN","REG"].includes(data.kind)?data.kind:"DC",creator:"me",parent:null,assignee:null,members:[],bids:[]});
- log("create",id,"Lot created");save();close();go("projects");
+ const auditBefore=state.audit.slice();log("create",id,"Lot created");if(!save()){state.lots=state.lots.filter(x=>x.id!==id);state.audit=auditBefore;notify("Не удалось сохранить Case. Данные не изменены.");return;}close();go("projects");
  }
  if(f.id==="nameForm"){const name=String(data.name||"").trim().slice(0,80);if(!name){notify("Введите имя.");return;}state.name=name;log("profile",null,"Name updated");save();close();go("profile");}
 });
-$("#newLot").onclick=create;
+const newLotButton=$("#newLot"); if(newLotButton)newLotButton.onclick=create;
 $("#dialogBackdrop").onclick=e=>{if(e.target.id==="dialogBackdrop")close()};
 window.addEventListener("hashchange",restoreRoute);
 window.addEventListener("popstate",restoreRoute);
