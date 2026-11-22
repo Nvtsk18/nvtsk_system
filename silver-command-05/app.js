@@ -620,10 +620,10 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={"pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={"pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-string":"Новый DC String","pv-cut":"Раскрой шины","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
- if(["pv-tech","pv-zone","pv-material","pv-document"].includes(kind)){
+ if(["pv-tech","pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)){
    if(!lead())return;
    const project=state.cases.find(c=>c.id===id);
    if(!project)return;
@@ -714,7 +714,7 @@ document.addEventListener("click",async e=>{
    }catch(error){alert(error.message)}
    return;
  }
- if(["pv-tech","pv-zone","pv-material","pv-document"].includes(a)){edit(a,id);return}
+ if(["pv-tech","pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(a)){edit(a,id);return}
  if(a==="pv-check"){
    const key=b.dataset.check;
    const current=Boolean(state.cases.find(c=>c.id===id)?.pvPlan?.checks?.[key]);
@@ -759,9 +759,9 @@ $("#editor").onsubmit=async e=>{
  const selected=e.target.elements.media?.files;
  const avatarFile=e.target.elements.avatarFile?.files?.[0];
  if(kind==="pv-tech")p.caseId=id;
- if(["pv-zone","pv-material","pv-document"].includes(kind)){
+ if(["pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)){
    p.caseId=id;
-   p.list={"pv-zone":"zones","pv-material":"materials","pv-document":"documents"}[kind];
+   p.list={"pv-zone":"zones","pv-string":"strings","pv-cut":"cuts","pv-material":"materials","pv-document":"documents"}[kind];
  }
  if(kind==="team"||kind==="team-update"){
    p.memberIds=new FormData(e.target).getAll("memberIds");
@@ -799,7 +799,7 @@ $("#editor").onsubmit=async e=>{
      }));
    }
    const operation=()=>{
-     if(kind!=="electrical")return apply(state,["pv-zone","pv-material","pv-document"].includes(kind)?"pv-add":kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p.counterpartyId===""?{...p,counterpartyId:null}:p);
+     if(kind!=="electrical")return apply(state,["pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)?"pv-add":kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p.counterpartyId===""?{...p,counterpartyId:null}:p);
      const caseId=p.id;
      let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files,counterpartyId:p.counterpartyId||null});
      const steps=[
