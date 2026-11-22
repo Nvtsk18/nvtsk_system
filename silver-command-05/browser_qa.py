@@ -36,8 +36,26 @@ with sync_playwright() as pw:
         def fits():
             overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
-        expect(page.get_by_role("heading",name="NVTSK SYSTEM",exact=True)).to_be_visible()
+        expect(page.locator(".command-brand")).to_contain_text("NVTSK SYSTEM")
         expect(page.locator(".command-center")).to_be_visible()
+        # The hero must place TWO independent actions vertically to the left
+        # of a project map, on both desktop and mobile.
+        expect(page.locator(".command-home-actions .command-home-action")).to_have_count(2)
+        expect(page.locator(".command-home-map .casemap")).to_be_visible()
+        expect(page.locator(".command-home-map iframe")).to_have_attribute("title", "OpenStreetMap · регион Bodensee")
+        home = page.evaluate("""() => {
+           const bounds=s=>document.querySelector(s).getBoundingClientRect().toJSON();
+           return {open:bounds('.command-home-action.is-open'),
+             create:bounds('.command-home-action.is-create'),
+             map:bounds('.command-home-map'),
+             main:bounds('.command-home-hero'),
+             lead:document.querySelector('.command-title')?.textContent?.trim()||''}
+        }""")
+        assert home["open"]["right"] <= home["map"]["left"] + 2, (width,"Actions must be left of project map",home)
+        assert home["create"]["right"] <= home["map"]["left"] + 2, (width,"Create action must be left of map",home)
+        assert home["create"]["top"] >= home["open"]["bottom"] - 2, (width,"Project actions must stack vertically",home)
+        assert home["map"]["height"] >= 175, (width,"Project map panel too short",home)
+        assert not home["lead"], (width,"Remove repeated NVTSK hero heading",home)
         # The real office photograph must be independent of the actual UI.
         # The screenshot reference must never be drawn underneath duplicated controls.
         office = page.evaluate("""() => ({
