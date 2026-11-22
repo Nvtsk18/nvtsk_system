@@ -41,6 +41,8 @@ with sync_playwright() as pw:
         # The hero must place TWO independent actions vertically to the left
         # of a project map, on both desktop and mobile.
         expect(page.locator(".command-home-actions .command-home-action")).to_have_count(2)
+        expect(page.locator(".command-home-action.is-open")).to_contain_text("Projects")
+        expect(page.locator(".command-home-action.is-create")).to_contain_text("Project")
         expect(page.locator(".command-home-map .casemap")).to_be_visible()
         expect(page.locator(".command-home-map .casemap-schematic svg")).to_be_visible()
         expect(page.locator(".command-home-map .mapcasepin")).to_have_count(4)
@@ -91,7 +93,7 @@ with sync_playwright() as pw:
         expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
         expect(page.locator(".command-panels .command-panel")).to_have_count(3)
         expect(page.locator(".command-dock")).to_be_visible()
-        expect(page.locator(".command-dock")).to_contain_text("Пакеты")
+        expect(page.locator(".command-dock")).to_contain_text("Shards")
         expect(page.locator(".command-mission")).to_be_visible()
         if width <= 720:
             expect(page.locator(".command-mobile-tiles")).to_be_visible()
@@ -123,14 +125,14 @@ with sync_playwright() as pw:
         route("dashboard")
         expect(page.locator(".command-dock button")).to_have_count(5)
         page.locator(".command-dock [data-route=projects]").first.click()
-        expect(page.get_by_role("heading",name="Проекты")).to_be_visible()
+        expect(page.get_by_role("heading",name="Projects")).to_be_visible()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
         page.get_by_label("Бюджет").fill("1000");save()
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
-        page.get_by_label("Стоимость").fill("250");save()
+        page.get_by_label("Бюджет Shard").fill("250");save()
         # Project -> Shard -> Task must be a real nested hierarchy.
         act("new-task")
         page.locator("#editor [name=title]").fill("QA закрепить рельсы")
@@ -142,7 +144,7 @@ with sync_playwright() as pw:
           const t=d.tasks.find(t=>t.title==='QA закрепить рельсы');
           return !!sh && !!t && t.shardId===sh.id && t.status==='todo' && d.cases.some(c=>c.id===sh.caseId);
         }"""), "Task must belong to Shard and Shard to project"
-        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Открыть пакет").click()
+        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Открыть Shard").click()
         expect(page.get_by_role("heading",name="QA монтаж")).to_be_visible()
         expect(page.get_by_text("QA закрепить рельсы")).to_be_visible()
         fits()
