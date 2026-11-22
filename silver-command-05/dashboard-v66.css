@@ -69,3 +69,13 @@
 .command-home-actions>.is-create:only-child{min-height:180px}
 .ref66-action-grid:has(>button:nth-child(3):last-child){grid-template-columns:repeat(2,minmax(0,1fr))}
 .ref66-bottom{justify-content:flex-end}
+
+/* v69: wide project map, restored without duplicate navigation */
+.ref66-map-wide{width:100%;margin:0 0 18px;min-width:0}
+.ref66-map-wide .casemap{margin:0;padding:16px 19px;border-radius:18px;background:linear-gradient(135deg,#263a46e8,#172832ed);border:1px solid #7799a66b;box-shadow:0 12px 32px #0005}
+.ref66-map-wide .casemap .panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.ref66-map-wide .casemapviewport{height:clamp(260px,29vw,430px);min-height:260px;border-radius:14px;overflow:hidden}
+.ref66-map-wide .casemap-schematic,.ref66-map-wide .casemappins{width:100%;height:100%}
+.ref66-map-wide .casemaplegend{display:flex;align-items:center;justify-content:flex-start;margin-top:10px}
+.ref66-map-wide .casemapnote{font-size:11px;color:#a8c3ce;margin:8px 0 0}
+@media(max-width:600px){.ref66-map-wide{margin-bottom:12px}.ref66-map-wide .casemap{padding:11px;border-radius:14px}.ref66-map-wide .casemapviewport{height:270px;min-height:270px}.ref66-map-wide .casemap .panelhead{flex-wrap:wrap}.ref66-map-wide .casemapnote{font-size:10px}}
