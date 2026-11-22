@@ -126,11 +126,13 @@ with sync_playwright() as pw:
         # Role-specific participation: demo installer sees its assigned Shard project,
         # not unrelated projects or new unassigned electrical templates.
         route("team");page.locator("#actor").select_option("member-0")
+        page.wait_for_function("""() => JSON.parse(localStorage.getItem('nvtsk05_independent')).data.actor==='member-0'""")
         route("dashboard")
         expect(page.locator(".command-myproject")).to_have_count(1)
         expect(page.locator(".command-myproject")).to_contain_text("PV Dachmontage")
         assert page.locator(".command-mobile-tiles").count()==0
         route("team");page.locator("#actor").select_option("lead")
+        page.wait_for_function("""() => JSON.parse(localStorage.getItem('nvtsk05_independent')).data.actor==='lead'""")
         route("dashboard")
         expect(page.locator(".command-myproject")).to_have_count(5)
                 # Dashboard dock navigation must reach its linked workspace.
