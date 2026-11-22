@@ -109,6 +109,8 @@ const articleShops={
 };
 const shopLinks=sku=>(articleShops[String(sku||"").trim()]||[]).map(x=>'<a class="stocksource" target="_blank" rel="noopener noreferrer" href="'+esc(x.url)+'">Купить · '+esc(x.name)+' ↗</a>').join(" ");
 const systemReferences=[
+ {title:"novotegra C-N-Schiene 37 · 5,90 м",article:"03-001670",detail:"Алюминиевый профиль 52 × 37 мм; не путать с Einlegeschiene.",url:"https://solar-distribution.baywa-re.de/montagesystem-novotegra/c-n-schiene-37-5-90m.html"},
+ {title:"novotegra Schienenverbinder-Set C-N 37 S",article:"03-001347",detail:"Соединитель длиной 250 мм для C-N-Schiene 37.",url:"https://solar-distribution.baywa-re.de/montagesystem-novotegra/schienenverbinder-set-c-n-37-s.html"},
  {title:"K2 SingleRail 36 · 5,95 м",article:"2004260 · GTIN 4251786213344 · 36 × 39,4 мм · 4,579 кг",detail:"Алюминий EN AW-6063 T66. Система крепления подбирается по покрытию и статике в K2 Base.",url:"https://catalogue.k2-systems.com/de/singlerail-36/2004260"},
  {title:"K2 SingleRail 36/50 RailConnector",article:"Системный соединитель",detail:"Использовать только в совместимых конфигурациях по инструкции K2; момент затяжки и расположение проверять по актуальному руководству.",url:"https://catalogue.k2-systems.com/en/resource-access?file=4cd5ecfbec174967aacdf50449a1cfec"},
  {title:"novotegra Insertion System",article:"Комплект зависит от варианта монтажа",detail:"Insertion Rail Plus, Support Rail IR, EPDM-T и крепёж подбираются по конкретной схеме; комплект не универсальный.",url:"https://www.novotegra.com/fileadmin/04_Downloads/Mounting_instruction/Tile_Roof/Insertion_System_Side-Fix/mounting-instructions-tile-roof-side-fix-novotegra.pdf"}
