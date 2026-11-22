@@ -2,9 +2,20 @@
 import json
 import os
 import sys
+from pathlib import Path
+from threading import Thread
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from playwright.sync_api import sync_playwright, expect
 
-url = sys.argv[1]
+def start_server(port):
+    server = ThreadingHTTPServer(("127.0.0.1",port),SimpleHTTPRequestHandler)
+    Thread(target=server.serve_forever,daemon=True).start()
+    return server
+
+server = None if len(sys.argv)>1 else start_server(0)
+port = server.server_port if server else None
+url = "http://127.0.0.1:"+str(port)+"/silver-command-05/" if server else sys.argv[1]
+
 with sync_playwright() as pw:
     engine = getattr(pw, os.getenv("ENGINE", "chromium"))
     browser = engine.launch()
@@ -26,14 +37,19 @@ with sync_playwright() as pw:
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), (width,page.url)
         expect(page.get_by_role("heading",name="Добро пожаловать",exact=False)).to_be_visible()
         fits()
+        def capture(screen):
+            folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
+            folder.mkdir(parents=True,exist_ok=True)
+            page.screenshot(path=str(folder/f"{engine.name}-{width}-{screen}.png"))
+        capture("dashboard")
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
         page.get_by_label("Бюджет").fill("1000");save()
-        expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits()
+        expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Стоимость").fill("250");save()
-        route("garage");fits();act("move");page.get_by_label("Количество").fill("2");save()
+        route("garage");fits();capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
         expect(page.get_by_text("Остаток · 22")).to_be_visible()
         page.locator('.mode [data-route=field]').click()
         page.locator('#actor').select_option("member-0")
@@ -52,7 +68,12 @@ with sync_playwright() as pw:
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
         page.reload();route("projects");expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         page.evaluate("navigator.serviceWorker.ready");page.wait_for_function("!!navigator.serviceWorker.controller")
-        ctx.set_offline(True);page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        if server:
+            server.shutdown()
+            server.server_close()
+        else:
+            ctx.set_offline(True)
+        page.reload();expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
         route("settings");act("sandbox")
         expect(page.get_by_text("Тестовая копия · изменения изолированы")).to_be_visible()
         route("projects");act("new-case")
@@ -63,4 +84,5 @@ with sync_playwright() as pw:
         assert not errors, errors
         print(f"PASS {engine.name} {width}×{height}: layout, Case, Shard, Garage, Field, acceptance, export/import, undo, persistence, offline",flush=True)
         ctx.close()
+        if server: server=start_server(port)
     browser.close()
