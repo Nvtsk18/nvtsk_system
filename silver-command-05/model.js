@@ -24,8 +24,8 @@ globalThis.NVModel = (() => {
     }
     const has = (list,id) => list.some(x=>x.id===id);
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников");
-    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка проекта");
-    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка пакета работ");
+    requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Project");
+    requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))),"Ошибка Shard");
     requireValue(d.tasks.every(t=>label(t.title)&&has(d.shards,t.shardId)&&["todo","doing","done"].includes(t.status)&&optional(t.notes,2000)&&(t.assignee===null||has(d.crew,t.assignee))),"Ошибка задачи");
     requireValue(d.garage.every(m=>label(m.title)&&Number.isSafeInteger(m.qty)&&m.qty>=0&&optional(m.sku,80)&&optional(m.brand,100)&&optional(m.unit,20)),"Ошибка артикула или количества");
     const skuKey=m=>m.sku?.trim().toUpperCase();
@@ -54,7 +54,7 @@ globalThis.NVModel = (() => {
       case "crew": allowed(lead); d.crew.push({id:p.id,name:p.title,role:p.role}); break;
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[]}); break;
       case "shard": allowed(lead);
-        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Стоимость пакета работ превышает остаток бюджета проекта"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
+        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
       case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; break;
       case "task": {
         allowed(s && s.status==="draft" && (lead || s.assignee===actor.id));
@@ -69,7 +69,7 @@ globalThis.NVModel = (() => {
         t.status=p.status;
         break;
       }
-      case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); requireValue(d.tasks.filter(t=>t.shardId===s.id).every(t=>t.status==="done"),"Завершите все задачи пакета работ перед отправкой на приёмку"); s.status="submitted"; break;
+      case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); requireValue(d.tasks.filter(t=>t.shardId===s.id).every(t=>t.status==="done"),"Завершите все Tasks в Shard перед приёмкой"); s.status="submitted"; break;
       case "accept": case "revise": allowed(lead && s && s.status==="submitted" && actor.id!==s.assignee); s.status=action==="accept"?"accepted":"draft"; break;
       case "material": {
         allowed(stock);
@@ -89,7 +89,7 @@ globalThis.NVModel = (() => {
         if(p.type==="writeoff")requireValue(typeof p.reason==="string"&&p.reason.trim().length>=3&&p.reason.length<=300,"Укажите причину списания");
         if(p.type==="return"){
           const outstanding=d.moves.filter(m=>m.itemId===item.id&&m.shardId===s.id).reduce((n,m)=>n+(m.type==="issue"?m.qty:m.type==="return"?-m.qty:0),0);
-          requireValue(outstanding>=p.qty,"Нельзя вернуть больше, чем выдано этому пакету работ");
+          requireValue(outstanding>=p.qty,"Возврат превышает выдачу по Shard");
         }
         item.qty=Math.round((item.qty+(["issue","writeoff"].includes(p.type)?-p.qty:p.qty))*1e6)/1e6;
         d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,reason:p.type==="writeoff"?p.reason.trim():""});
