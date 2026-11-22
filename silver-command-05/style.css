@@ -416,3 +416,52 @@ body:has(.command-center) main{margin:0;padding:0;min-height:100vh}
 @media(max-width:720px){.command-top{height:66px;padding:8px 12px}.command-brand strong{font-size:16px}.command-brand small{font-size:8px}.command-monogram{font-size:27px}.command-status{display:none}.command-topbuttons button{height:33px;width:33px;font-size:18px}.command-stage{padding:18px 10px 14px;min-height:0;background-position:center top}.command-stage-head{grid-template-columns:1fr 1fr;gap:10px}.command-title{grid-column:1/-1;grid-row:1}.command-title h1{font-size:29px}.command-title p{font-size:11px}.command-health,.command-clock{grid-row:2;max-width:none;min-width:0;padding:10px}.command-health strong{font-size:19px}.command-clock strong{font-size:13px}.command-metrics{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px}.command-metric{min-height:88px;border-radius:9px;gap:2px}.command-metric-glyph{font-size:20px}.command-metric>span:nth-child(2){font-size:10px}.command-metric strong{font-size:19px}.command-hologram{height:55px}.command-globe{font-size:55px;height:50px}.command-panels{grid-template-columns:1fr;gap:9px}.command-panel{padding:12px}.command-panel h2{font-size:15px}.command-dock{position:sticky;bottom:0;z-index:10;gap:4px;padding:7px 5px calc(10px + env(safe-area-inset-bottom));grid-template-columns:repeat(5,minmax(0,1fr))}.command-dock button{min-height:67px;border-radius:10px;box-shadow:inset 0 1px #a6d9ff9e,0 3px 0 #050e1d}.command-dock button>span{font-size:20px}.command-dock strong{font-size:11px}.command-dock small{display:none}}
 @media(max-width:390px){.command-topbuttons button:nth-child(2){display:none}.command-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.command-metric{min-height:79px}.command-case-row{gap:5px}.command-progress{width:45px}}
 @media(prefers-reduced-motion:reduce){.command-metric,.command-dock button{transition:none}}
+
+/* v39: responsive side navigation — command actions at right, thumb dock on phones */
+.command-metric-glyph .ui-icon,.command-dock button>span .ui-icon{width:31px;height:31px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.command-metric-glyph,.command-dock button>span{display:grid;place-items:center}
+.command-dock button:focus-visible,.command-metric:focus-visible{outline:3px solid #b2f7f3;outline-offset:3px}
+@media(min-width:721px){
+ .command-center{display:grid;grid-template-columns:minmax(0,1fr) 178px;grid-template-rows:77px minmax(0,1fr);align-items:stretch}
+ .command-top{grid-row:1;grid-column:1/-1}
+ .command-stage{grid-row:2;grid-column:1;min-width:0;min-height:calc(100vh - 77px);padding:26px clamp(12px,2.2vw,40px)}
+ .command-stage-head{grid-template-columns:1fr 1fr;align-items:start}
+ .command-title{grid-column:1/-1;grid-row:1}
+ .command-health,.command-clock{grid-row:2}
+ .command-metrics{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:17px}
+ .command-panels{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .command-panels>.command-panel:last-child{grid-column:1/-1}
+ .command-dock{grid-row:2;grid-column:2;position:sticky;top:0;align-self:start;display:flex;flex-direction:column;justify-content:flex-start;gap:12px;min-width:0;height:calc(100vh - 77px);max-height:none;overflow-y:auto;margin:0;padding:18px 12px;background:linear-gradient(165deg,#182c42,#071526 75%);border-top:0;border-left:1px solid #3f91bc;box-shadow:inset 5px 0 28px #020a14b0}
+ .command-dock button{width:100%;min-height:100px;flex:1 0 100px;max-height:156px;padding:12px 6px;gap:5px;box-shadow:inset 0 2px #a6d9ff9e,0 4px 0 #050e1d,0 10px 18px #0006}
+ .command-dock button>span .ui-icon{width:33px;height:33px}
+ .command-dock strong{font-size:clamp(15px,1.35vw,20px)}
+ .command-dock small{font-size:10px;line-height:1.3}
+}
+@media(min-width:1050px){
+ .command-center{grid-template-columns:minmax(0,1fr) 218px}
+ .command-panels{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .command-panels>.command-panel:last-child{grid-column:auto}
+}
+@media(min-width:1320px){
+ .command-center{grid-template-columns:minmax(0,1fr) 240px}
+ .command-metrics{grid-template-columns:repeat(7,minmax(0,1fr))}
+ .command-stage-head{grid-template-columns:1fr 2fr 1fr}
+ .command-title{grid-column:2;grid-row:1}
+ .command-health{grid-column:1;grid-row:1}
+ .command-clock{grid-column:3;grid-row:1}
+}
+@media(min-width:721px) and (max-width:900px){
+ .command-stage{padding:20px 12px}
+ .command-dock{padding:12px 8px;gap:9px}
+ .command-dock button{min-height:87px;flex-basis:87px}
+ .command-dock strong{font-size:15px}
+ .command-dock small{font-size:9px}
+ .command-panels{grid-template-columns:1fr}
+ .command-panels>.command-panel:last-child{grid-column:auto}
+}
+@media(max-width:720px){
+ .command-dock{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:sticky;bottom:0;max-height:none}
+ .command-dock button>span .ui-icon{width:22px;height:22px}
+ .command-metric-glyph .ui-icon{width:21px;height:21px}
+ .command-metric{min-width:0}
+}
