@@ -51,6 +51,15 @@ with sync_playwright() as pw:
         workspace.locator("summary").click()
         assert "office-command-v40.png" in page.evaluate("getComputedStyle(document.querySelector('.ref66'),'::before').backgroundImage")
         fits()
+        route("finance")
+        expect(page.get_by_role("heading",name="Финансы",exact=False)).to_be_visible()
+        expect(page.locator(".ref66-finance-warning")).to_contain_text("полной оплаты Case")
+        route("merit")
+        expect(page.get_by_role("heading",name="Merit",exact=False)).to_be_visible()
+        expect(page.locator(".ref66-section")).to_contain_text("Shard распределяет существующие Merit")
+        route("analytics")
+        expect(page.get_by_role("heading",name="Аналитика",exact=False)).to_be_visible()
+        route("dashboard")
         capture("dashboard")
         # Social Team hub: actual member profiles, owner-editable details, feed,
         # searchable directory, experience and skill-based career progression.
