@@ -92,11 +92,14 @@ function myProjects(){
  state.shards.forEach(sh=>{if(sh.assignee===who)ids.add(sh.caseId)});
  state.tasks.forEach(t=>{if(t.assignee===who){const id=projectId(t.shardId);if(id){ids.add(id);taskIds.add(id)}}});
  state.moves.forEach(m=>{if(m.actor===who&&m.shardId){const id=projectId(m.shardId);if(id){ids.add(id);stockIds.add(id)}}});
+ for(const sh of state.shards){
+   if(sh.teamId&&state.teams.some(t=>t.id===sh.teamId&&t.memberIds.includes(who)))ids.add(sh.caseId);
+ }
  const projects=state.cases.filter(c=>manager||ids.has(c.id)).slice().reverse();
  const html=projects.map(c=>{
   const shards=state.shards.filter(sh=>sh.caseId===c.id),shardIds=new Set(shards.map(sh=>sh.id));
   const taskCount=state.tasks.filter(t=>shardIds.has(t.shardId)).length;
-  const labels=manager?["Управление"]:[...(shards.some(sh=>sh.assignee===who)?["Shard"]:[]),...(taskIds.has(c.id)?["Task"]:[]),...(stockIds.has(c.id)?["Склад"]:[])];
+  const labels=manager?["Управление"]:[...(shards.some(sh=>sh.assignee===who)?["Shard"]:[]),...(shards.some(sh=>sh.teamId&&state.teams.some(t=>t.id===sh.teamId&&t.memberIds.includes(who)))?["Team"]:[]),...(taskIds.has(c.id)?["Task"]:[]),...(stockIds.has(c.id)?["Склад"]:[])];
   const status=shards.some(sh=>sh.status==="submitted")?"На приёмке":shards.some(sh=>sh.status==="draft")?"В работе":shards.length?"Принято":"Планирование";
   const percent=pct(c.id);
   return '<button class="command-myproject" data-route="case/'+esc(c.id)+'" aria-label="Открыть '+esc(c.title)+'"><img src="art/tile0.webp" alt="" loading="lazy"><span class="command-myproject-info"><strong>'+esc(c.title)+'</strong><small>'+esc(c.city)+' · '+shardCount(shards.length)+' · '+taskCount+' Tasks</small><span class="command-myproject-tags">'+labels.map(t=>'<em>'+esc(t)+'</em>').join("")+'</span></span><span class="command-myproject-side"><small>'+esc(status)+'</small><b>'+percent+'%</b><span class="command-myproject-track"><i style="width:'+percent+'%"></i></span><span class="command-myproject-arrow">›</span></span></button>';
