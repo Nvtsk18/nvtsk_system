@@ -44,6 +44,8 @@ with sync_playwright() as pw:
         content_width=page.locator(".ref66").bounding_box()["width"]
         assert map_width>=content_width-50, f"Map is too narrow: {map_width} vs {content_width}"
         expect(page.locator(".ref66-greeting h1")).to_have_text("NVTSK SYSTEM")
+        expect(page.locator(".ref70-workshop img")).to_be_visible()
+        assert page.locator(".ref70-workshop img").evaluate("(img) => img.complete && img.naturalWidth > 0"), "Workshop illustration failed to load"
         expect(page.locator(".ref66-metrics .ref66-kpi")).to_have_count(5)
         expect(page.locator(".ref66-projects")).to_be_visible()
         expect(page.locator(".ref66-tasks")).to_be_visible()
