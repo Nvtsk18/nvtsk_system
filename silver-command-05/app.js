@@ -597,6 +597,10 @@ function edit(kind,id){
   fields='<p class="hint">Профиль сохраняется локально. Редактировать можно только свой.</p>'+
    '<label>Специализация / должность<input name="headline" maxlength="120" placeholder="DC Montage · Team Lead" value="'+esc(member.headline||"")+'"></label>'+
    '<label>Город / регион<input name="location" maxlength="100" placeholder="Stockach · Bodensee" value="'+esc(member.location||"")+'"></label>'+
+   '<label>Адрес компании / профиль<input name="address" maxlength="240" placeholder="Hauptstraße 29, 88662 Überlingen" value="'+esc(member.address||"")+'"></label>'+
+   '<label>Телефон<input name="phone" maxlength="50" placeholder="+49 160 ..." value="'+esc(member.phone||"")+'"></label>'+
+   '<label>Email<input name="email" type="email" maxlength="160" placeholder="name@company.de" value="'+esc(member.email||"")+'"></label>'+
+   '<label>Сайт компании<input name="website" type="url" maxlength="180" placeholder="https://www.example.de" value="'+esc(member.website||"")+'"></label>'+
    '<label>Навыки (через запятую, до 8)<input name="skillsText" maxlength="320" placeholder="PV, DC, K2, novotegra" value="'+esc((member.skills||[]).join(", "))+'"></label>'+
    '<label>О себе<textarea name="bio" maxlength="700" rows="4" placeholder="Опыт, специализация, интересы">'+esc(member.bio||"")+'</textarea></label>'+
    '<label>Фото профиля (PNG, JPEG, WebP · до 150 КБ)<input type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp"></label>'+
