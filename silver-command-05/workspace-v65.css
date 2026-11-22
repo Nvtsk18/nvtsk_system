@@ -1,0 +1,22 @@
+/* NVTSK 0.6 / Stage 1: platform identity and the first company workspace */
+.command-brand,.workspace-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+.command-brand .nvtsk-brand-caption{min-width:135px}
+.workspace-switch{position:relative;z-index:45;min-width:0}
+.workspace-switch summary{display:flex;align-items:center;gap:9px;list-style:none;cursor:pointer;border:1px solid #6d858c88;border-radius:14px;padding:8px 11px;background:#182b34e8;max-width:290px;min-height:48px;box-shadow:0 5px 18px #0004}
+.workspace-switch summary::-webkit-details-marker{display:none}
+.workspace-switch summary:focus-visible{outline:2px solid #78dfdf;outline-offset:3px}
+.workspace-switch-symbol{display:grid;place-items:center;flex:none;width:31px;height:31px;border-radius:10px;background:linear-gradient(140deg,#bce9dc,#4b9da8);color:#0a2730;font-weight:800}
+.workspace-switch-text{display:flex;flex-direction:column;min-width:0;gap:3px}
+.workspace-switch-text small{color:#a6c4cc;font-size:9px;letter-spacing:.09em}
+.workspace-switch-text strong{color:#eff9fa;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.workspace-switch-arrow{color:#9bd8d9;margin-left:auto}
+.workspace-switch-menu{position:absolute;top:calc(100% + 8px);left:0;width:min(340px,calc(100vw - 28px));border-radius:16px;background:#14242ef7;border:1px solid #547985;padding:14px;box-shadow:0 16px 45px #000a;backdrop-filter:blur(18px)}
+.workspace-switch-menu>p:first-child{margin:0 0 13px;color:#c5dbe2;font-size:12px}
+.workspace-switch-current{display:flex;align-items:center;gap:10px;padding:10px;background:#253b44;border:1px solid #6aa6a08c;border-radius:12px}
+.workspace-switch-current>span:nth-child(2){display:grid;flex:1;gap:4px;min-width:0}
+.workspace-switch-current strong{font-size:13px;color:#fff}
+.workspace-switch-current small{font-size:11px;color:#b8d0d6}
+.workspace-switch-current>span:last-child{color:#81e3bf;font-weight:700}
+.workspace-switch-note{color:#aabfc9;font-size:11px;line-height:1.55;margin:13px 2px 1px}
+@media(max-width:740px){.command-brand,.workspace-brand{gap:8px}.workspace-switch summary{min-height:43px;padding:6px 8px;max-width:220px}.workspace-switch-symbol{width:26px;height:26px}.workspace-switch-text strong{font-size:11px}.workspace-switch-menu{left:auto;right:0}.command-brand .nvtsk-brand-caption{min-width:100px}}
+@media(max-width:440px){.workspace-switch{width:100%}.workspace-switch summary{max-width:100%;width:100%}.workspace-switch-menu{left:0;right:auto}.workspace-switch-text strong{font-size:12px}}
