@@ -154,6 +154,7 @@ with sync_playwright() as pw:
         expect(page.locator(".company-network-branches .company-network-link")).to_have_count(5)
         expect(page.locator(".company-network-person")).to_have_count(1)
         expect(page.locator(".company-network-person")).to_contain_text("Demo Monteur")
+        capture("captain-profile")
         act("edit-profile")
         page.locator('#editor [name=headline]').fill("PV Team Lead")
         page.locator('#editor [name=location]').fill("Bodensee")
