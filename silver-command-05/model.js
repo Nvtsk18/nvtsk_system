@@ -1,6 +1,20 @@
 "use strict";
 globalThis.NVModel = (() => {
   const roles = ["Руководитель", "Монтажник", "Кладовщик"];
+  // Business-card sourced company contact; system Captain is an app role, not a legal job title.
+  const companyCaptain=Object.freeze({name:"Roman Eppinger",headline:"SolAn Plus GmbH",location:"Überlingen, Baden-Württemberg",address:"Hauptstraße 29, 88662 Überlingen",phone:"+49 160 784 19 43",email:"romaneppinger@solanplus.de",website:"https://www.solanplus.de",company:"SolAn Plus GmbH"});
+  const upgradeCaptain=old=>{
+    const crew=old?.crew;
+    if(!Array.isArray(crew))return old;
+    const lead=crew.find(c=>c&&c.id==="lead"&&c.role===roles[0]);
+    if(!lead||!["Капитан","Координатор"].includes(lead.name))return old;
+    return {...old,crew:crew.map(c=>c.id==="lead"?{...companyCaptain,...c,name:companyCaptain.name,
+      headline:c.headline||companyCaptain.headline,location:c.location||companyCaptain.location,
+      address:c.address||companyCaptain.address,phone:c.phone||companyCaptain.phone,
+      email:c.email||companyCaptain.email,website:c.website||companyCaptain.website,
+      company:c.company||companyCaptain.company}:c)};
+  };
+
   const requireValue = (ok, message) => { if (!ok) throw new Error(message); };
   const label = value => typeof value === "string" && value.trim().length > 0 && value.length <= 240;
   const amount = value => Number.isFinite(value) && value >= 0 && value <= 1e12;
@@ -8,11 +22,11 @@ globalThis.NVModel = (() => {
   const attachments = list => list===undefined || (Array.isArray(list)&&list.length<=8&&list.every(a=>a&&ident(a.id)&&optional(a.name,180)&&a.name&&typeof a.data==="string"&&/^data:(image\/(png|jpeg|webp|gif)|application\/pdf);base64,[A-Za-z0-9+/=]+$/.test(a.data)&&a.data.length<=900000));
   const ident = value => typeof value === "string" && /^[A-Za-z0-9_-]{1,100}$/.test(value);
   function migrate(old) {
-    if (old.version === 2) return Array.isArray(old.teams) ? old : {...old,teams:[]};
+    if (old.version === 2) return upgradeCaptain(Array.isArray(old.teams) ? old : {...old,teams:[]});
     if (old.version !== 1) return old;
     const data = JSON.parse(JSON.stringify(old));
     requireValue(["cases","garage","tasks","crew","shards"].every(k => Array.isArray(data[k])), "Неверная схема v1");
-    data.crew = [{id:"lead",name:"Капитан",role:roles[0]}, ...data.crew.map((c,i) => ({id:"member-"+i,name:c.name,role:roles[1]}))];
+    data.crew = [{id:"lead",role:roles[0],...companyCaptain}, ...data.crew.map((c,i) => ({id:"member-"+i,name:c.name,role:roles[1]}))];
     data.actor = "lead";
     data.moves = [];
     data.teams = [];
@@ -25,7 +39,7 @@ globalThis.NVModel = (() => {
       requireValue(list.every(x => x && ident(x.id)) && new Set(list.map(x=>x.id)).size === list.length,"Ошибка идентификаторов");
     }
     const has = (list,id) => list.some(x=>x.id===id);
-    requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
+    requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
     requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
     requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)),"Ошибка Project");
     requireValue(d.shards.every(s=>label(s.title)&&label(s.kind)&&amount(s.price)&&has(d.cases,s.caseId)&&optional(s.notes,4000)&&attachments(s.files)&&["draft","submitted","accepted"].includes(s.status)&&(s.assignee===null||has(d.crew,s.assignee))&&(s.teamId===undefined||s.teamId===null||has(d.teams,s.teamId))),"Ошибка Shard");
@@ -87,9 +101,12 @@ globalThis.NVModel = (() => {
         const target=d.crew.find(c=>c.id===p.memberId);
         allowed(target&&target.id===actor.id);
         requireValue(typeof p.headline==="string"&&p.headline.length<=120&&typeof p.location==="string"&&p.location.length<=100&&typeof p.bio==="string"&&p.bio.length<=700,"Слишком длинный текст профиля");
+        requireValue(typeof p.address==="string"&&p.address.length<=240&&typeof p.phone==="string"&&p.phone.length<=50&&typeof p.email==="string"&&p.email.length<=160&&typeof p.website==="string"&&p.website.length<=180,"Некорректные контактные данные профиля");
+        requireValue(!p.website||/^https:\/\/[a-z0-9.-]+(?:\/[a-zA-Z0-9._~!requireValue(typeof p.headline==="string"&&p.headline.length<=120&&typeof p.location==="string"&&p.location.length<=100&&typeof p.bio==="string"&&p.bio.length<=700,"Слишком длинный текст профиля");'()*+,;=:@%/?#-]*)?$/.test(p.website),"Сайт должен начинаться с https://");
+        requireValue(!p.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email),"Некорректный email");
         requireValue(Array.isArray(p.skills)&&p.skills.length<=8&&p.skills.every(x=>typeof x==="string"&&x.length<=36),"Укажите до 8 навыков");
         if(p.avatar!==undefined)requireValue(p.avatar===""||(typeof p.avatar==="string"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.avatar)&&p.avatar.length<=240000),"Недопустимое фото профиля");
-        Object.assign(target,{headline:p.headline.trim(),location:p.location.trim(),bio:p.bio.trim(),skills:p.skills.map(x=>x.trim()).filter(Boolean)});
+        Object.assign(target,{headline:p.headline.trim(),location:p.location.trim(),bio:p.bio.trim(),address:p.address.trim(),phone:p.phone.trim(),email:p.email.trim(),website:p.website.trim(),skills:p.skills.map(x=>x.trim()).filter(Boolean)});
         if(p.avatar!==undefined)target.avatar=p.avatar;
         break;
       }
