@@ -607,3 +607,18 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 - Checks: V8 `new Function(updatedApp)` syntax PASS; targeted source assertions on Shard form/submit and five versioned assets PASS. GitHub write API returned concrete commit hashes. Tokenomics spec already matches 1010 + 250 = 1260 Merit, €10 + €3 = €13, Shard fee 1.2%, no 80/20 split; no changes to financial UI.
 - **NOT TESTED:** browser reload on iPad/iPhone, actual Pages asset response, full UI click-through, 3 roles / 3 adversarial scenarios, atomic combined import/export, rollback after browser quota failure. Combined export remains **not safely restorable** by current import. No claim of MVP readiness.
 - Next: implement combined Case/Shard/Garage atomic restore with migration and fail-closed validation; build reproducible browser integration harness for roles, routes, and persistence; then Command/Field UI based on canonical logo asset rather than regenerated artwork.
+
+
+## Iteration · 2026-11-22 ~11:00 CET · Garage restore cross-reference guard
+
+**Code commit:** `b1fbdda8953313cdb5e40d8e8d0510c3632eaa3b` (`silver-command/garage.js` only). Root 0.3 untouched.
+
+**Priorities:** (1) reject Garage backup restore if any historical material consumption references a Case/Shard absent from the current project store; (2) enforce the same validation during preview and confirmed import, before any localStorage write. This closes an integrity gap in the separate Garage restore path. The existing project-only import already checks the opposite direction.
+
+**Verification performed:** fetched live `garage.js`, `app.js` and this log before change; exact replacement anchor matched once; V8 `new Function(updatedGarageSource)` syntax parser PASS; static assertion for orphan guard PASS; GitHub code commit returned SHA. No real browser test, no storage fault injection, no reload or export/import end-to-end test, and no three-role runtime test performed. This is not proof of browser behavior or secure authorization.
+
+**Conflict perspectives (source review only):** Garage custodian restoring consumption for a deleted project (now refused); manager restoring valid stock for extant projects (guard permits); field installer viewing a stock history whose Case reference would otherwise be missing. No authenticated actors.
+
+**Critical blockers remain:** unified crash-safe Case/Shard/Garage import and legacy migration; 3+ runtime role/conflict tests; real Field Mode and full browser navigation; actual photos and independent acceptance; no physical iPhone Safari test. Keep separate backups and do not enter real customer data. Combined export is archival, not currently restorable as one operation.
+
+**Next:** implement staging/rollback for combined restore only with reproducible browser/storage tests; verify no silent migration loss and role-conflict cases before enabling import.
