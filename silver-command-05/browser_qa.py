@@ -101,7 +101,7 @@ with sync_playwright() as pw:
         route("dashboard")
         expect(page.locator(".command-dock button")).to_have_count(5)
         page.locator(".command-dock [data-route=projects]").first.click()
-        expect(page.get_by_role("heading",name="Проекты и задачи")).to_be_visible()
+        expect(page.get_by_role("heading",name="Проекты")).to_be_visible()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
@@ -109,6 +109,21 @@ with sync_playwright() as pw:
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Стоимость").fill("250");save()
+        # Project -> Shard -> Task must be a real nested hierarchy.
+        act("new-task")
+        page.locator("#editor [name=title]").fill("QA закрепить рельсы")
+        page.locator("#editor [name=notes]").fill("Крепёж и безопасность")
+        save()
+        assert page.evaluate("""() => {
+          const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+          const sh=d.shards.find(s=>s.title==='QA монтаж');
+          const t=d.tasks.find(t=>t.title==='QA закрепить рельсы');
+          return !!sh && !!t && t.shardId===sh.id && t.status==='todo' && d.cases.some(c=>c.id===sh.caseId);
+        }"""), "Task must belong to Shard and Shard to project"
+        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Открыть Shard").click()
+        expect(page.get_by_role("heading",name="QA монтаж")).to_be_visible()
+        expect(page.get_by_text("QA закрепить рельсы")).to_be_visible()
+        fits()
         route("garage");fits();
         # Audit every warehouse image: local assets are required; supplier-hosted
         # images are reported separately because third-party networks may block CI.
@@ -149,6 +164,15 @@ with sync_playwright() as pw:
         assert stock_guards, (width,"Stock movement invariants failed")
         route("team")
         page.locator("#actor").select_option("member-0")
+        route("field")
+        route("tasks")
+        task_btn=page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Начать")
+        task_btn.click()
+        page.locator(".shard-work-card").filter(has_text="QA монтаж").get_by_role("button",name="Завершить").click()
+        assert page.evaluate("""() => {
+          const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+          return d.tasks.some(t=>t.title==='QA закрепить рельсы' && t.status==='done');
+        }"""), "Worker task completion not stored"
         route("field")
         task=page.locator("article.fieldtask").filter(has_text="QA монтаж")
         task.get_by_role("button",name="Передать на приёмку").click()
@@ -200,7 +224,8 @@ with sync_playwright() as pw:
         assert page.evaluate("""() => {
             const record=JSON.parse(localStorage.getItem('nvtsk05_independent'));
             return record.data.cases.some(c=>c.title==='QA Roof') &&
-                record.data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted');
+                record.data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted') &&
+                record.data.tasks.some(t=>t.title==='QA закрепить рельсы' && t.status==='done');
         }"""), "Offline reload lost persisted Case or accepted Shard"
         ctx.set_offline(False)
         route("settings");act("sandbox")
@@ -211,6 +236,6 @@ with sync_playwright() as pw:
         route("settings");act("sandbox");route("projects")
         expect(page.get_by_role("heading",name="Sandbox only")).to_have_count(0)
         assert not errors, errors
-        print(f"PASS {engine.name} {width}×{height}: layout, Case, Shard, Garage, Field, acceptance, export/import, undo, persistence, offline",flush=True)
+        print(f"PASS {engine.name} {width}×{height}: layout, Project, Shard, Task, Garage, Field, acceptance, export/import, undo, persistence, offline",flush=True)
         ctx.close()
     browser.close()
