@@ -622,3 +622,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Critical blockers remain:** unified crash-safe Case/Shard/Garage import and legacy migration; 3+ runtime role/conflict tests; real Field Mode and full browser navigation; actual photos and independent acceptance; no physical iPhone Safari test. Keep separate backups and do not enter real customer data. Combined export is archival, not currently restorable as one operation.
 
 **Next:** implement staging/rollback for combined restore only with reproducible browser/storage tests; verify no silent migration loss and role-conflict cases before enabling import.
+
+
+## 2026-11-22 ~12:00 CET · startup regression and Case persistence guard
+
+**Scope:** only `silver-command/app.js`, `silver-command/index.html` and this audit log. Root 0.3 untouched. Current source and audit reviewed before changes.
+
+**Critical findings:** The reference-style topbar had removed `#newLot`, while app startup still ran `$("#newLot").onclick=create` unconditionally. This throws a TypeError before route restoration, potentially leaving a static fallback instead of a functional app. The previously removed `#screenTitle` already has a null guard in current code. New Case creation also called `save()` without checking failure, unlike the newer Shard rollback.
+
+**Code commits:** `e192a212ec0a517976b381711be13b2a217c7ee2` adds an optional newLot button listener and restores Case + audit in-memory on failed persistence; `2fd2aa9ed2e0c2012f4f233c2b98978adb6fd433` updates asset cache parameters. A concurrent GitHub write caused one 409; refreshed the blob and retried successfully.
+
+**Verification:** complete updated app.js parsed using V8 `new Function` before commit (PASS). Exact startup listener and Case save rollback code paths verified in source (PASS). Three perspectives considered: manager opening dashboard without old button; project creator encountering quota/write failure; warehouse operator relying on unchanged Case IDs after failed save. **NOT RUN:** physical browser/iPhone, full DOM startup, three-role runtime conflicts, combined import/export/reload, and full Case→Shard→Garage→acceptance. No claim of 75% visual similarity or functional MVP readiness.
+
+**P0 remaining:** atomic combined Case/Shard/Garage restore, role-conflict integration tests, actual browser click-through, stable Field Mode. Reference visual requires further asset/layout work and a screenshot comparison; cosmetic progress must not mask functional regressions.
