@@ -202,5 +202,31 @@ assert.equal(JSON.stringify(profiles),beforeInvalid);
 assert.throws(()=>pAct('profile',{memberId:'member-0',headline:'DC',location:'',bio:'',skills:['x','x','x','x','x','x','x','x','x']}),/навыков/);
 assert.equal(JSON.stringify(profiles),beforeInvalid);
 
+
+require('./pv-project-card-v62.js');
+let engineering=apply(base,'case',{id:'engineering-case',title:'PV Design QA',city:'Stockach',price:10000});
+assert.equal(engineering.cases[0].pvPlan,undefined,'Legacy Cases need no technical dossier by default');
+engineering=apply(engineering,'pv-tech',{caseId:'engineering-case',bauherr:'',revision:'Rev A',roofType:'Concrete',tileType:'Braas',mounting:'Novo ES',moduleType:'AXI',insulation:'',cableRoute:'',hazards:'',safetyPlan:'',sourcePlan:'Plan A',model3d:'https://example.com/model',acScope:'external',dcScope:'DC',declaredModules:'15',panelWp:'460',declaredKwp:'6.44',slopeDeg:'35',eaveHeightM:'6',rafterSpacingCm:'95',roofLengthM:'6.9'});
+engineering=apply(engineering,'pv-add',{caseId:'engineering-case',list:'zones',id:'pv-z1',name:'String 1',direction:'SW',modules:'14',hooks:'24',panelWp:'460',roofType:'Concrete tile',mounting:'Novo ES',moduleType:'AXI',notes:''});
+engineering=apply(engineering,'pv-add',{caseId:'engineering-case',list:'materials',id:'pv-m1',name:'Roof hook',qty:'24',unit:'St.',sku:'001'});
+engineering=apply(engineering,'pv-add',{caseId:'engineering-case',list:'documents',id:'pv-d1',name:'Montageplan Rev A',kind:'PDF',url:'https://example.com/plan.pdf',revision:'A'});
+engineering=apply(engineering,'pv-check',{caseId:'engineering-case',key:'risk',value:true});
+assert.equal(engineering.cases[0].pvPlan.zones[0].roofType,'Concrete tile');
+assert.equal(engineering.cases[0].pvPlan.materials[0].qty,24);
+assert.equal(engineering.cases[0].pvPlan.checks.risk,true);
+assert.equal(engineering.cases[0].price,10000,'PV metadata must not alter Case budget');
+assert.equal(engineering.shards.length,0,'PV metadata must not mint Shards or Merit');
+const issues=PVProjectCard.conflicts(engineering.cases[0].pvPlan);
+assert(issues.some(x=>x.level==='danger'&&x.title.includes('модулей')),'15 vs 14 anomaly detected');
+assert(issues.some(x=>x.level==='warning'&&x.title.includes('Anlagenleistung')),'6.44 vs 6.9 kWp anomaly detected');
+const engineeringBad=JSON.stringify(engineering);
+assert.throws(()=>apply(engineering,'pv-check',{caseId:'engineering-case',key:'imaginary',value:true}),/Неизвестный/);
+assert.throws(()=>apply(engineering,'pv-add',{caseId:'engineering-case',list:'zones',id:'pv-z2',name:'Negative',modules:'-1',hooks:'0',panelWp:'460'}),/PV/);
+assert.equal(JSON.stringify(engineering),engineeringBad,'Rejected mutations never change original state');
+engineering=apply(engineering,'pv-remove',{caseId:'engineering-case',list:'materials',rowId:'pv-m1'});
+assert.equal(engineering.cases[0].pvPlan.materials.length,0);
+engineering=apply(engineering,'actor',{id:'member-0'});
+assert.throws(()=>apply(engineering,'pv-tech',{caseId:'engineering-case'}),/недоступно/,'Only Captain edits the technical plan');
+
 assert.equal(base.cases.length,0);
 console.log('PASS migration, workflow, closed-Shard issue/return guards, role restrictions, manager receiving, stock conservation, rollback, 300 chaos operations, three-role conflict matrix, seed=42');
