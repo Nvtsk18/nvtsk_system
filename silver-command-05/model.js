@@ -81,7 +81,7 @@ globalThis.NVModel = (() => {
       }
       case "move": {
         const item=d.garage.find(x=>x.id===p.itemId);
-        allowed(stock && item && (["receive","writeoff"].includes(p.type) || (s && s.status!=="accepted")));
+        allowed(stock && item && (["receive","writeoff"].includes(p.type) || (s && s.status==="draft")));
         // Accepted work is closed: further stock movements require a new open Shard.
         requireValue(Number.isSafeInteger(p.qty)&&p.qty>0,"Количество должно быть положительным целым числом");
         requireValue(["issue","return","receive","writeoff"].includes(p.type),"Неизвестная складская операция");
