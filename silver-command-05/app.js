@@ -34,7 +34,7 @@ const button=(label,action,id)=>'<button data-action="'+action+'" '+(id?'data-id
 const panel=(title,route,body)=>'<section class="panel"><div class="panelhead"><h2>'+title+'</h2><button data-route="'+route+'">Открыть →</button></div>'+body+'</section>';
 const stat=(symbol,label,value,detail)=>'<div class="stat"><span class="symbol">'+symbol+'</span><div><strong>'+esc(value)+'</strong><label>'+label+'</label><small>'+detail+'</small></div></div>';
 const row=c=>'<button class="case" data-route="case/'+esc(c.id)+'"><span class="thumb"></span><span class="casebody"><strong>'+esc(c.title)+'</strong><small>⌖ '+esc(c.city)+'</small><span class="progress"><i style="width:'+pct(c.id)+'%"></i></span></span><span class="casemeta"><b>'+pct(c.id)+'%</b><small>'+money(c.price)+' €</small></span></button>';
-const shard=s=>'<button class="shard" data-route="case/'+esc(s.caseId)+'"><span class="ring" style="--p:'+(s.status==="accepted"?100:0)+'%"><b>'+(s.status==="accepted"?"100%":"0%")+'</b></span><span><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(s.status)+'</small></span><b>›</b></button>';
+const shard=s=>'<button class="shard" data-route="case/'+esc(s.caseId)+'"><span class="ring" style="--p:'+(s.status==="accepted"?100:0)+'%"><b>'+(s.status==="accepted"?"100%":"0%")+'</b></span><span><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(statusName[s.status])+'</small></span><b>›</b></button>';
 const iconPaths={
  home:"M2 10 12 2l10 8 M5 9v12h5v-7h4v7h5V9",
  layers:"m2 8 10-5 10 5-10 5z M2 12l10 5 10-5 M2 16l10 5 10-5",
@@ -51,7 +51,7 @@ const iconPaths={
 const icon=name=>'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'+iconPaths[name]+'"/></svg>';
 function dashboard(){
  const accepted=state.shards.filter(s=>s.status==="accepted").length;
- const open=state.shards.filter(s=>s.status!=="accepted"), waiting=open.filter(s=>s.status==="submitted");
+ const open=state.shards.filter(s=>s.status!=="accepted");
  const fleet=state.garage.filter(m=>["van","car","trailer"].includes(m.art));
  const people=new Set(open.map(s=>s.assignee).filter(Boolean));
  const totalMerit=money(state.cases.reduce((n,c)=>n+c.price,0));
@@ -108,7 +108,7 @@ let pending;
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
  const titles={case:"Новый Case",shard:"Новый Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
- 
+
  let fields=["case","shard","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
  if(kind==="case")fields+=input("city","Город")+input("price","Бюджет, €","number");
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Другое"]))+input("price","Стоимость Shard, €","number");
