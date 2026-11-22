@@ -293,8 +293,6 @@ function projects(){
  const filters=[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершённые"]];
  const right=tab==="accounting"?projectHubAccounting():tab==="partners"?counterpartiesView():(
  '<div class="ph-searchline"><label class="ph-search"><span>'+icon("search")+'</span><input id="project-hub-search" type="search" aria-label="Поиск по проектам" maxlength="120" placeholder="Название, город, DC, AC, монтаж…" value="'+esc(projectHubQuery)+'" autocomplete="off"></label><span id="ph-result-count">'+list.length+' найдено</span></div>'+
- '<div class="ph-filterbar"><label class="ph-filter-select">Город<select id="ph-city" aria-label="Выбрать город"><option value="all">Все города</option>'+cities.map(city=>'<option value="'+esc(city.toLocaleLowerCase())+'" '+(projectHubCity===city.toLocaleLowerCase()?"selected":"")+'>'+esc(city)+'</option>').join("")+'</select></label></div>'+
- '<div class="ph-filters" role="group" aria-label="Фильтр проектов">'+filters.map(([id,label])=>'<button type="button" data-action="project-filter" data-filter="'+id+'" class="'+(projectHubFilter===id?"is-active":"")+'" aria-pressed="'+(projectHubFilter===id)+'">'+label+'</button>').join("")+'</div>'+
  '<div class="ph-list">'+(cards||'<div class="ph-empty"><strong>'+info[2]+'</strong><p>'+emptyHelp+'</p>'+(lead()&&tab==="mine"?button("＋ Создать Project","new-case"):"")+'</div>')+'</div>'+
  '<div id="ph-no-match" class="ph-empty" hidden><strong>Нет подходящих объектов</strong><p>Попробуйте другой запрос или фильтр.</p></div>'
  );
@@ -367,7 +365,9 @@ function detail(id){
   const partner=counterpartyForProject(c);
   const partnerInfo='<section class="panel cp-case-link"><div class="panelhead"><h2>Заказчик / Auftraggeber</h2>'+(lead()?button("Связать контрагента","link-counterparty",id):"")+'</div>'+
     (partner?'<button data-route="partner/'+esc(partner.id)+'" class="cp-case-partner"><strong>'+esc(partner.name)+'</strong><span>DC-монтаж · SolAn Plus · AC — электрики заказчика</span><small>Открыть профиль →</small></button>':'<p>Контрагент не назначен. Исторические проекты сохраняются без автоматически установленного заказчика.</p>')+'</section>';
-  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div>'+PVProjectCard.render(c,state,lead())+'<section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+partnerInfo+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
+  const mediaItems=(c.files||[]).map(a=>'<a class="case-media-item" href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+(a.data.startsWith("data:image/")?'<img src="'+a.data+'" alt="'+esc(a.name)+'">':'<span class="case-media-pdf">PDF</span>')+'<small>'+esc(a.name)+'</small></a>').join("");
+  const mediaPanel='<section class="panel case-media-panel"><div class="panelhead"><h2>Медиа объекта · '+(c.files||[]).length+'/8</h2>'+(lead()?'<button data-action="case-media" data-id="'+esc(id)+'">＋ Фото / PDF</button>':'')+'</div><div class="case-media-grid">'+(mediaItems||'<p class="hint">Фото крыши, чертежи, Stringplan и документы объекта.</p>')+'</div></section>';
+  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div>'+mediaPanel+PVProjectCard.render(c,state,lead())+'<section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+partnerInfo+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 const warehousePhotos=[
  {name:"novotegra Einlegeschiene",brand:"novotegra",kind:"Einlegesystem · не привязано к артикулу",image:"https://www.novotegra.com/fileadmin/_processed_/d/9/csm_einlegeschiene-kombination-03-0013xx_e3262ee072.jpg",url:"https://www.novotegra.com/fileadmin/04_Downloads/Certificates/novotegra_system/Montagesystemkatalog/DE-novotegra-Montage-Systemkatalog.pdf",verified:false},
@@ -654,9 +654,11 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={"pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-string":"Новый DC String","pv-cut":"Раскрой шины","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={"case-media":"Добавить фото / PDF","pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-string":"Новый DC String","pv-cut":"Раскрой шины","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
+ if(kind==="case-media"){if(!lead()||!state.cases.some(c=>c.id===id))return;fields='<p class="hint">Медиа сохраняются локально. До 8 файлов на Case, до 650 КБ каждый.</p>';}
+
  if(["pv-tech","pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)){
    if(!lead())return;
    const project=state.cases.find(c=>c.id===id);
@@ -792,7 +794,7 @@ $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
  const selected=e.target.elements.media?.files;
  const avatarFile=e.target.elements.avatarFile?.files?.[0];
- if(kind==="pv-tech")p.caseId=id;
+ if(kind==="pv-tech"||kind==="case-media")p.caseId=id;
  if(["pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)){
    p.caseId=id;
    p.list={"pv-zone":"zones","pv-string":"strings","pv-cut":"cuts","pv-material":"materials","pv-document":"documents"}[kind];
