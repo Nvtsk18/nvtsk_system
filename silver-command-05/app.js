@@ -324,14 +324,14 @@ function social(){
  }).join("")||'<div class="socialempty"><img src="art/roof.webp" alt=""><p>Публикаций пока нет. Расскажите команде о ходе работ.</p></div>';
  return heading("Сообщество")+'<section class="socialhero"><img src="art/roof.webp" alt=""><div><h2>Лента команды</h2><p>Новости объектов, вопросы и опыт монтажников</p></div></section><section class="panel socialcomposer"><h2>Новая публикация</h2><form id="social-compose"><textarea name="text" required maxlength="1200" rows="3" placeholder="Что нового на объекте?"></textarea><div class="socialcomposeactions"><select name="caseId"><option value="">Без Project</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.title)+'</option>').join("")+'</select><button type="submit">Опубликовать</button></div></form></section><div class="socialfeed">'+posts+'</div><p class="socialnotice">Публикации сохраняются только на этом устройстве. Это не общий онлайн-чат. Не публикуйте персональные данные клиентов.</p>';
 }
-const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social,lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
+const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social:()=>communityShell("feed",social()),lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
 function render(){
  const r=location.hash.slice(1)||"dashboard";
  $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
- const sectionName=r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({projects:"Projects",tasks:"Приёмка",team:"Команда",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
+ const sectionName=r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Команда":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({projects:"Projects",tasks:"Приёмка",team:"Команда",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
  const workbar=r==="dashboard"?"":'<header class="workspace-bar"><div class="workspace-brand"><img src="art/logo.webp" alt="" width="40" height="40"><span><strong>NVTSK SYSTEM</strong><small>'+esc(sectionName)+' · LOCAL FIRST</small></span></div><div class="workspace-tools"><button data-route="dashboard">'+icon("home")+' Главная</button><button data-route="settings" aria-label="Настройки">'+icon("settings")+'</button></div></header>';
- $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):Object.hasOwn(pages,r)?pages[r]():dashboard());
- document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/"))&&b.dataset.route==="projects")));
+ $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("team/")?team():Object.hasOwn(pages,r)?pages[r]():dashboard());
+ document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/"))&&b.dataset.route==="projects")||(b.closest("#nav")&&(r.startsWith("member/")||r.startsWith("team/"))&&b.dataset.route==="team")));
  if(!lead())document.querySelectorAll('[data-action="new-case"],[data-action="new-electrical"]').forEach(b=>b.remove());
 }
 const input=(name,text,type="text")=>'<label>'+text+'<input required name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="1000000000000" step=".01"':'maxlength="120"')+'></label>';
@@ -341,7 +341,7 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
  if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number");
@@ -351,6 +351,17 @@ function edit(kind,id){
   if(kind==="task")fields+='<p class="hint">Task входит в выбранный Shard. Бюджет и Merit не изменяются.</p><label>Исполнитель<select name="assignee"><option value="">Исполнитель Shard</option>'+options(teamOptions())+'</select></label><label>Описание<textarea name="notes" maxlength="2000" rows="3" placeholder="Что нужно сделать и как проверить результат"></textarea></label>';
  if(kind==="material")fields+=`<label>Артикул / Artikelnummer<input required name="sku" maxlength="80" placeholder="2004260"></label><label>Производитель<input name="brand" maxlength="100" placeholder="K2 Systems / novotegra"></label>`;
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
+ if(kind==="profile"){
+  const member=state.crew.find(c=>c.id===id);
+  if(!member||member.id!==state.actor)return;
+  fields='<p class="hint">Профиль сохраняется локально. Редактировать можно только свой.</p>'+
+   '<label>Специализация / должность<input name="headline" maxlength="120" placeholder="DC Montage · Team Lead" value="'+esc(member.headline||"")+'"></label>'+
+   '<label>Город / регион<input name="location" maxlength="100" placeholder="Stockach · Bodensee" value="'+esc(member.location||"")+'"></label>'+
+   '<label>Навыки (через запятую, до 8)<input name="skillsText" maxlength="320" placeholder="PV, DC, K2, novotegra" value="'+esc((member.skills||[]).join(", "))+'"></label>'+
+   '<label>О себе<textarea name="bio" maxlength="700" rows="4" placeholder="Опыт, специализация, интересы">'+esc(member.bio||"")+'</textarea></label>'+
+   '<label>Фото профиля (PNG, JPEG, WebP · до 150 КБ)<input type="file" name="avatarFile" accept="image/png,image/jpeg,image/webp"></label>'+
+   (member.avatar?'<label class="community-avatar-remove"><input type="checkbox" name="removeAvatar"> Удалить фото профиля</label>':"");
+ }
  if(kind==="move"){const open=state.shards.filter(s=>s.status==="draft");fields+=select("type","Операция",open.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"],["writeoff","Списание"]]:[["receive","Приход"],["writeoff","Списание"]]);fields+='<div id="move-shard-wrap" hidden>'+select("shardId","Project / Shard",open.map(s=>[s.id,(state.cases.find(c=>c.id===s.caseId)?.title||"Project")+" / "+s.title]))+"</div>";}
  if(kind==="move")fields+=`<label>Причина списания<input name="reason" maxlength="300" placeholder="Брак, потеря, инвентаризация"></label>`;
  if(kind==="material"||kind==="move")fields+=input("qty","Количество, шт.","number").replace('step=".01"','step="1"').replace('min="0"','min="1"');
@@ -371,6 +382,7 @@ document.addEventListener("click",async e=>{
    }catch(error){alert(error.message)}
    return;
  }
+ if(a==="edit-profile"){edit("profile",id);return}
  if(a.startsWith("new-")||a==="assign"||a==="move"){edit(a.replace("new-",""),id);return}
  if(["accept","submit","revise"].includes(a))await change(()=>apply(state,a,{shardId:id}));
   if(a==="task-next"){const t=state.tasks.find(t=>t.id===id);if(t)await change(()=>apply(state,"task-status",{taskId:id,status:t.status==="todo"?"doing":t.status==="doing"?"done":"todo"}));}
@@ -389,17 +401,32 @@ document.addEventListener("change",async e=>{if(e.target.name==="type"&&pending?
  if(confirm("Заменить локальные данные данными из файла?"))await change(()=>data,false,true);
  }catch(err){alert(err.message)}finally{e.target.value=""}}
 });
-document.addEventListener("input",e=>{if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()))});
+document.addEventListener("input",e=>{if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()));if(e.target.id==="member-search")document.querySelectorAll("[data-membersearch]").forEach(el=>el.hidden=!el.dataset.membersearch.includes(e.target.value.toLowerCase()))});
 $("#cancel").onclick=()=>$("#dialog").close();
 $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
  const selected=e.target.elements.media?.files;
+ const avatarFile=e.target.elements.avatarFile?.files?.[0];
+ if(kind==="profile"){
+  p.memberId=id;
+  p.skills=String(p.skillsText||"").split(",").map(x=>x.trim()).filter(Boolean);
+  delete p.skillsText;
+  const remove=Boolean(p.removeAvatar);
+  delete p.removeAvatar;
+  delete p.avatarFile;
+  if(remove)p.avatar="";
+ }
  delete p.media;
  for(const k of ["title","city"])if(k in p)p[k]=p[k].trim();
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
  p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="task")p.shardId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
  try{
+   if(kind==="profile"&&avatarFile){
+     if(avatarFile.size>150000)throw Error("Фото должно быть не больше 150 КБ");
+     if(!["image/png","image/jpeg","image/webp"].includes(avatarFile.type))throw Error("Допустимы PNG, JPEG или WebP");
+     p.avatar=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Не удалось прочитать фото"));reader.readAsDataURL(avatarFile)});
+   }
    if(selected){
      if(selected.length>8)throw Error("Максимум 8 файлов");
      if(Array.from(selected).reduce((n,file)=>n+file.size,0)>2000000)throw Error("Суммарный размер вложений не должен превышать 2 МБ");
