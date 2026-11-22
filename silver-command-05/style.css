@@ -214,3 +214,9 @@ button:active{transform:translateY(1px)}
 .projectgrouphead>button{white-space:nowrap}
 .projectshards{margin-top:14px;border-top:1px solid #35404c;padding-top:8px}
 @media(max-width:650px){.unifiedstats{grid-template-columns:repeat(3,minmax(0,1fr))}.projectgrouphead{flex-wrap:wrap}.projectgrouphead>img{width:75px;height:70px}.projectgrouphead>button{margin-left:auto}.unifiedstats .stat{padding:9px 5px}}
+
+
+.lagertabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 17px}
+.lagertabs button{border:1px solid #4d5a6b;background:#1a2430;border-radius:9px;padding:11px 17px;color:#d8e1eb;cursor:pointer;font-weight:600}
+.lagertabs button.active{background:#d5dce6;color:#111924;border-color:#d5dce6}
+@media(max-width:500px){.lagertabs{display:grid;grid-template-columns:1fr 1fr}.lagertabs button{padding:10px 6px;font-size:12px}}
