@@ -489,3 +489,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Verification:** exact source anchor matched and GitHub content update returned commit SHA. No Node syntax test, browser execution, import/export/reload end-to-end test, iPhone/Safari test, or 3-role runtime test in this iteration. Mark these NOT RUN. The backup is still EXPORT ONLY as a combined artifact; unified atomic restore and rollback are NOT IMPLEMENTED. UI wording still needs alignment. Keep prior separate backups. Do not mark MVP ready.
 
 **Next:** design and implement a validated, rollback-safe combined restore; exercise actual syntax/runtime tests and browser reload, then role conflicts and navigation.
+
+
+## Iteration · 2026-11-22 03:00 CET · fail-closed combined archive import
+
+**Code commit:** `e70248513e789e0f6b4f90832b36bfe3a9b318e5` (`silver-command/app.js` only).
+
+**Change:** Project-only importer now explicitly rejects `nvtsk-silver-combined-export` and payloads with top-level `garage` before normalization, confirmation, or any storage write. Previously it could silently import only `data` from a combined export while leaving Garage unchanged, causing a false impression of full restoration. Profile UI now accurately calls combined export an archival snapshot, warns that unified import is unsupported, and labels project-only import separately.
+
+**Verification:** Fetched updated GitHub blob; V8 Function parser successfully parsed complete `app.js` (PASS). Static assertions confirmed combined rejection guard and corrected UI label (PASS). The guard precedes all import writes by source inspection. **NOT RUN:** actual browser import/reload, Garage rollback, real role tests, iPhone gestures, end-to-end workflow. This is a protective patch, not a combined restore implementation.
+
+**Perspectives:** device owner trying combined archive, Garage operator avoiding stale stock after project-only import, field installer reading misleading backup label. These are reviewed scenarios, not runtime role authorization PASS.
+
+**Open P0:** validated two-store atomic restore with rollback/crash recovery; stage/post lossless migration; 3-role authorization conflicts; real browser flow and persistence tests. Preserve existing separate backups.
