@@ -99,11 +99,47 @@ function garage(){
   const moves=state.moves.slice().reverse();
   return '<div class="warehouse">'+heading("Склад //",warehouse()?button("＋ Добавить позицию","new-material"):"")+'</div><div class="columns stock"><section class="panel"><h2>Все позиции · '+state.garage.length+'</h2><label>Поиск по складу<input id="stock-search" type="search"></label><div class="cards">'+state.garage.map(m=>'<article class="panel item stockitem" data-stock="'+esc(m.title.toLowerCase())+'">'+(['rail','clamp','module','vertical','van','car','trailer'].includes(m.art)?'<img src="art/'+m.art+'.webp" alt="">':'')+'<h2>'+esc(m.title)+'</h2><p>Остаток · '+esc(m.qty)+'</p>'+(warehouse()?button("Движение","move",m.id):"")+'</article>').join("")+'</div></section><section class="panel"><h2>Движения</h2>'+moves.map(m=>'<div class="taskrow"><div>'+esc(state.garage.find(i=>i.id===m.itemId).title)+' · '+esc(m.qty)+'<small>'+({issue:"Выдача",return:"Возврат",receive:"Приход"})[m.type]+' · '+esc(state.shards.find(s=>s.id===m.shardId)?.title||"Склад")+'</small></div></div>').join("")+(!moves.length?"<p>Движений пока нет</p>":"")+'</section></div>';
 }
-function tasks(){return heading("Приёмка")+panel("На проверке","projects",state.shards.filter(s=>s.status==="submitted").map(shardRow).join("")||"<p>Очередь пуста</p>")}
-function team(){return heading("Команда",lead()?button("＋ Участник","new-crew"):"")+panel("Участники","settings",state.crew.map(c=>'<div class="taskrow">'+esc(c.name)+' <small>'+esc(c.role)+'</small></div>').join(""))}
+function tasks(){
+ const pending=state.shards.filter(s=>s.status==="submitted");
+ const active=state.shards.filter(s=>s.status==="draft");
+ return heading("Задачи / Приёмка")+
+ panel("Ожидают приёмки · "+pending.length,"projects",pending.map(shardRow).join("")||"<p>Нет заданий на проверке</p>")+
+ panel("В работе · "+active.length,"projects",active.map(shardRow).join("")||"<p>Все задания обработаны</p>");
+}
+function team(){
+ const members=state.crew.map(c=>{
+  const assigned=state.shards.filter(s=>s.assignee===c.id);
+  const accepted=assigned.filter(s=>s.status==="accepted").length;
+  return '<article class="taskrow"><div><strong>'+esc(c.name)+'</strong><small>'+esc(c.role)+' · '+assigned.length+' Shard · '+accepted+' принято</small></div><span class="memberstate">'+(c.id===state.actor?'Текущий профиль':'')+'</span></article>';
+ }).join("");
+ return heading("Команда",lead()?button("＋ Участник","new-crew"):"")+profile()+panel("Участники · "+state.crew.length,"settings",members);
+}
 function profile(){return '<label>Локальный профиль<select id="actor">'+options(teamOptions(),state.actor)+'</select></label>'}
-function field(){return heading("Field Mode")+profile()+panel("Мои Shard","projects",state.shards.filter(s=>s.assignee===state.actor).map(shardRow).join("")||"<p>Нет назначенных заданий</p>")}
-function pulse(){return heading("Project Pulse")+panel("Готовность Case","projects",state.cases.map(row).join(""))}
+function field(){
+ const mine=state.shards.filter(s=>s.assignee===state.actor);
+ const active=mine.filter(s=>s.status==="draft");
+ const review=mine.filter(s=>s.status==="submitted");
+ const done=mine.filter(s=>s.status==="accepted");
+ return heading("Field Mode")+profile()+
+ '<div class="fieldsummary">'+stat(icon("clock"),"В работе",active.length,"")+stat(icon("check"),"На проверке",review.length,"")+stat(icon("layers"),"Принято",done.length,"")+'</div>'+
+ panel("Мои задания · "+mine.length,"projects",mine.map(s=>{
+ const c=state.cases.find(c=>c.id===s.caseId);
+ return '<article class="fieldtask"><div class="fieldtaskhead"><div><strong>'+esc(s.title)+'</strong><small>'+esc(c?.title||"Case")+' · '+esc(c?.city||"")+'</small></div><span class="fieldstatus">'+esc(statusName[s.status])+'</span></div>'+shardRow(s)+'<button data-route="case/'+esc(s.caseId)+'">Открыть Case →</button></article>';
+ }).join("")||'<p>Назначенных заданий пока нет. Руководитель может назначить Shard в карточке Case.</p>');
+}
+function pulse(){
+ const total=state.cases.reduce((n,c)=>n+c.price,0);
+ const allocated=state.shards.reduce((n,s)=>n+s.price,0);
+ const accepted=state.shards.filter(s=>s.status==="accepted").reduce((n,s)=>n+s.price,0);
+ const pending=state.shards.filter(s=>s.status==="submitted").length;
+ return heading("Project Pulse")+
+ '<div class="pulsemetrics">'+stat(icon("coins"),"Бюджет Case",money(total)+" €","")+
+ stat(icon("layers"),"Распределено Shard",money(allocated)+" €","")+
+ stat(icon("check"),"Принято",money(accepted)+" €","")+
+ stat(icon("clock"),"Ожидают приёмки",pending,"")+'</div>'+
+ panel("Готовность проектов","projects",state.cases.map(row).join("")||"<p>Проектов пока нет</p>")+
+ '<p class="pulsehint">Merit создаётся только при создании Case. Shard распределяет уже существующий Merit, не создавая новый.</p>';
+}
 function settings(){return heading("Настройки")+profile()+'<div class="panel tools"><button data-route="team">Команда и роли</button>'+button(lab?"Вернуться к рабочим данным":"Тестовая копия","sandbox")+button("Экспорт JSON","export")+(lead()?'<label>Импорт JSON<input id="import" type="file" accept=".json,application/json"></label>'+ (history.length?button("Time Machine · отменить последнюю операцию","undo"):""):"")+'</div><p>Профили действуют на этом устройстве. История хранит последние 10 операций.</p>'}
 const pages={dashboard,projects,garage,tasks,team,field,settings,pulse};
 function render(){
