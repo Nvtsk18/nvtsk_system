@@ -43,6 +43,20 @@ with sync_playwright() as pw:
             folder.mkdir(parents=True,exist_ok=True)
             page.screenshot(path=str(folder/f"{engine.name}-{width}-{screen}.png"))
         capture("dashboard")
+        # Residential electrical template must create one Case and five
+        # budget-balanced Shards without changing the PV workflow.
+        route("projects");act("new-electrical")
+        page.get_by_label("Название").fill("QA Elektro Rohbau")
+        page.get_by_label("Город").fill("Stockach")
+        page.get_by_label("Бюджет").fill("1000");save()
+        assert page.evaluate("""() => {
+            const data=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+            const c=data.cases.find(c=>c.title==='QA Elektro Rohbau');
+            const shards=data.shards.filter(s=>s.caseId===c?.id);
+            return !!c && shards.length===5 &&
+                shards.every(s=>s.status==='draft' && s.assignee===null) &&
+                Math.round(shards.reduce((n,s)=>n+s.price,0)*100)===100000;
+        }"""), "Electrical Case template failed to create five balanced Shards"
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
         page.get_by_label("Город").fill("Demo")
