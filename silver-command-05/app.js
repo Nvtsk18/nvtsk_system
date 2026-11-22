@@ -618,16 +618,22 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
- if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number");
+ if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number")+counterpartySelector(kind==="case"?id:null);
  if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Elektro · Rohbau","Elektro · Kabel","Elektro · Installation","Elektro · Verteiler","Elektro · Prüfung","Другое"]))+input("price","Бюджет Shard, €","number");
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
   if(kind==="task")fields+='<p class="hint">Task входит в выбранный Shard. Бюджет и Merit не изменяются.</p><label>Исполнитель<select name="assignee"><option value="">Исполнитель Shard</option>'+options(teamOptions())+'</select></label><label>Описание<textarea name="notes" maxlength="2000" rows="3" placeholder="Что нужно сделать и как проверить результат"></textarea></label>';
  if(kind==="material")fields+=`<label>Артикул / Artikelnummer<input required name="sku" maxlength="80" placeholder="2004260"></label><label>Производитель<input name="brand" maxlength="100" placeholder="K2 Systems / novotegra"></label>`;
  if(kind==="crew")fields+=select("role","Роль",roles.map(r=>[r,r===roles[0]?"Капитан":r]),roles[1]);
+ if(kind==="link-counterparty"){
+   if(!lead())return;
+   const project=state.cases.find(c=>c.id===id);
+   if(!project)return;
+   fields='<p class="hint">Выберите подтверждённого заказчика этого объекта. Существующий бюджет и Merit не изменятся.</p>'+counterpartySelector(project.counterpartyId||"");
+ }
  if(kind==="team"||kind==="team-update"){
    if(!lead())return;
    const old=kind==="team-update"?state.teams.find(t=>t.id===id):null;
@@ -695,6 +701,8 @@ document.addEventListener("click",async e=>{
    return;
  }
  if(a==="edit-profile"){edit("profile",id);return}
+ if(a==="link-counterparty"){edit("link-counterparty",id);return}
+ if(a==="new-case-partner"){edit("case",id);return}
  if(a==="team-edit"){edit("team-update",id);return}
  if(a==="assign-team"){edit("assign-team",id);return}
  if(a.startsWith("new-")||a==="assign"||a==="move"){edit(a.replace("new-",""),id);return}
@@ -741,7 +749,7 @@ $("#editor").onsubmit=async e=>{
  delete p.media;
  for(const k of ["title","city"])if(k in p)p[k]=p[k].trim();
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
- p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="task")p.shardId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
+ p.id=crypto.randomUUID();if(kind==="link-counterparty")p.caseId=id;if(kind==="shard")p.caseId=id;if(kind==="task")p.shardId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
  try{
    if(kind==="profile"&&avatarFile){
@@ -760,9 +768,9 @@ $("#editor").onsubmit=async e=>{
      }));
    }
    const operation=()=>{
-     if(kind!=="electrical")return apply(state,kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p);
+     if(kind!=="electrical")return apply(state,kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p.counterpartyId===""?{...p,counterpartyId:null}:p);
      const caseId=p.id;
-     let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files});
+     let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files,counterpartyId:p.counterpartyId||null});
      const steps=[
        ["Разметка, штробы и подготовка трасс","Elektro · Rohbau",20],
        ["Прокладка кабелей и крепление трасс","Elektro · Kabel",25],
