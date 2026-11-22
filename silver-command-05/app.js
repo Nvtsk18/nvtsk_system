@@ -83,10 +83,23 @@ const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+acti
 function visualTiles(items){return '<div class="visualtiles">'+items.map(([img,title,subtitle,route])=>'<button class="visualtile" data-route="'+route+'"><img src="art/'+img+'.webp" alt="" loading="lazy"><span><strong>'+esc(title)+'</strong><small>'+esc(subtitle)+'</small></span></button>').join("")+'</div>'}
 function projects(){
  const all=state.shards,review=all.filter(x=>x.status==="submitted"),active=all.filter(x=>x.status==="draft");
- const cases=state.cases.map(c=>{const linked=all.filter(x=>x.caseId===c.id);return '<section class="panel projectgroup"><div class="projectgrouphead"><img src="art/roof.webp" alt="" loading="lazy"><div><h2>'+esc(c.title)+'</h2><small>⌖ '+esc(c.city)+' · '+money(c.price)+' € · '+linked.length+' Shard</small><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div></div><button data-route="case/'+esc(c.id)+'">Открыть проект →</button></div><div class="projectshards">'+(linked.length?linked.map(shardRow).join(""):'<p>Нет Shard. Создайте рабочий блок в проекте.</p>')+'</div></section>'}).join("")||'<p>Создайте первый проект.</p>';
- return heading("Проекты и задачи",button("＋ Новый проект","new-case")+button("⚡ Электромонтаж","new-electrical"))+visualTiles([["roof","Мои объекты","Открыть проект","projects"],["module","Монтаж PV","Задачи DC / AC","field"],["hero","Работа команды","Назначения и приёмка","team"]])+'<div class="unifiedstats">'+stat(icon("layers"),"Проекты",state.cases.length,"Проекты")+stat(icon("box"),"Shard",all.length,"Рабочие блоки")+stat(icon("clock"),"На приёмке",review.length,"Ожидают проверки")+'</div>'+panel("Приёмка · "+review.length,"projects",review.map(shardRow).join("")||'<p>Нет заданий на проверке</p>')+panel("В работе · "+active.length,"projects",active.map(shardRow).join("")||'<p>Нет активных задач</p>')+'<div class="projectgroups">'+cases+'</div>';
+ const cases=state.cases.map(c=>{const linked=all.filter(x=>x.caseId===c.id);return '<section class="panel projectgroup"><div class="projectgrouphead"><img src="art/roof.webp" alt="" loading="lazy"><div><h2>'+esc(c.title)+'</h2><small>⌖ '+esc(c.city)+' · '+money(c.price)+' € · '+linked.length+' Shard · '+state.tasks.filter(t=>linked.some(s=>s.id===t.shardId)).length+' задач</small><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div></div><button data-route="case/'+esc(c.id)+'">Открыть проект →</button></div><div class="projectshards">'+(linked.length?linked.map(shardRow).join(""):'<p>Нет Shard. Создайте рабочий блок в проекте.</p>')+'</div></section>'}).join("")||'<p>Создайте первый проект.</p>';
+ return heading("Проекты",button("＋ Новый проект","new-case")+button("⚡ Электромонтаж","new-electrical"))+visualTiles([["roof","Мои объекты","Открыть проект","projects"],["module","Монтаж PV","Задачи DC / AC","field"],["hero","Работа команды","Назначения и приёмка","team"]])+'<div class="unifiedstats">'+stat(icon("layers"),"Проекты",state.cases.length,"Проекты")+stat(icon("box"),"Shard",all.length,"Рабочие блоки")+stat(icon("check"),"Задачи",state.tasks.length,"Внутри Shard")+stat(icon("clock"),"На приёмке",review.length,"Ожидают проверки")+'</div>'+panel("Приёмка · "+review.length,"projects",review.map(shardRow).join("")||'<p>Нет заданий на проверке</p>')+panel("В работе · "+active.length,"projects",active.map(shardRow).join("")||'<p>Нет активных задач</p>')+'<div class="projectgroups">'+cases+'</div>';
 }
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
+const taskStatusName={todo:"К выполнению",doing:"В работе",done:"Готово"};
+const tasksForShard=id=>state.tasks.filter(t=>t.shardId===id);
+const taskProgress=id=>{const work=tasksForShard(id);return work.length?Math.round(work.filter(t=>t.status==="done").length/work.length*100):0};
+const mayEditTask=(t,sh)=>sh.status==="draft"&&(lead()||t.assignee===state.actor||(t.assignee===null&&sh.assignee===state.actor));
+function taskRows(sh){
+ const list=tasksForShard(sh.id);
+ const out=list.map(t=>{
+  const who=t.assignee||sh.assignee;
+  const action=mayEditTask(t,sh)?'<button class="task-status-btn" data-action="task-next" data-id="'+esc(t.id)+'">'+(t.status==="todo"?"Начать":t.status==="doing"?"Завершить":"Вернуть в работу")+'</button>':"";
+  return '<div class="shard-task-row '+(t.status==="done"?"is-done":"")+'"><span class="task-state">'+(t.status==="done"?"✓":t.status==="doing"?"◉":"○")+'</span><div><strong>'+esc(t.title)+'</strong><small>'+esc(taskStatusName[t.status])+' · '+esc(member(who))+'</small>'+(t.notes?'<p>'+esc(t.notes)+'</p>':"")+'</div>'+action+'</div>';
+ }).join("");
+ return '<div class="shard-task-list"><div class="shard-task-title"><strong>Задачи · '+list.filter(t=>t.status==="done").length+' / '+list.length+'</strong><span>Готово '+taskProgress(sh.id)+'%</span></div>'+(out||'<p class="hint">Задачи ещё не добавлены.</p>')+(sh.status==="draft"&&(lead()||sh.assignee===state.actor)?button("＋ Задача","new-task",sh.id):"")+'</div>';
+}
 const member=id=>state.crew.find(c=>c.id===id)?.name||"Без назначения";
 const options=(items,value)=>items.map(([id,name])=>'<option value="'+esc(id)+'" '+(id===value?'selected':'')+'>'+esc(name)+'</option>').join("");
 const teamOptions=()=>state.crew.map(c=>[c.id,c.name+" · "+c.role]);
@@ -95,7 +108,13 @@ function shardRow(s){
   if(s.status==="draft" && lead())actions+=button("Назначить","assign",s.id);
   if(s.status==="draft" && state.actor===s.assignee)actions+=button("На проверку","submit",s.id);
   if(s.status==="submitted" && lead() && state.actor!==s.assignee)actions+=button("Принять","accept",s.id)+button("На доработку","revise",s.id);
-  return '<article class="taskrow"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small><p>'+esc(s.notes||'')+'</p><div>'+fileLinks(s.files)+'</div></div><div>'+actions+'</div></article>';
+  return '<article class="taskrow shard-work-card"><div><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(member(s.assignee))+' · '+statusName[s.status]+'</small><p>'+esc(s.notes||'')+'</p><div>'+fileLinks(s.files)+'</div></div><div><button data-route="shard/'+esc(s.id)+'">Открыть Shard →</button>'+actions+'</div>'+taskRows(s)+'</article>';
+}
+function shardDetail(id){
+ const sh=state.shards.find(x=>x.id===id);
+ if(!sh)return heading("Shard не найден");
+ const project=state.cases.find(c=>c.id===sh.caseId);
+ return '<button class="back" data-route="case/'+esc(project.id)+'">← '+esc(project.title)+'</button><section class="panel shard-workspace"><div class="shard-workspace-heading"><div><small>ПРОЕКТ / SHARD / ЗАДАЧИ</small><h1>'+esc(sh.title)+'</h1><p>'+esc(project.title)+' · '+esc(sh.kind)+' · '+esc(member(sh.assignee))+'</p><span class="fieldstatus">'+esc(statusName[sh.status])+'</span></div><img src="art/roof.webp" alt="PV-монтаж" loading="lazy"></div><p>'+esc(sh.notes||"")+'</p><div class="shard-work-progress"><span>Выполнено '+taskProgress(sh.id)+'%</span><div class="progress"><i style="width:'+taskProgress(sh.id)+'%"></i></div></div>'+taskRows(sh)+'<div class="shard-work-actions">'+(sh.status==="draft"&&sh.assignee===state.actor?button("Передать на приёмку","submit",sh.id):"")+(sh.status==="submitted"&&lead()&&state.actor!==sh.assignee?button("Принять Shard","accept",sh.id)+button("На доработку","revise",sh.id):"")+'</div></section>';
 }
 function caseMaterialHistory(caseId){
  const related=new Set(state.shards.filter(s=>s.caseId===caseId).map(s=>s.id));
@@ -156,7 +175,7 @@ function garage(view="material"){
 function tasks(){
  const pending=state.shards.filter(s=>s.status==="submitted");
  const active=state.shards.filter(s=>s.status==="draft");
- return heading("Задачи / Приёмка")+
+ return heading("Shard и задачи / Приёмка")+
  panel("Ожидают приёмки · "+pending.length,"projects",pending.map(shardRow).join("")||"<p>Нет заданий на проверке</p>")+
  panel("В работе · "+active.length,"projects",active.map(shardRow).join("")||"<p>Все задания обработаны</p>");
 }
@@ -175,7 +194,7 @@ function field(){
  const next=active[0]||review[0]||done[0],nextCase=next&&state.cases.find(c=>c.id===next.caseId);
  const hero='<section class="fieldhero"><div class="fieldheroimage" role="img" aria-label="PV-монтаж"></div><div class="fieldherocontent"><span class="fieldeyebrow">NVTSK / FIELD OPERATIONS</span><h1>Рабочее место монтажника</h1><p>Задания, материалы, инструкции и передача работ на приёмку.</p><div class="fieldherolinks"><button data-route="projects">Проекты / задачи</button><button data-route="lager">Lager</button></div></div></section>';
  const briefing=next?'<section class="panel fieldbrief"><div class="panelhead"><h2>Следующее задание</h2><span class="fieldstatus">'+esc(statusName[next.status])+'</span></div><div class="fieldbriefbody"><img src="art/roof.webp" alt="Иллюстрация PV-крыши"><div><strong>'+esc(next.title)+'</strong><small>'+esc(nextCase?.title||"Проект")+' · '+esc(nextCase?.city||"")+'</small><p>'+esc(next.notes||"Откройте проект, чтобы посмотреть материалы и инструкции.")+'</p><button data-route="case/'+esc(next.caseId)+'">Открыть проект →</button></div></div></section>':'<section class="panel fieldbrief"><h2>Нет назначенных заданий</h2><p>Руководитель может назначить Shard в карточке проекта.</p></section>';
- const cards=mine.map(s=>{const c=state.cases.find(c=>c.id===s.caseId);return '<article class="fieldtask fieldtaskvisual"><img src="art/roof.webp" alt="Иллюстрация PV-монтажа" loading="lazy"><div class="fieldtaskcontent"><div class="fieldtaskhead"><div><strong>'+esc(s.title)+'</strong><small>'+esc(c?.title||"Проект")+' · '+esc(c?.city||"")+'</small></div><span class="fieldstatus">'+esc(statusName[s.status])+'</span></div><p class="fieldtasknotes">'+esc(s.notes||"Подробности доступны в проекте")+'</p><div class="fieldtaskbuttons"><button data-route="case/'+esc(s.caseId)+'">Открыть проект →</button>'+(s.status==="draft"?'<button data-action="submit" data-id="'+esc(s.id)+'">Передать на приёмку</button>':'')+'</div></div></article>'}).join("")||'<p>Назначенных заданий пока нет.</p>';
+ const cards=mine.map(s=>{const c=state.cases.find(c=>c.id===s.caseId);return '<article class="fieldtask fieldtaskvisual"><img src="art/roof.webp" alt="Иллюстрация PV-монтажа" loading="lazy"><div class="fieldtaskcontent"><div class="fieldtaskhead"><div><strong>'+esc(s.title)+'</strong><small>'+esc(c?.title||"Проект")+' · '+esc(c?.city||"")+'</small></div><span class="fieldstatus">'+esc(statusName[s.status])+'</span></div><p class="fieldtasknotes">'+esc(s.notes||"Подробности доступны в проекте")+'</p><div class="fieldtaskbuttons"><button data-route="shard/'+esc(s.id)+'">Задачи Shard →</button><button data-route="case/'+esc(s.caseId)+'">Открыть проект →</button>'+(s.status==="draft"?'<button data-action="submit" data-id="'+esc(s.id)+'">Передать на приёмку</button>':'')+'</div></div></article>'}).join("")||'<p>Назначенных заданий пока нет.</p>';
  const steps='<section class="panel fieldworkflow"><h2>Порядок работы</h2><div class="fieldsteps"><div><span>01</span>'+icon("layers")+'<strong>Открыть проект</strong><small>Проект и инструкции</small></div><div><span>02</span>'+icon("box")+'<strong>Получить материалы</strong><small>Выдача на Shard</small></div><div><span>03</span>'+icon("settings")+'<strong>Монтаж</strong><small>По проекту и технике безопасности</small></div><div><span>04</span>'+icon("check")+'<strong>Приёмка</strong><small>Передать результат</small></div></div></section>';
  return hero+'<div class="fieldsummary">'+stat(icon("clock"),"В работе",active.length,"")+stat(icon("check"),"На проверке",review.length,"")+stat(icon("layers"),"Принято",done.length,"")+'</div>'+briefing+panel("Мои задания · "+mine.length,"projects",cards)+steps+'<p class="fieldwarning">Иллюстрации не заменяют монтажный проект. Для работ на крыше обязательна защита от падения. AC-подключение выполняет уполномоченная Elektrofachkraft.</p>';
 }
@@ -208,10 +227,10 @@ const pages={dashboard,projects,garage,tasks,team,field,settings,pulse,social,la
 function render(){
  const r=location.hash.slice(1)||"dashboard";
  $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
- const sectionName=r.startsWith("case/")?"Карточка проекта":({projects:"Проекты и Shard",tasks:"Приёмка",team:"Команда",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
+ const sectionName=r.startsWith("shard/")?"Карточка Shard":r.startsWith("case/")?"Карточка проекта":({projects:"Проекты и Shard",tasks:"Приёмка",team:"Команда",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",field:"Field Mode",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки"})[r]||"Рабочее пространство";
  const workbar=r==="dashboard"?"":'<header class="workspace-bar"><div class="workspace-brand"><img src="art/logo.webp" alt="" width="40" height="40"><span><strong>NVTSK SYSTEM</strong><small>'+esc(sectionName)+' · LOCAL FIRST</small></span></div><div class="workspace-tools"><button data-route="dashboard">'+icon("home")+' Главная</button><button data-route="settings" aria-label="Настройки">'+icon("settings")+'</button></div></header>';
- $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):Object.hasOwn(pages,r)?pages[r]():dashboard());
- document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&r.startsWith("case/")&&b.dataset.route==="projects")));
+ $("#app").innerHTML=(lab?'<p class="labnotice">Тестовая копия · изменения изолированы</p>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(r.slice(5)):r.startsWith("shard/")?shardDetail(r.slice(6)):Object.hasOwn(pages,r)?pages[r]():dashboard());
+ document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&["garage","fuhrpark"].includes(r)))||(b.closest(".mode")&&r!=="field"&&b.dataset.route==="dashboard")||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/"))&&b.dataset.route==="projects")));
  if(!lead())document.querySelectorAll('[data-action="new-case"],[data-action="new-electrical"]').forEach(b=>b.remove());
 }
 const input=(name,text,type="text")=>'<label>'+text+'<input required name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="1000000000000" step=".01"':'maxlength="120"')+'></label>';
@@ -221,13 +240,14 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={electrical:"Электромонтаж · новый проект",case:"Новый проект",shard:"Новый Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={electrical:"Электромонтаж · новый проект",case:"Новый проект",shard:"Новый Shard",task:"Новая задача Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
- let fields=["case","electrical","shard","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
+ let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
  if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number");
  if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Elektro · Rohbau","Elektro · Kabel","Elektro · Installation","Elektro · Verteiler","Elektro · Prüfung","Другое"]))+input("price","Стоимость Shard, €","number");
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
+  if(kind==="task")fields+='<p class="hint">Задача входит в выбранный Shard. Бюджет проекта и Merit не изменяются.</p><label>Исполнитель<select name="assignee"><option value="">Исполнитель Shard</option>'+options(teamOptions())+'</select></label><label>Описание<textarea name="notes" maxlength="2000" rows="3" placeholder="Что нужно сделать и как проверить результат"></textarea></label>';
  if(kind==="material")fields+=`<label>Артикул / Artikelnummer<input required name="sku" maxlength="80" placeholder="2004260"></label><label>Производитель<input name="brand" maxlength="100" placeholder="K2 Systems / novotegra"></label>`;
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
  if(kind==="move"){const open=state.shards.filter(s=>s.status!=="accepted");fields+=select("type","Операция",open.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"],["writeoff","Списание"]]:[["receive","Приход"],["writeoff","Списание"]]);fields+='<div id="move-shard-wrap" hidden>'+select("shardId","Проект / Shard",open.map(s=>[s.id,(state.cases.find(c=>c.id===s.caseId)?.title||"Проект")+" / "+s.title]))+"</div>";}
@@ -252,6 +272,7 @@ document.addEventListener("click",async e=>{
  }
  if(a.startsWith("new-")||a==="assign"||a==="move"){edit(a.replace("new-",""),id);return}
  if(["accept","submit","revise"].includes(a))await change(()=>apply(state,a,{shardId:id}));
+  if(a==="task-next"){const t=state.tasks.find(t=>t.id===id);if(t)await change(()=>apply(state,"task-status",{taskId:id,status:t.status==="todo"?"doing":t.status==="doing"?"done":"todo"}));}
  if(a==="undo"&&lead()&&history.length&&confirm("Вернуть предыдущий снимок данных?"))await change(()=>history.at(-1),true);
  if(a==="export"){
  const url=URL.createObjectURL(new Blob([damaged?raw:JSON.stringify(state,null,2)],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download="nvtsk-05.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
@@ -275,7 +296,7 @@ $("#editor").onsubmit=async e=>{
  delete p.media;
  for(const k of ["title","city"])if(k in p)p[k]=p[k].trim();
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
- p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
+ p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="task")p.shardId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
  try{
    if(selected){
