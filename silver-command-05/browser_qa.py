@@ -43,6 +43,9 @@ with sync_playwright() as pw:
         expect(page.locator(".ref66-projects")).to_be_visible()
         expect(page.locator(".ref66-tasks")).to_be_visible()
         expect(page.locator(".ref66-actions")).to_be_visible()
+        assert page.locator(".ref66-action-grid [data-route=projects]").count()==0, "Redundant Projects quick action"
+        assert page.locator(".ref66-bottom [data-route]").count()==0, "Redundant footer navigation"
+        assert page.locator(".ref66-action-grid [data-action=new-case]").count()==1, "Missing primary creation action"
         expect(page.locator(".ref66-project")).to_have_count(3)
         expect(page.locator(".ref66-toolbar .workspace-switch")).to_be_visible()
         workspace=page.locator(".ref66-toolbar .workspace-switch")
