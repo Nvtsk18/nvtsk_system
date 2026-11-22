@@ -172,3 +172,31 @@ button:active{transform:translateY(1px)}
 .case .thumb img{width:100%;height:100%;object-fit:cover}
 @media(max-width:700px){.fieldsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.fieldhero{min-height:220px}.fieldherocontent{padding:20px}.fieldbriefbody>img{width:105px;height:105px}.fieldtaskvisual>img{width:90px}.fieldtaskvisual{gap:10px}}
 @media(max-width:390px){.fieldtaskvisual>img{width:66px}.fieldbriefbody>img{width:85px}.fieldherolinks button{padding:8px 10px}}
+
+
+/* Local-first team community */
+.socialhero{display:flex;align-items:center;gap:20px;background:#18212d;border:1px solid #3a4553;border-radius:13px;overflow:hidden;margin-bottom:14px}
+.socialhero>img{width:38%;height:150px;object-fit:cover}
+.socialhero>div{padding:14px}.socialhero h2{margin:0 0 8px}.socialhero p{opacity:.8}
+.socialcomposer textarea{display:block;width:100%;min-height:92px;margin:10px 0;border-radius:8px;padding:12px}
+.socialcomposeactions{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.socialcomposeactions select{min-width:150px;max-width:100%}
+.socialcomposeactions button,.socialcommentform button{padding:9px 14px;border-radius:8px;border:1px solid #738096}
+.socialfeed{display:grid;gap:12px;margin-top:14px}
+.socialpost{padding:16px;border:1px solid #3c4654;border-radius:12px;background:#151d28}
+.socialauthor{display:flex;gap:10px;align-items:center}
+.socialavatar{display:grid;place-items:center;border:1px solid #8794a8;border-radius:50%;width:38px;height:38px;font-weight:700}
+.socialauthor>div{display:grid;gap:3px}.socialauthor small{font-size:11px;opacity:.65}
+.socialpost>p{white-space:pre-wrap;overflow-wrap:anywhere;margin:14px 0}
+.socialactions{display:flex;align-items:center;gap:14px;border-top:1px solid #394350;padding-top:10px;margin-top:12px;font-size:12px}
+.socialactions button{padding:5px 10px;border:1px solid #526074;border-radius:7px}
+.socialcomments p{font-size:12px;overflow-wrap:anywhere}
+.socialcommentform{display:flex;gap:8px;margin-top:10px}
+.socialcommentform input{min-width:0;flex:1}
+.socialempty{text-align:center;padding:20px;border:1px solid #3c4654;border-radius:12px}
+.socialempty img{max-width:220px;width:100%;border-radius:9px}
+.socialnotice{font-size:11px;opacity:.65}
+.socialteaser{display:flex;gap:16px;align-items:center}
+.socialteaser img{width:115px;height:80px;object-fit:cover;border-radius:8px}
+.socialteaser p{font-size:12px;opacity:.7}
+@media(max-width:600px){.socialhero>img{width:35%;height:125px}.socialhero h2{font-size:18px}.socialteaser img{width:85px}.socialpost{padding:12px}}
