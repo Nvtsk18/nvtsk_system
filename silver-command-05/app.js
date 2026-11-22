@@ -458,6 +458,7 @@ function captainRelations(c){
  const membership=allTeams.map(t=>'<button class="company-network-link" data-route="team/teams"><span>TEAM</span><strong>'+esc(t.name)+'</strong><small>'+t.memberIds.length+' участников</small></button>').join("");
  const ownShards=state.shards.filter(sh=>sh.assignee===c.id||sh.teamId&&memberTeams.some(t=>t.id===sh.teamId)||state.tasks.some(t=>t.shardId===sh.id&&t.assignee===c.id));
  const relatedProjectIds=managing?state.cases.map(p=>p.id):[...new Set(ownShards.map(sh=>sh.caseId))];
+ const people=managing?state.crew.filter(person=>person.id!==c.id):state.crew.filter(person=>person.id!==c.id&&memberTeams.some(t=>t.memberIds.includes(person.id)));
  const relations='<div class="company-network">'+
   '<div class="company-network-company"><small>COMPANY</small><strong>SolAn Plus GmbH</strong><span>Внутренняя рабочая среда</span></div>'+
   '<div class="company-network-arrow">↓</div>'+
@@ -466,7 +467,8 @@ function captainRelations(c){
   '<div><small>PROJECTS · '+relatedProjectIds.length+'</small>'+relatedProjectIds.slice(0,5).map(pid=>{
    const p=state.cases.find(x=>x.id===pid);return p?'<button class="company-network-link" data-route="case/'+esc(p.id)+'"><span>PROJECT</span><strong>'+esc(p.title)+'</strong><small>'+esc(p.city)+'</small></button>':"";
   }).join("")+(relatedProjectIds.length>5?'<button class="company-network-more" data-route="projects">Все Projects →</button>':"")+'</div></div>'+
-  '</div>';
+  '<div class="company-network-people"><div class="company-network-people-header"><small>УЧАСТНИКИ · '+people.length+'</small><button data-route="team">Все профили →</button></div>'+
+  '<div class="company-network-people-list">'+(people.map(person=>'<button data-route="member/'+esc(person.id)+'" class="company-network-person">'+memberAvatar(person)+'<span><strong>'+esc(displayMemberName(person))+'</strong><small>'+esc(displayRole(person))+'</small></span></button>').join("")||'<span class="company-network-empty">Участники появятся здесь после добавления профилей</span>')+'</div></div></div>';
  return '<section class="community-section company-network-section"><div class="community-section-head"><h2>'+title+'</h2><small>Связи формируются из Teams, Projects и назначений</small></div>'+relations+'</section>';
 }
 function memberProfile(id){
