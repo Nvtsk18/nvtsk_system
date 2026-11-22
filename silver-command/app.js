@@ -13,7 +13,7 @@ const initial = [
   {id:"uber",title:"12 кВт AC • Überlingen",city:"Überlingen",client:"Демо Bodensee PV",price:1200,kind:"AC",creator:"demo-client",parent:null,members:[],bids:[]}
 ];
 const fresh = () => ({schemaVersion:2,lots:JSON.parse(JSON.stringify(initial)),name:"Участник",merit:3000,crew:["Участник","Роман","Денис","Олена"],stages:[],posts:[],audit:[]});
-const validLot = l => l && typeof l.id==="string" && !!l.id.trim() && l.id.length<=100 && typeof l.title==="string" && !!l.title.trim() && l.title.length<=300 && typeof l.creator==="string" && !!l.creator.trim() && l.creator.length<=100 && (l.parent===null || (typeof l.parent==="string" && !!l.parent.trim())) && (l.assignee==null || (typeof l.assignee==="string" && !!l.assignee.trim() && l.assignee!==l.creator)) && Array.isArray(l.members) && l.members.length<=100 && l.members.every(m=>typeof m==="string" && !!m.trim()) && new Set(l.members).size===l.members.length && Array.isArray(l.bids) && l.bids.length<=100 && l.bids.every(b=>b && typeof b.team==="string" && !!b.team.trim() && Number.isFinite(b.amount) && b.amount>0 && b.amount<=100000000 && (b.mine===undefined || typeof b.mine==="boolean")) && Number.isFinite(l.price) && l.price>=0 && l.price<=100000000;
+const validLot = l => l && typeof l.id==="string" && !!l.id.trim() && l.id.length<=100 && typeof l.title==="string" && !!l.title.trim() && l.title.length<=300 && typeof l.creator==="string" && !!l.creator.trim() && l.creator.length<=100 && (l.parent===null || (typeof l.parent==="string" && !!l.parent.trim())) && (l.assignee==null || (typeof l.assignee==="string" && !!l.assignee.trim() && l.assignee!==l.creator)) && Array.isArray(l.members) && l.members.length<=100 && l.members.every(m=>typeof m==="string" && !!m.trim()) && new Set(l.members).size===l.members.length && Array.isArray(l.bids) && l.bids.length<=100 && l.bids.every(b=>b && typeof b.team==="string" && !!b.team.trim() && Number.isFinite(b.amount) && b.amount>0 && b.amount<=100000000 && (b.mine===undefined || typeof b.mine==="boolean")) && (l.description===undefined || (typeof l.description==="string" && l.description.length<=2000)) && (l.kind!=="CUSTOM" || (typeof l.title==="string" && !!l.title.trim())) && Number.isFinite(l.price) && l.price>=0 && l.price<=100000000;
 function normalize(raw) {
  if(!raw || !Array.isArray(raw.lots) || raw.lots.length>2000 || !raw.lots.every(validLot)) throw Error("Invalid saved lot data");
  if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.crew)||!Array.isArray(raw.audit))throw Error("Invalid saved collections");
@@ -193,9 +193,9 @@ function socialAction(act,id){
 function lotScreen() {
  const l = find(selected); if (!l) return projects();
  const subs = state.lots.filter(x=>x.parent===l.id);
- let sublist = subs.length ? subs.map(x=>'<div class="listrow"><span>'+encode(x.title)+'</span>'+button("lot","Открыть",x.id)+'</div>').join("") : '<p>Сублотов пока нет.</p>';
+ let sublist = subs.length ? subs.map(x=>'<div class="listrow"><div><b>'+encode(x.title)+'</b><div class="small muted">'+encode(x.description||"Без описания")+' · '+money(x.price)+' €</div></div>'+button("lot","Открыть",x.id)+'</div>').join("") : '<p>Шардов пока нет.</p>';
  let bidlist = (l.bids||[]).map(b=>'<div class="listrow"><span>'+encode(b.team)+'</span><b>'+money(b.amount)+' €</b></div>').join("");
- return '<div class="stack">'+projectNav()+(projectPage===0?panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div>'+pulseView(l)+'<p class="small">Материалы Garage (локальный деморасход): '+money(garageCost(l.id))+' €</p><div class="row" style="margin-top:14px">'+badge(role(l))+button("split","Разбить на 4",l.id)+button("projects","← Проекты")+'</div>') : "")+(projectPage===1?stagePanel(l):"")+(projectPage===2?socialPanel(l):"")+(projectPage===3?'<div class="grid maincols">'+panel('<h2>Сублоты</h2>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фотоэтапы с описанием до/после, номером страницы PDF и независимой демоприёмкой доступны выше. Файлы фотографий и PDF пока не загружаются. Stringplan, Erdung и реальные подписи требуют отдельной реализации.</p>') +
+ return '<div class="stack">'+projectNav()+(projectPage===0?panel('<div class="overline">LOT '+encode(l.id)+'</div><h2 style="font-size:26px;margin:9px 0">'+encode(l.title)+'</h2><p>'+encode(l.city)+' • '+encode(l.client)+'</p><div class="stat">'+money(l.price)+' €</div>'+pulseView(l)+'<p class="small">Материалы Garage (локальный деморасход): '+money(garageCost(l.id))+' €</p><div class="row" style="margin-top:14px">'+badge(role(l))+(l.parent?"":button("shard-new","＋ Добавить Shard",l.id))+button("projects","← Проекты")+'</div>') : "")+(projectPage===1?stagePanel(l):"")+(projectPage===2?socialPanel(l):"")+(projectPage===3?'<div class="grid maincols">'+panel('<div class="between"><h2>Шарды</h2>'+(l.parent?'':button('shard-new','＋ Добавить',l.id))+'</div>'+sublist+'<div class="line"></div><h2>Монтажный чек-лист</h2><p>Фотоэтапы с описанием до/после, номером страницы PDF и независимой демоприёмкой доступны выше. Файлы фотографий и PDF пока не загружаются. Stringplan, Erdung и реальные подписи требуют отдельной реализации.</p>') +
  panel('<h2>Аукцион</h2>'+bidlist+'<label>Моя ставка, €<input id="bid" type="number" min="1"></label><div style="margin-top:10px">'+button("bid","Подать ставку")+'</div><div class="line"></div><label>Назначенный исполнитель<select id="assignee"><option value="">Не назначен</option><option value="me">Я (исполнитель)</option><option value="roman">Роман</option><option value="denis">Денис</option><option value="olena">Олена</option></select></label><div style="margin-top:10px">'+button("assign","Назначить (демо)")+'</div><p class="small" style="margin-top:10px">Роль определяется отдельно для этого лота. Самому себе выдавать контракт собственного лота нельзя.</p>')+'</div>':"")+'</div>';
 }
 function chat() {
@@ -250,14 +250,17 @@ function close(){$("#dialogBackdrop").hidden=true}
 function create() {
  modal('<h2>Новый лот</h2><p>Автор автоматически становится заказчиком в этом лоте.</p><form id="newForm" class="formstack"><label>Название<input name="title" required></label><label>Город<input name="city" required></label><label>Тип<select name="kind"><option>DC</option><option>AC</option><option>PLAN</option><option>REG</option></select></label><label>Цена, €<input name="price" type="number" min="0" value="0"></label><button class="btn primary" type="submit">Создать</button></form>');
 }
-function split(l) {
- if (!l || l.creator!=="me"){notify("Создавать сублоты может только автор этого лота (демо).");return;}
- if(l.parent){notify("Автоматическая разбивка доступна только для корневого лота.");return;}
- for(const [kind,title] of kinds) {
-  if (state.lots.some(x=>x.parent===l.id&&x.kind===kind)) continue;
-  state.lots.push({id:uuid(),title,city:l.city,client:l.client,price:0,kind,creator:"me",parent:l.id,assignee:null,members:[],bids:[]});
- }
- log("split",l.id,"Generated missing phase sublots");save();selected=l.id;go("lot");
+function createShard(l) {
+ if(!l||l.parent||l.creator!=="me"){notify("Добавить Shard может только создатель корневого Case (демо).");return;}
+ if(state.lots.length>=2000){notify("Достигнут лимит проектов.");return;}
+ modal('<h2>Новый Shard</h2><p class="small">Любой вид работ. Шард создаётся внутри Case, без автоматической разбивки на четыре этапа.</p>'+
+ '<form id="shardForm" class="formstack"><input type="hidden" name="parent" value="'+encode(l.id)+'">'+
+ '<label>Название работы<input name="title" maxlength="120" required placeholder="Например: Gerüstbau, DC, логистика"></label>'+
+ '<label>Категория<select name="kind"><option value="CUSTOM">Другая работа</option><option value="PLAN">Projektierung</option><option value="DC">DC-Montage</option><option value="AC">AC-Anschluss</option><option value="REG">Anmeldung</option></select></label>'+
+ '<label>Описание и объём работ<textarea name="description" maxlength="2000" rows="4" placeholder="Что именно нужно выполнить"></textarea></label>'+
+ '<label>Бюджет Shard, €<input name="price" type="number" min="0" max="100000000" step="0.01" value="0" required></label>'+
+ '<p class="small">Исполнителя назначают отдельно после создания. Для AC и Anmeldung в демоверсии назначение ограничено.</p>'+
+ '<button type="submit" class="btn primary">Создать Shard</button></form>');
 }
 document.addEventListener("click",e=>{
  const n=e.target.closest("[data-screen]"); if(n){e.preventDefault();go(n.dataset.screen);return;}
@@ -268,7 +271,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.act==="project-page"){setProjectPage(Number(b.dataset.page));return;}
  if(b.dataset.act==="projects")go("projects");
  if(b.dataset.act==="new")create();
- if(b.dataset.act==="split")split(find(b.dataset.id));
+ if(b.dataset.act==="shard-new"){createShard(find(b.dataset.id));return;}
  if(b.dataset.act==="import"){modal('<h2>Импорт локальной резервной копии</h2><p class="small">Только демоданные. Существующие данные будут заменены после проверки и подтверждения. Не вставляйте реальные адреса клиентов, документы или персональные данные.</p><form id="importForm" class="formstack"><label>JSON резервной копии<textarea name="backup" rows="8" maxlength="1500000" required placeholder=\'{"exportedAt":"...","data":{...}}\'></textarea></label><button class="btn primary" type="submit">Проверить и восстановить</button></form>');return;}
  if(b.dataset.act==="export-raw"){try{const raw=sessionStorage.getItem("nvtsk04_original_saved")??localStorage.getItem(KEY);if(raw===null)throw Error("Нет исходной записи");const blob=new Blob([raw],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-original-recovery.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(err){notify("Не удалось экспортировать: "+err.message)}return;}
  if(b.dataset.act==="export"){let garage;try{const checked=normalize(state);if(checked.recoveryWarnings.length)throw Error("Проекты содержат записи, которые не переживут восстановление: "+checked.recoveryWarnings.join("; "));garage=window.NVTSK_GARAGE?.snapshot();if(!garage)throw Error("Модуль Garage недоступен");const ids=new Set(checked.lots.map(l=>l.id));const orphans=garage.usage.filter(u=>!ids.has(u.project));if(orphans.length)throw Error("Расходы Garage ссылаются на отсутствующие проекты: "+orphans.length);if(recoveryLock)throw Error("Хранилище проектов заблокировано для восстановления");}catch(err){notify("Общий экспорт остановлен: "+err.message+". Данные не изменены.");return;}const payload=JSON.stringify({kind:"nvtsk-silver-combined-export",version:1,exportedAt:new Date().toISOString(),data:state,garage},null,2);const blob=new Blob([payload],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nvtsk-silver-combined-export.json";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
@@ -319,7 +322,20 @@ document.addEventListener("submit",e=>{
   }catch(err){notify("Импорт отклонён: "+err.message)}
   return;
  }
- if(f.id==="newForm"){
+ if(f.id==="shardForm"){
+ const parent=find(String(data.parent||""));
+ if(!parent||parent.parent||parent.creator!=="me"){notify("Недостаточно прав для создания Shard.");return;}
+ if(state.lots.length>=2000){notify("Достигнут лимит проектов.");return;}
+ const title=String(data.title||"").trim(),description=String(data.description||"").trim(),price=Number(data.price);
+ const kind=["CUSTOM","PLAN","DC","AC","REG"].includes(data.kind)?data.kind:"CUSTOM";
+ if(!title||title.length>120||description.length>2000||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, описание и бюджет.");return;}
+ const id=uuid();
+ state.lots.push({id,title,description,city:parent.city,client:parent.client,price,kind,creator:"me",parent:parent.id,assignee:null,members:[],bids:[]});
+ log("shard_created",parent.id,"Shard: "+id+" / "+title);
+ if(!save()){state.lots=state.lots.filter(x=>x.id!==id);notify("Не удалось сохранить Shard. Данные не изменены.");return;}
+ close();selected=parent.id;projectPage=3;go("lot");return;
+}
+if(f.id==="newForm"){
  const title=String(data.title||"").trim().slice(0,120),city=String(data.city||"").trim().slice(0,100),price=Number(data.price);
  if(!title||!city||!Number.isFinite(price)||price<0||price>100000000){notify("Проверьте название, город и сумму.");return;}
  const id=uuid();state.lots.push({id,title,city,client:"Создано пользователем",price,kind:["DC","AC","PLAN","REG"].includes(data.kind)?data.kind:"DC",creator:"me",parent:null,assignee:null,members:[],bids:[]});
