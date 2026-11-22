@@ -93,6 +93,11 @@ function importBackup(raw,confirmed){
  const wrapper=JSON.parse(raw);
  if(!wrapper||wrapper.kind!=="nvtsk-garage-backup")throw Error("Это не резервная копия Garage");
  const next=validate(wrapper.data);
+ // Never restore material consumption against projects absent from the active Case store.
+ // Validate before both preview and commit; no localStorage mutation on mismatch.
+ const activeIds=new Set(projects().map(p=>p.id));
+ const orphan=next.usage.find(u=>!activeIds.has(u.project));
+ if(orphan)throw Error("Копия Garage ссылается на отсутствующий Case/Shard: "+orphan.project+". Восстановите соответствующий проект до импорта склада.");
  if(!confirmed)return {items:next.items.length,movements:next.movements.length,usage:next.usage.length};
  if(locked)throw Error("Повреждённое исходное хранилище: автоматическое восстановление заблокировано");
  localStorage.setItem(KEY,JSON.stringify(next));
