@@ -52,7 +52,8 @@ globalThis.NVModel = (() => {
       case "material": allowed(stock); d.garage.push({id:p.id,title:p.title,qty:p.qty}); break;
       case "move": {
         const item=d.garage.find(x=>x.id===p.itemId);
-        allowed(stock && item && (p.type==="receive" || s));
+        allowed(stock && item && (p.type==="receive" || (s && s.status!=="accepted")));
+        // Accepted work is closed: further stock movements require a new open Shard.
         requireValue(amount(p.qty)&&p.qty>0,"Введите положительное количество");
         item.qty=Math.round((item.qty+(p.type==="issue"?-p.qty:p.qty))*1e6)/1e6;
         d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:p.type==="receive"?null:s.id,actor:actor.id});
