@@ -166,7 +166,7 @@ function filterProjectHub(){
  });
  const result=document.getElementById("ph-result-count"),empty=document.getElementById("ph-no-match");
  if(result)result.textContent=shown+" найдено";
- if(empty)empty.hidden=shown>0;
+ if(empty)empty.hidden=shown>0||cards.length===0;
 }
 function projects(){
  const all=state.cases.map(projectHubMembership),managed=all.filter(x=>x.managed),joined=all.filter(x=>x.joined);
@@ -190,7 +190,7 @@ function projects(){
   tab==="discover"?'<div class="ph-local-note"><strong>Локальный каталог</strong><span>Здесь отображаются записи этого браузера, а не общедоступные заказы из интернета.</span></div>':"";
  const filterButtons=tab==="market"?"":'<div class="ph-filters" role="group" aria-label="Фильтр статуса">'+[["all","Все"],["active","В работе"],["review","Приёмка"],["accepted","Завершено"]].map(([key,label])=>'<button type="button" data-action="project-filter" data-filter="'+key+'" class="'+(projectHubFilter===key?"is-active":"")+'" aria-pressed="'+(projectHubFilter===key)+'">'+label+'</button>').join("")+'</div>';
  return '<div class="ph-root">'+
-  '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">NVTSK · WORKSPACE</span><h1>Projects</h1><p>Ваши объекты, участие в работах и поиск новых возможностей.</p><div class="ph-hero-metrics"><span><strong>'+managed.length+'</strong> под управлением</span><span><strong>'+joined.length+'</strong> с участием</span><span><strong>'+offers.length+'</strong> свободных Shards</span></div></div><div class="ph-hero-actions">'+(lead()?button("＋ Project","new-case"):"")+'</div></header>'+
+  '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">NVTSK · WORKSPACE</span><h1>Projects</h1><p>Ваши объекты, участие в работах и поиск новых возможностей.</p><div class="ph-hero-metrics"><span><strong>'+managed.length+'</strong> под управлением</span><span><strong>'+joined.length+'</strong> с участием</span><span><strong>'+offers.length+'</strong> свободных Shards</span></div></div><div class="ph-hero-actions">'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
   '<nav class="ph-tabs" aria-label="Разделы Projects">'+views.map(([key,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+key+'" class="'+(tab===key?"is-active":"")+'" aria-current="'+(tab===key?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
   '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="market"?"OPPORTUNITIES":tab==="discover"?"DISCOVER":"MY WORKSPACE")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+
   note+
