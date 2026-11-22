@@ -11,7 +11,7 @@ globalThis.NVModel = (() => {
     if (old.version !== 1) return old;
     const data = JSON.parse(JSON.stringify(old));
     requireValue(["cases","garage","tasks","crew","shards"].every(k => Array.isArray(data[k])), "Неверная схема v1");
-    data.crew = [{id:"lead",name:"Координатор",role:roles[0]}, ...data.crew.map((c,i) => ({id:"member-"+i,name:c.name,role:roles[1]}))];
+    data.crew = [{id:"lead",name:"Капитан",role:roles[0]}, ...data.crew.map((c,i) => ({id:"member-"+i,name:c.name,role:roles[1]}))];
     data.actor = "lead";
     data.moves = [];
     data.version = 2;
