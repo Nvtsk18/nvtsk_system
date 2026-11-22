@@ -101,12 +101,13 @@ globalThis.NVModel = (() => {
         const target=d.crew.find(c=>c.id===p.memberId);
         allowed(target&&target.id===actor.id);
         requireValue(typeof p.headline==="string"&&p.headline.length<=120&&typeof p.location==="string"&&p.location.length<=100&&typeof p.bio==="string"&&p.bio.length<=700,"Слишком длинный текст профиля");
-        requireValue(typeof p.address==="string"&&p.address.length<=240&&typeof p.phone==="string"&&p.phone.length<=50&&typeof p.email==="string"&&p.email.length<=160&&typeof p.website==="string"&&p.website.length<=180,"Некорректные контактные данные профиля");
-        requireValue(!p.website||/^https:\/\/[a-z0-9.-]+(?:\/[a-zA-Z0-9._~!requireValue(typeof p.headline==="string"&&p.headline.length<=120&&typeof p.location==="string"&&p.location.length<=100&&typeof p.bio==="string"&&p.bio.length<=700,"Слишком длинный текст профиля");'()*+,;=:@%/?#-]*)?$/.test(p.website),"Сайт должен начинаться с https://");
-        requireValue(!p.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email),"Некорректный email");
+        const contact={address:p.address??target.address??"",phone:p.phone??target.phone??"",email:p.email??target.email??"",website:p.website??target.website??""};
+        requireValue(typeof contact.address==="string"&&contact.address.length<=240&&typeof contact.phone==="string"&&contact.phone.length<=50&&typeof contact.email==="string"&&contact.email.length<=160&&typeof contact.website==="string"&&contact.website.length<=180,"Некорректные контактные данные профиля");
+        requireValue(!contact.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email),"Некорректный email");
+        requireValue(!contact.website||/^https:\/\/[a-z0-9.-]+(?:\/[a-zA-Z0-9._~!$&'()*+,;=:@%/?#-]*)?$/.test(contact.website),"Сайт должен начинаться с https://");
         requireValue(Array.isArray(p.skills)&&p.skills.length<=8&&p.skills.every(x=>typeof x==="string"&&x.length<=36),"Укажите до 8 навыков");
         if(p.avatar!==undefined)requireValue(p.avatar===""||(typeof p.avatar==="string"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.avatar)&&p.avatar.length<=240000),"Недопустимое фото профиля");
-        Object.assign(target,{headline:p.headline.trim(),location:p.location.trim(),bio:p.bio.trim(),address:p.address.trim(),phone:p.phone.trim(),email:p.email.trim(),website:p.website.trim(),skills:p.skills.map(x=>x.trim()).filter(Boolean)});
+        Object.assign(target,{headline:p.headline.trim(),location:p.location.trim(),bio:p.bio.trim(),address:contact.address.trim(),phone:contact.phone.trim(),email:contact.email.trim(),website:contact.website.trim(),skills:p.skills.map(x=>x.trim()).filter(Boolean)});
         if(p.avatar!==undefined)target.avatar=p.avatar;
         break;
       }
