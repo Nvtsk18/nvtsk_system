@@ -256,7 +256,11 @@ with sync_playwright() as pw:
         route("team");page.locator('#actor').select_option("lead");route("tasks");act("accept")
         page.wait_for_function("""() => {const r=JSON.parse(localStorage.getItem('nvtsk05_independent'));return r?.data?.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')}""")
         page.wait_for_function("JSON.parse(localStorage.getItem('nvtsk05_independent')).data.shards.some(s=>s.title==='QA монтаж' && s.status==='accepted')")
-        # Browser-runtime regression: an accepted Shard cannot consume or return stock,
+        # Gamification is linked to verified work, not raw task toggles.
+        route("member/member-0")
+        expect(page.locator(".community-profile-stats")).to_contain_text("75")
+        expect(page.locator(".community-progress")).to_contain_text("75 XP")
+                # Browser-runtime regression: an accepted Shard cannot consume or return stock,
         # even if the actor is the manager. The persisted local snapshot must stay intact.
         closed_guard = page.evaluate("""() => {
             const raw = JSON.parse(localStorage.getItem('nvtsk05_independent'));
