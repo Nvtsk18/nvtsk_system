@@ -134,6 +134,7 @@ const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+acti
 function visualTiles(items){return '<div class="visualtiles">'+items.map(([img,title,subtitle,route])=>'<button class="visualtile" data-route="'+route+'"><img src="art/'+img+'.webp" alt="" loading="lazy"><span><strong>'+esc(title)+'</strong><small>'+esc(subtitle)+'</small></span></button>').join("")+'</div>'}
 // Project Hub v56 — three user-centered surfaces, never a claim of a real online marketplace.
 // Project -> Shard -> Task data models remain unchanged.
+let projectHubSelectedCase=null;
 let projectHubTab="mine",projectHubFilter="all",projectHubQuery="",projectHubCity="all",projectHubKind="all";
 const projectHubStatusLabel={review:"Приёмка",active:"В работе",accepted:"Завершён",planning:"Планирование"};
 const projectHubStatusOrder={review:0,active:1,planning:2,accepted:3};
@@ -188,7 +189,7 @@ function projectHubMarketCard(x,saved){
 }
 function filterProjectHub(){
  const search=(document.getElementById("project-hub-search")?.value||"").trim().toLocaleLowerCase();
- const cards=[...document.querySelectorAll(".ph-row[data-hubsearch]")];
+ const cards=[...document.querySelectorAll(".ph-row[data-hubsearch],.sc75-project[data-hubsearch]")];
  let shown=0;
  for(const el of cards){
   const textMatch=el.dataset.hubsearch.includes(search);
@@ -284,7 +285,7 @@ function projects(){
  const cards=list.map(x=>'<button class="sc75-project'+(current&&current.c.id===x.c.id?' is-current':'')+'" data-action="project-select" data-id="'+esc(x.c.id)+'" data-hubsearch="'+esc(projectHubMeta(x).search)+'"><img src="'+photo(x.c)+'" alt=""><span class="sc75-card-info"><strong>'+esc(x.c.title)+'</strong><small>'+esc(x.c.city||x.c.address||"Объект")+'</small><span>'+x.shards.length+' Shards · '+x.tasks.length+' Tasks</span><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span></span><span class="sc75-card-end"><em>'+status(x)+'</em><b>'+x.percent+'%</b></span></button>').join("");
  let pane='<section class="sc75-empty">Выберите Case, чтобы открыть паспорт, медиа и задачи.</section>';
  if(current){
-  const x=current,c=x.c,p=c.pv||c.pvProject||{},images=mediaFor(c);
+  const x=current,c=x.c,p=c.pvPlan||{},images=mediaFor(c);
   const facts=[["Мощность",p.declaredKwp?esc(String(p.declaredKwp))+" kWp":"—"],["Модули",p.declaredModules?esc(String(p.declaredModules))+" шт.":"—"],["Инвертор",esc(p.inverter||p.inverterType||"—")],["Крыша",esc(p.roofType||"—")],["Крепление",esc(p.mounting||"—")],["Уклон",p.slopeDeg!=null&&p.slopeDeg!==""?esc(String(p.slopeDeg))+"°":"—"]];
   const files=(c.files||[]).slice(0,6).map(f=>'<a class="sc75-file" href="'+f.data+'" download="'+esc(f.name)+'">'+(f.data.startsWith("data:image/")?'<img src="'+f.data+'" alt="'+esc(f.name)+'">':'<span>PDF</span>')+'</a>').join("");
   const stages=[["Подготовка",x.shards.length>0],["Монтаж",x.percent>0],["AC",x.shards.some(sh=>sh.kind==="AC"&&sh.status==="accepted")],["Приёмка",x.status==="review"||x.status==="accepted"],["Закрытие",x.status==="accepted"]];
@@ -710,6 +711,7 @@ function edit(kind,id){
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
 document.addEventListener("click",async e=>{
+ const select=e.target.closest('[data-action="project-select"]');if(select){projectHubSelectedCase=select.dataset.id;render();return}
  const phTab=e.target.closest('[data-action="project-tab"]');
  if(phTab){projectHubTab=phTab.dataset.tab;projectHubFilter="all";projectHubQuery="";projectHubCity="all";projectHubKind="all";render();return}
  const phSave=e.target.closest('[data-action="project-save"]');
