@@ -38,6 +38,17 @@ with sync_playwright() as pw:
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
         expect(page.get_by_role("heading",name="NVTSK SYSTEM",exact=True)).to_be_visible()
         expect(page.locator(".command-center")).to_be_visible()
+        # Guard the user-approved raster office against regression to placeholder SVG.
+        office = page.evaluate("""() => ({
+          background:getComputedStyle(document.querySelector('.command-stage')).backgroundImage,
+          dock:document.querySelector('.command-dock').getBoundingClientRect().toJSON(),
+          panels:document.querySelector('.command-panels').getBoundingClientRect().toJSON()
+        })""")
+        assert "data:image/webp;base64" in office["background"], (width, "Approved office artwork missing")
+        if width > 720:
+            assert office["dock"]["top"] >= office["panels"]["bottom"] - 4 and office["dock"]["left"] < 2, (width, "Desktop dock misplaced",office)
+        else:
+            assert office["dock"]["top"] < height and office["dock"]["bottom"] >= height - 5, (width, "Mobile dock not fixed",office)
         fits()
         def capture(screen):
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
