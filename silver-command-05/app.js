@@ -437,12 +437,12 @@ function contactDetail(label,content,href){
  return '<div class="company-contact-detail"><small>'+esc(label)+'</small>'+(href?'<a href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+esc(content)+'</a>':'<strong>'+esc(content)+'</strong>')+'</div>';
 }
 function memberContacts(c){
- const website=typeof c.website==="string"&&/^https:\/\/[a-z0-9.-]+(?:\/[a-zA-Z0-9._~!function memberProfile(id){'()*+,;=:@%/?#-]*)?$/i.test(c.website)?c.website:"";
+ let website="";
+ try{if(typeof c.website==="string"){const url=new URL(c.website);if(url.protocol==="https:"&&/^[a-z0-9.-]+$/i.test(url.hostname))website=url.href}}catch{}
  const phone=typeof c.phone==="string"&&/^\+?[\d\s()-]{6,50}$/.test(c.phone)?c.phone:"";
  const email=typeof c.email==="string"&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)?c.email:"";
- const address=c.address||"";
  const pieces=[
-   contactDetail("Адрес",address,null),
+   contactDetail("Адрес",c.address||"",null),
    contactDetail("Телефон",phone,phone?"tel:"+phone.replace(/[^\d+]/g,""):null),
    contactDetail("Email",email,email?"mailto:"+email:null),
    contactDetail("Веб-сайт",website?website.replace(/^https:\/\//,""):null,website||null)
