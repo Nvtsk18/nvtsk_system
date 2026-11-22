@@ -270,6 +270,54 @@ with sync_playwright() as pw:
         expect(page.locator(".cp-project-row")).to_contain_text("QA Roof")
         page.locator(".cp-project-row").click()
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible()
+        # PV technical dossier: source plan vs Modulfläche and kWp consistency.
+        expect(page.locator(".pv-cockpit")).to_be_visible()
+        expect(page.locator(".pv-cockpit-nav button")).to_have_count(7)
+        act("pv-tech")
+        for key,val in [
+            ("sourcePlan","Montageplanung Rev A"),("declaredModules","15"),
+            ("declaredKwp","6.44"),("panelWp","460"),
+            ("moduleType","AXIbiperfect 460"),("roofType","Beton"),
+            ("tileType","Braas Frankfurter Pfanne"),("mounting","Novo-ES"),
+            ("slopeDeg","35"),("eaveHeightM","6.0"),
+            ("rafterSpacingCm","95"),("model3d","https://example.com/pv3d")
+        ]: page.locator(f'#editor [name="{key}"]').fill(val)
+        save()
+        expect(page.locator(".pv-facts")).to_contain_text("Montageplanung Rev A")
+        act("pv-zone")
+        page.locator("#editor [name=name]").fill("Modulfläche/String 1")
+        page.locator("#editor [name=direction]").fill("Südwest")
+        page.locator("#editor [name=modules]").fill("14")
+        page.locator("#editor [name=hooks]").fill("24")
+        page.locator("#editor [name=panelWp]").fill("460")
+        page.locator("#editor [name=roofType]").fill("Beton")
+        save()
+        expect(page.locator(".pv-zone")).to_have_count(1)
+        expect(page.locator(".pv-issue.pv-danger")).to_contain_text("15")
+        expect(page.locator(".pv-issue.pv-danger")).to_contain_text("14")
+        expect(page.locator(".pv-issue.pv-warning")).to_contain_text("6,44")
+        act("pv-material")
+        page.locator("#editor [name=name]").fill("Dachhaken")
+        page.locator("#editor [name=qty]").fill("24")
+        page.locator("#editor [name=sku]").fill("0300")
+        save()
+        expect(page.locator(".pv-material")).to_have_count(1)
+        act("pv-document")
+        page.locator("#editor [name=name]").fill("Stringplan Rev A")
+        page.locator("#editor [name=kind]").fill("DC Stringplan")
+        page.locator("#editor [name=url]").fill("https://example.com/stringplan.pdf")
+        page.locator("#editor [name=revision]").fill("A")
+        save()
+        expect(page.locator(".pv-document")).to_have_count(1)
+        page.locator('[data-action="pv-check"][data-check="risk"]').click()
+        expect(page.locator('[data-action="pv-check"][data-check="risk"]')).to_have_attribute("aria-pressed","true")
+        assert page.evaluate("""() => {
+           const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+           const p=d.cases.find(c=>c.title==='QA Roof')?.pvPlan;
+           return p?.checks?.risk===true && p?.zones?.length===1 && p?.materials?.length===1 && p?.documents?.length===1;
+        }"""), "PV project dossier must persist with linked source fields"
+        page.evaluate("window.scrollTo(0,0)")
+        capture("case-pv-dossier")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Бюджет Shard").fill("250");save()
         act("assign-team")
