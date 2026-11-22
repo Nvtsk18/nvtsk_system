@@ -80,7 +80,7 @@ with sync_playwright() as pw:
         route("team")
         expect(page.locator(".community-hero")).to_be_visible()
         expect(page.locator(".community-hero h1")).to_have_text("Сообщество")
-        expect(page.locator("#nav [data-route=team]")).to_contain_text("Сообщество")
+        expect(page.locator("#nav [data-route=team]")).to_contain_text("Команда")
         expect(page.locator(".community-identity-copy")).to_contain_text("Roman Eppinger")
         assert page.locator(".community-person").filter(has_text="Координатор").count()==0, "Legacy Coordinator must not appear"
         assert page.locator(".community-person").filter(has_text="Капитан").count() >= 1
