@@ -59,6 +59,10 @@ deny('move',{id:'installerissue',type:'issue',qty:1,itemId:'roleitem',shardId:'r
 deny('accept',{shardId:'roleshard'});
 roleAct('submit',{shardId:'roleshard'});
 roleAct('actor',{id:'lead'});
+const submittedSnapshot=JSON.stringify(rolesState);
+assert.throws(()=>roleAct('move',{id:'submitted-issue',type:'issue',qty:1,itemId:'roleitem',shardId:'roleshard'}),/недоступно/);
+assert.throws(()=>roleAct('move',{id:'submitted-return',type:'return',qty:1,itemId:'roleitem',shardId:'roleshard'}),/недоступно/);
+assert.equal(JSON.stringify(rolesState),submittedSnapshot,'submitted Shard stock must remain unchanged');
 roleAct('accept',{shardId:'roleshard'});
 deny('move',{id:'closedkeeperissue',type:'issue',qty:1,itemId:'roleitem',shardId:'roleshard'});
 assert.equal(rolesState.garage[0].qty,8);
