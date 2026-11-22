@@ -83,3 +83,107 @@
  .command-dock{background:linear-gradient(#18334bfa,#081728fc)!important;border-left:0!important}
  .command-dock button{min-height:58px!important;box-shadow:inset 0 1px #c6f5ff78!important}
 }
+
+/* v43 — restore early design's readable photographic cards, unify navigation */
+.command-mission{position:relative;z-index:3;display:flex;align-items:center;gap:15px;min-height:79px;margin:5px 0 16px;padding:10px 14px;border:1px solid #7dc3e686;border-radius:15px;background:linear-gradient(110deg,#1d3d56ed,#10273cee);box-shadow:0 9px 25px #0007,inset 0 1px #ffffff4b}
+.command-mission>img{flex:0 0 95px;width:95px;height:61px;object-fit:cover;border-radius:10px;border:1px solid #a1d9e37a}
+.command-mission-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.command-mission-copy small{font-size:10px;font-weight:750;letter-spacing:.14em;color:#a6e5ec}
+.command-mission-copy strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.command-mission-copy span{font-size:12px;color:#c6dfed;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.command-mission button{display:flex;align-items:center;justify-content:center;gap:7px;flex:none;padding:10px 15px;min-height:43px;border-radius:11px;color:#05263b;font-size:12px;font-weight:750;background:linear-gradient(#daeffc,#9dd7ec);border:1px solid #e1fcff9c;box-shadow:0 4px 0 #174361,inset 0 1px #fff}
+.command-mission button .ui-icon{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7}
+.command-mission button:hover{filter:brightness(1.08)}
+@media(max-width:720px){
+ .command-stage{display:flex;flex-direction:column}
+ .command-stage-head{order:0;min-height:285px;padding-top:53px}
+ .command-mobile-tiles{order:1;margin:7px 0 14px;gap:9px}
+ .command-mobile-tiles button{border:1px solid #8bcce6bd;background:linear-gradient(165deg,#254763,#0b253e)}
+ .command-mobile-tiles img{height:95px}
+ .command-metrics{order:2;margin:0 0 12px}
+ .command-mission{order:3;gap:10px;flex-wrap:wrap;margin:0 0 15px;padding:10px}
+ .command-mission>img{width:70px;flex-basis:70px;height:65px}
+ .command-mission-copy small{font-size:9px}
+ .command-mission-copy strong{font-size:13px}
+ .command-mission-copy span{font-size:10px}
+ .command-mission button{flex:0 0 100%;min-height:39px}
+ .command-globe-scene{display:none}
+ .command-panels{order:5}
+}
+body:not(:has(.command-center)) #nav{
+ display:flex!important;flex-direction:column!important;position:fixed!important;
+ top:0!important;left:auto!important;right:0!important;bottom:0!important;
+ width:214px!important;height:100dvh!important;max-height:none!important;
+ margin:0!important;padding:13px 11px 19px!important;gap:9px!important;
+ z-index:80;background:linear-gradient(175deg,#1b3248,#081827 84%)!important;
+ border-left:1px solid #6fc1e7a0!important;border-right:0!important;
+ box-shadow:-8px 0 31px #0008!important;overflow-y:auto!important
+}
+body:not(:has(.command-center)) #nav .nav-logo{display:grid!important;padding:18px 7px 21px!important}
+body:not(:has(.command-center)) #nav .nav-logo strong{font-size:23px;color:#f7fbff;letter-spacing:.06em}
+body:not(:has(.command-center)) #nav .nav-logo span{font-size:10px;color:#a8cee4;letter-spacing:.18em}
+body:not(:has(.command-center)) #nav button{
+ display:flex!important;flex-direction:row!important;justify-content:flex-start!important;align-items:center!important;
+ gap:11px!important;min-width:0;min-height:49px!important;
+ padding:10px 12px!important;color:#eaf6ff!important;text-align:left!important;
+ background:linear-gradient(145deg,#29475e,#122b42);
+ border:1px solid #79b9d67d!important;border-radius:13px!important;
+ box-shadow:inset 0 1px #ffffff38,0 6px 13px #0004
+}
+body:not(:has(.command-center)) #nav button.active{background:linear-gradient(145deg,#33607c,#153652)!important;border:1px solid #b2eaff!important;box-shadow:inset 3px 0 #b9f9fa,0 5px 16px #1a94c257!important}
+body:not(:has(.command-center)) #nav .nav-glyph{color:#a9eaff;font-size:23px}
+body:not(:has(.command-center)) #nav button>span:not(.nav-glyph){display:block!important;font-size:13px;font-weight:700!important;line-height:1.25}
+body:not(:has(.command-center)) #nav button small{display:block;color:#abcada;font-weight:400}
+body:not(:has(.command-center)) main{margin:0 214px 0 0!important;min-height:100dvh;padding:0 21px 35px!important;max-width:none;overflow-x:clip}
+.workspace-bar{height:72px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;z-index:20;margin:0 -21px 15px;padding:10px 21px;background:linear-gradient(115deg,#122536f5,#0b1b2bf8);border-bottom:1px solid #5eaad07d;box-shadow:0 7px 18px #0005;backdrop-filter:blur(10px)}
+.workspace-brand{display:flex;align-items:center;gap:10px}.workspace-brand img{width:40px;height:40px;object-fit:contain}
+.workspace-brand span{display:flex;flex-direction:column;gap:2px}.workspace-brand strong{font-size:16px;color:#f7faff;letter-spacing:.03em}.workspace-brand small{font-size:10px;color:#a4dce9}
+.workspace-tools{display:flex;gap:8px}.workspace-tools button{display:flex;align-items:center;justify-content:center;gap:8px;min-width:42px;min-height:39px;padding:9px 12px;color:#def7ff;border:1px solid #7dc7e08c;border-radius:10px;background:#1e4059}.workspace-tools .ui-icon{height:17px;width:17px;fill:none;stroke:currentColor;stroke-width:1.9}
+body:not(:has(.command-center)) .casehead{display:grid;grid-template-columns:minmax(225px,38%) minmax(0,1fr);align-items:stretch;gap:19px;padding:15px;min-height:230px;overflow:hidden}
+body:not(:has(.command-center)) .casehead>img{height:215px;width:100%;object-fit:cover;border-radius:13px;border:1px solid #87c4e480;box-shadow:0 8px 25px #0007}
+body:not(:has(.command-center)) .casehead>div{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:5px;min-width:0}
+body:not(:has(.command-center)) .casehead h1{font-size:clamp(25px,3vw,35px);line-height:1.2;margin:0 0 5px;color:#f5fcff}
+body:not(:has(.command-center)) .casehead p{margin:0;color:#c3d8e6}
+body:not(:has(.command-center)) .casehead .progress{width:min(290px,100%);margin-top:12px}
+body:not(:has(.command-center)) .details .stat{background:linear-gradient(145deg,#274b66,#132b40);border:1px solid #77bfd58c;border-radius:13px;box-shadow:inset 0 1px #fff3,0 5px 15px #0005}
+body:not(:has(.command-center)) .visualtile:hover,body:not(:has(.command-center)) .panel button:hover{border-color:#9deaff}
+@media(min-width:721px) and (max-width:950px){
+ body:not(:has(.command-center)) #nav{width:174px!important;padding:10px 7px!important}
+ body:not(:has(.command-center)) main{margin-right:174px!important;padding:0 12px 28px!important}
+ .workspace-bar{margin:0 -12px 12px;padding:8px 12px}
+ body:not(:has(.command-center)) .casehead{grid-template-columns:1fr;gap:12px}
+ body:not(:has(.command-center)) .casehead>img{height:195px}
+}
+@media(max-width:720px){
+ body:not(:has(.command-center)) main{margin:0!important;padding:0 10px calc(94px + env(safe-area-inset-bottom))!important}
+ body:not(:has(.command-center)) #nav{
+  display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  flex-direction:row!important;align-items:center!important;justify-content:space-around!important;
+  width:100%!important;height:calc(76px + env(safe-area-inset-bottom))!important;max-height:none!important;
+  left:0!important;right:0!important;top:auto!important;bottom:0!important;
+  padding:5px 4px calc(5px + env(safe-area-inset-bottom))!important;margin:0!important;gap:4px!important;
+  overflow:hidden!important;border-top:1px solid #86d0ec9c!important;border-left:0!important;
+  background:linear-gradient(#17384ef8,#07192afc)!important
+ }
+ body:not(:has(.command-center)) #nav .nav-logo,body:not(:has(.command-center)) #nav .nav-spacer{display:none!important}
+ body:not(:has(.command-center)) #nav button{display:none!important}
+ body:not(:has(.command-center)) #nav button[data-route="dashboard"],
+ body:not(:has(.command-center)) #nav button[data-route="projects"],
+ body:not(:has(.command-center)) #nav button[data-route="lager"],
+ body:not(:has(.command-center)) #nav button[data-route="team"],
+ body:not(:has(.command-center)) #nav button[data-route="field"]{
+  display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;
+  gap:2px!important;min-height:57px!important;height:57px!important;margin:0!important;
+  padding:4px 1px!important;border-radius:11px!important;
+  text-align:center!important;box-shadow:inset 0 1px #bff4ff66!important
+ }
+ body:not(:has(.command-center)) #nav button>span:not(.nav-glyph){display:block!important;font-size:10px!important;line-height:1.1}
+ body:not(:has(.command-center)) #nav .nav-glyph{font-size:22px!important;line-height:1}
+ body:not(:has(.command-center)) #nav button small{display:none!important}
+ .workspace-bar{height:61px;margin:0 -10px 12px;padding:8px 10px}
+ .workspace-brand img{width:34px;height:34px}.workspace-brand strong{font-size:14px}.workspace-brand small{font-size:9px}
+ .workspace-tools button{min-height:36px;padding:7px 9px;font-size:11px}
+ body:not(:has(.command-center)) .casehead{display:flex;flex-direction:column;padding:11px;min-height:0;gap:12px}
+ body:not(:has(.command-center)) .casehead>img{width:100%;height:180px}
+ body:not(:has(.command-center)) .casehead h1{font-size:23px}
+}
