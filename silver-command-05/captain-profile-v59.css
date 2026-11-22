@@ -1,0 +1,64 @@
+/* SolAn Plus GmbH main Captain • sourced from business card, tied to company workspace */
+.company-captain-entry{display:flex;flex-direction:column;gap:11px;border-radius:18px;border:1px solid #9ecfc89e;background:linear-gradient(115deg,#21495aee,#173a44eb);padding:16px 18px;margin:14px 0;box-shadow:inset 0 1px #edffff61,0 12px 24px #07162099}
+.company-captain-overline{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid #90beb46b;padding-bottom:10px}
+.company-captain-overline>span{font-size:12px;color:#e3ffef;font-weight:850;letter-spacing:.03em}
+.company-captain-overline>small{font-size:10px;color:#a9dddb;letter-spacing:.08em;text-transform:uppercase}
+.company-captain-person{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.company-captain-person>div{display:flex;flex:1 1 160px;flex-direction:column;gap:4px}
+.company-captain-person>div small{font-size:10px;font-weight:800;letter-spacing:.08em;color:#a2eadb}
+.company-captain-person>div strong{font-size:clamp(17px,2vw,22px);line-height:1.18;color:#f5ffff}
+.company-captain-person>div span{font-size:11px;color:#bcd8dd}
+.company-captain-person>button,.ph-company-lead,.company-team-owner-link{padding:9px 13px;border:1px solid #9ddaccaf;border-radius:10px;background:linear-gradient(130deg,#295b64,#1a4154);color:#e6fff8;font-size:12px;font-weight:780;line-height:1.4;min-height:41px}
+.company-captain-person>button:hover,.ph-company-lead:hover,.company-team-owner-link:hover{background:#397680}
+.company-captain-relations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.company-captain-relations span{font-size:11px;font-weight:750;text-align:center;padding:9px 8px;color:#d4f8e9;border-radius:9px;border:1px solid #93cec16c;background:#2d59585a}
+.company-profile-role{display:block;max-width:max-content;font-size:10px!important;font-weight:800;letter-spacing:.06em;color:#bdffdd!important;background:#265944b0;border:1px solid #80c9a39c;border-radius:7px;padding:5px 9px;margin:8px 0 0}
+.company-role-note{font-size:11px;color:#a4c4cd;line-height:1.5;padding:3px 5px;margin:7px 0 11px}
+.company-contact-section,.company-network-section{margin:13px 0}
+.company-contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.company-contact-detail{min-width:0;display:flex;flex-direction:column;gap:7px;border:1px solid #78aab67a;border-radius:12px;background:#163747dd;padding:13px 15px}
+.company-contact-detail small{font-size:10px;color:#9cccd7;letter-spacing:.08em;font-weight:730;text-transform:uppercase}
+.company-contact-detail strong,.company-contact-detail a{font-size:13px;font-weight:710;line-height:1.4;color:#eaf9fc;overflow-wrap:anywhere;text-decoration:none}
+.company-contact-detail a{color:#a3eddf}
+.company-contact-detail a:hover{text-decoration:underline}
+.company-network{display:flex;align-items:center;flex-direction:column;gap:10px;padding:10px 0 2px}
+.company-network-company,.company-network-captain{display:flex;flex-direction:column;align-items:center;gap:5px;width:min(420px,100%);min-width:0;padding:15px;background:linear-gradient(130deg,#285e60,#183a4c);border:1px solid #8dd0c7a3;border-radius:15px;text-align:center}
+.company-network-captain{background:linear-gradient(120deg,#1d4d61,#14384f)}
+.company-network-company small,.company-network-captain small,.company-network-branches>div>small{font-size:10px;color:#a9e6d4;letter-spacing:.12em;font-weight:800}
+.company-network-company strong,.company-network-captain strong{font-size:18px;color:#f7fffe;line-height:1.2;overflow-wrap:anywhere}
+.company-network-company span,.company-network-captain span{font-size:11px;color:#b4dbe0}
+.company-network-arrow{height:15px;line-height:15px;color:#94dbc5;font-size:20px}
+.company-network-branches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;width:100%;position:relative;margin-top:8px}
+.company-network-branches:before{content:"";position:absolute;top:-11px;left:25%;width:50%;height:1px;background:#81bdb79c}
+.company-network-branches>div{display:flex;flex-direction:column;min-width:0;gap:7px;padding:12px 10px;border:1px solid #75a6b175;border-radius:13px;background:#15344680}
+.company-network-branches>div>small{text-align:center;margin:0 0 4px}
+.company-network-link{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid #73a6b678;border-radius:10px;background:#234758cf;color:#d5f5f5;min-height:66px;padding:10px 12px}
+.company-network-link:hover{background:#2e6470;border-color:#9cebd0}
+.company-network-link span{font-size:9px;color:#a7e5d2;font-weight:800;letter-spacing:.06em}
+.company-network-link strong{color:#fff;font-size:13px;font-weight:750;overflow-wrap:anywhere}
+.company-network-link small{color:#b7d2dc;font-size:10px}
+.company-network-empty{font-size:11px;color:#b2d4d5;text-align:center;padding:12px}
+.company-network-more{background:#194355;border:1px solid #85c5c8;color:#d7fdf5;border-radius:9px;padding:9px;font-size:11px;font-weight:730}
+.company-team-owner-link{margin:0 0 14px}
+.ph-company-lead{border-color:#96c7c7b8;font-size:11px;white-space:normal}
+.company-contact-detail a:focus-visible,.company-captain-person button:focus-visible,.company-network-link:focus-visible,.company-team-owner-link:focus-visible,.ph-company-lead:focus-visible{outline:3px solid #f5fff5;outline-offset:2px}
+@media(max-width:720px){
+ .company-captain-entry{margin:10px 0;padding:12px;gap:9px;border-radius:14px}
+ .company-captain-overline>span{font-size:11px}
+ .company-captain-overline>small{font-size:9px}
+ .company-captain-person{gap:9px}
+ .company-captain-person .community-avatar{height:52px;width:52px;border-radius:15px;font-size:22px}
+ .company-captain-person>div small{font-size:9px}
+ .company-captain-person>div strong{font-size:16px}
+ .company-captain-person>button{width:100%;min-height:37px}
+ .company-captain-relations{gap:5px}
+ .company-captain-relations span{font-size:9px;padding:8px 3px}
+ .company-contact-grid{grid-template-columns:1fr;gap:8px}
+ .company-contact-detail{padding:10px}
+ .company-contact-detail strong,.company-contact-detail a{font-size:12px}
+ .company-network-branches{gap:7px}
+ .company-network-branches>div{padding:8px 6px;gap:6px}
+ .company-network-link{padding:9px 7px;min-height:60px}
+ .company-network-link strong{font-size:11px}
+ .company-network-company strong,.company-network-captain strong{font-size:15px}
+}
