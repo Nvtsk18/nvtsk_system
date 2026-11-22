@@ -1,5 +1,5 @@
-const CACHE="nvtsk-05-reference-24";
-const CORE=["./","./index.html","./model.js","./app.js?v=24","./style.css?v=20"];
+const CACHE="nvtsk-05-reference-25";
+const CORE=["./","./index.html","./model.js","./app.js?v=25","./style.css?v=20"];
 self.addEventListener("install",event=>{event.waitUntil((async()=>{const cache=await caches.open(CACHE);try{await Promise.all(CORE.map(async path=>{const req=new Request(path,{cache:"reload"});const res=await fetch(req);if(!res.ok)throw new Error("Offline core unavailable: "+path+" HTTP "+res.status);await cache.put(req,res)}));await self.skipWaiting()}catch(error){await caches.delete(CACHE);throw error}})())});
 self.addEventListener("activate",event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE&&key.startsWith("nvtsk-"))await caches.delete(key);await self.clients.claim()})())});
 self.addEventListener("fetch",event=>{
