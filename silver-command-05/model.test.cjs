@@ -2,7 +2,21 @@ const assert = require('node:assert/strict');
 require('./model.js');
 const {apply,validate,migrate} = NVModel;
 const base = validate(migrate({version:1,cases:[],garage:[],crew:[{name:'Worker'}],tasks:[],shards:[]}));
-assert.equal(base.crew.find(c=>c.id==='lead').name,'Капитан');
+assert.equal(base.crew.find(c=>c.id==='lead').name,'Roman Eppinger');
+assert.equal(base.crew.find(c=>c.id==='lead').company,'SolAn Plus GmbH');
+assert.equal(base.crew.find(c=>c.id==='lead').address,'Hauptstraße 29, 88662 Überlingen');
+assert.equal(base.crew.find(c=>c.id==='lead').phone,'+49 160 784 19 43');
+assert.equal(base.crew.find(c=>c.id==='lead').email,'romaneppinger@solanplus.de');
+assert.equal(base.crew.find(c=>c.id==='lead').website,'https://www.solanplus.de');
+const existingCaptain=JSON.parse(JSON.stringify(base));
+existingCaptain.crew.find(c=>c.id==='lead').name='Капитан';
+for(const key of ['company','address','phone','email','website'])delete existingCaptain.crew.find(c=>c.id==='lead')[key];
+assert.equal(migrate(existingCaptain).crew.find(c=>c.id==='lead').name,'Roman Eppinger');
+assert.equal(migrate(existingCaptain).crew.find(c=>c.id==='lead').email,'romaneppinger@solanplus.de');
+const customizedCaptain=JSON.parse(JSON.stringify(existingCaptain));
+customizedCaptain.crew.find(c=>c.id==='lead').name='Actual Manager';
+assert.equal(migrate(customizedCaptain).crew.find(c=>c.id==='lead').name,'Actual Manager','Do not overwrite a customized owner');
+
 
 assert.deepEqual(base.teams,[],'Migrate v1 into internal company workspace with Teams');
 const legacyV2=JSON.parse(JSON.stringify(base));
@@ -150,6 +164,11 @@ pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bi
 assert.equal(profiles.crew.find(x=>x.id==='member-0').headline,'DC Monteur');
 assert.equal(profiles.cases[0].price,1000);
 assert.equal(profiles.shards[0].price,600);
+pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bio:'PV work',skills:['DC'],address:'Werkstraße 2',phone:'+49 170 1234567',email:'worker@example.de',website:'https://example.de'});
+assert.equal(profiles.crew.find(x=>x.id==='member-0').phone,'+49 170 1234567');
+assert.equal(profiles.crew.find(x=>x.id==='member-0').website,'https://example.de');
+pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bio:'PV work',skills:['DC']});
+assert.equal(profiles.crew.find(x=>x.id==='member-0').phone,'+49 170 1234567','Legacy profile form preserves contacts');
 const validAvatar='data:image/png;base64,iVBORw0KGgo=';
 pAct('profile',{memberId:'member-0',headline:'DC Monteur',location:'Stockach',bio:'PV work',skills:['DC'],avatar:validAvatar});
 validate(profiles);
