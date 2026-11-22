@@ -291,13 +291,19 @@ document.addEventListener("click",e=>{
  if(!who){notify("Выберите исполнителя.");return;}
  if(who===l.creator){notify("Самоназначение автора лота запрещено");return;}
  if(l.kind==="AC"||l.kind==="REG"){notify("Для AC/Anmeldung требуется подтверждённая квалификация и право выполнения работ. Назначение заблокировано в демо.");return;}
- l.assignee=who;log("assign",l.id,"Executor assigned: "+who);save();render();return;}
+ const previousAssignee=l.assignee, previousAudit=state.audit.slice();
+ l.assignee=who;log("assign",l.id,"Executor assigned: "+who);
+ if(!save()){l.assignee=previousAssignee;state.audit=previousAudit;notify(storageError);return;}
+ render();return;}
  if(b.dataset.act==="bid"){
   const l=find(selected),amount=Number($("#bid").value);
   if(role(l)==="Заказчик"){alert("Нельзя подавать ставку на свой лот");return;}
   if(!Number.isFinite(amount)||amount<=0||amount>100000000){alert("Введите корректную сумму");return;}
   if(l.assignee==="me"){notify("Назначенный исполнитель не может одновременно подавать новую ставку.");return;}
-  l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);save();render();
+  const previousBids=l.bids.slice(),previousAudit=state.audit.slice();
+  l.bids=l.bids.filter(x=>!x.mine);l.bids.push({team:"Моя бригада",amount,mine:true});log("bid",l.id,"Bid amount: "+amount);
+  if(!save()){l.bids=previousBids;state.audit=previousAudit;notify(storageError);return;}
+  render();
  }
 });
 document.addEventListener("change",e=>{if(e.target?.id==="demoActor"){const allowed=["me","roman","denis","olena"];if(!allowed.includes(e.target.value)){notify("Неизвестный демоперсонаж");render();return;}demoActor=e.target.value;render();}});
