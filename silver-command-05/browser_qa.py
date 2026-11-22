@@ -182,7 +182,7 @@ with sync_playwright() as pw:
         page.locator('.socialpost [data-action="social-like"]').first.click()
         assert page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent_social')).posts.some(p=>p.likes.includes('lead'))"""), "Feed likes not saved"
         route("team")
-        assert page.locator('.community-update').count()>0, "Feed preview must show new post"
+        expect(page.locator(".community-update")).to_have_count(1)
                 # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
         route("projects");act("new-electrical")
