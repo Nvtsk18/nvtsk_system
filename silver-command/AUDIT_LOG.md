@@ -543,3 +543,12 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Checks executed:** fetched current code and audit before edit; updated app.js via GitHub; fetched committed source and parsed complete JavaScript using V8 Function constructor PASS; static assertions for all three retention paths PASS. **NOT RUN:** actual browser export/import/reload, three-role runtime conflict tests, iPhone Safari, full workflow. No claim of full audit durability. Root files unchanged.
 
 **P0 remaining:** crash-safe combined Case/Shard/Garage restore, strict lossless legacy migration, actual browser persistence and authorization tests. Keep separate backups. MVP NOT ready.
+
+
+## Iteration · 2026-11-22 07:00 CET · reconcile contradictory Merit specification
+
+**Code/spec commit:** `65f49c1dfd5059f264df59cec12d869e2c0d69d2` (only `silver-command/MERIT_SPEC.md`).
+
+**Critical discrepancy found:** existing specification still said Shard transfers existing Case Merit and charges 2%; this directly contradicted the user's final agreed rules. Corrected documentation: €1,000 Case mints 1,010 Merit (10 additional to platform creator), €250 Shard mints 250 additional Merit, Shard creator pays 1.2%=€3, Case fee €10, combined mint 1,260 Merit and fees €13, all fees to backing without 80/20. Explicitly preserved unresolved issuance recipients, timing, Shard limits, idempotency and real backing questions. No payment code or UI added.
+
+**Checks performed:** read current `app.js` and `AUDIT_LOG.md` before change; checked arithmetic 1010+250=1260 and 10+3=13; GitHub spec update succeeded. **NOT RUN:** JS parser, runtime tests, three role scenarios, combined import/export/reload, browser or iPhone testing (no executable code changed). Current MVP remains blocked on atomic combined restore and full workflow verification. Root 0.3 untouched. Next: resume P0 combined import work; do not confuse specification correction with MVP readiness.
