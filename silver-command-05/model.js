@@ -48,6 +48,7 @@ globalThis.NVModel = (() => {
   }
   function apply(source, action, p) {
     const d = JSON.parse(JSON.stringify(source)), actor = d.crew.find(c=>c.id===d.actor);
+    const has=(list,id)=>list.some(item=>item.id===id);
     const lead = actor.role===roles[0], stock = lead || actor.role===roles[2];
     const s = d.shards.find(s=>s.id===p.shardId);
     const t = d.tasks.find(t=>t.id===p.taskId);
