@@ -209,7 +209,9 @@ function syncRoute(replace=false){const h=routeHash();if(location.hash!==h)histo
 function go(s){if(s==="lot" && screen!=="lot")projectPage=0;screen=s;render();window.scrollTo(0,0);syncRoute()}
 function setProjectPage(n){if(screen!=="lot"||!Number.isInteger(n)||n<0||n>=projectPages.length)return;projectPage=n;render();window.scrollTo(0,0);syncRoute()}
 function restoreRoute(){
- const h=decodeURIComponent(location.hash.slice(1));
+ let h="";
+ try { h=decodeURIComponent(location.hash.slice(1)); }
+ catch (_) { h=""; } // malformed URL fragments must not blank the application
  const m=/^lot\/([^/]+)\/(\d+)$/.exec(h);
  if(m&&state.lots.some(l=>l.id===m[1])&&Number(m[2])<projectPages.length){selected=m[1];projectPage=Number(m[2]);screen="lot";}
  else if(tabs.some(t=>t[0]===h)){screen=h;}
