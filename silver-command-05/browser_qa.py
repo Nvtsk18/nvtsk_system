@@ -63,7 +63,7 @@ with sync_playwright() as pw:
         workspace.locator("summary").click()
         expect(workspace.locator(".workspace-switch-current")).to_contain_text("SolAn Plus GmbH")
         workspace.locator("summary").click()
-        assert "office-command-v40.png" in page.evaluate("getComputedStyle(document.querySelector('.ref66'),'::before').backgroundImage")
+        assert "silver-command-office.svg" in page.evaluate("getComputedStyle(document.querySelector('.ref66'),'::before').backgroundImage")
         fits()
         route("finance")
         expect(page.get_by_role("heading",name="Финансы",exact=False)).to_be_visible()
