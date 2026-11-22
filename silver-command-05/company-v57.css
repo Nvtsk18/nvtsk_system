@@ -1,0 +1,79 @@
+/* SolAn Plus GmbH internal workspace. Product developer brand: NVTSK SYSTEM. */
+.command-top .command-brand .nvtsk-brand-caption{display:flex;flex-direction:column;gap:3px;min-width:0}
+.command-top .nvtsk-brand-caption strong{font-size:clamp(14px,1.55vw,20px);letter-spacing:.01em;font-weight:780;color:#f2fffe;overflow-wrap:anywhere;white-space:normal}
+.command-top .nvtsk-brand-caption small{font-size:9px;letter-spacing:.09em;color:#a7d9dc;text-transform:uppercase}
+.workspace-brand{display:flex;gap:10px;align-items:center;min-width:0}
+.workspace-brand img{flex:none;object-fit:contain}
+.workspace-brand span{display:flex;flex-direction:column;min-width:0;gap:4px}
+.workspace-brand strong{font-size:clamp(14px,1.6vw,19px);line-height:1.15;overflow-wrap:anywhere}
+.workspace-brand small{font-size:10px;line-height:1.3;color:#b4d3d9}
+.company-identity-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;padding:20px}
+.company-identity-settings>div{padding:15px;border-radius:13px;border:1px solid #78bac46d;background:#1134449e}
+.company-identity-settings small{display:block;color:#a6e8d8;font-size:10px;letter-spacing:.09em;margin-bottom:8px}
+.company-identity-settings strong{display:block;color:#f3fbff;font-size:19px;line-height:1.25}
+.company-identity-settings p{font-size:12px;color:#b5d6df;line-height:1.5;margin:8px 0 0}
+.ph-internal .ph-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ph-internal .ph-account{display:flex;flex-direction:column;gap:16px;margin-top:14px}
+.ph-internal .ph-account-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.ph-internal .ph-account-stats>div{display:flex;flex-direction:column;min-width:0;gap:10px;padding:18px 14px;border-radius:14px;background:linear-gradient(138deg,#1c4353,#122c3d);border:1px solid #7cbbc17c}
+.ph-internal .ph-account-stats small{font-size:11px;color:#bbd9df;line-height:1.4}
+.ph-internal .ph-account-stats strong{font-size:clamp(18px,2.0vw,26px);color:#f5fefe;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.015em}
+.ph-internal .ph-account-title{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ph-internal .ph-account-title h3{margin:0;color:#f1faff;font-size:18px}
+.ph-internal .ph-account-title button{border-radius:10px;padding:9px 13px;background:#1d465b;border:1px solid #7ac4c9;color:#e0f8fc;font-size:12px;font-weight:700}
+.ph-internal .ph-account-list{display:flex;flex-direction:column;gap:8px}
+.ph-internal .ph-account-row{display:grid;grid-template-columns:minmax(160px,2fr) repeat(3,minmax(85px,1fr));align-items:center;gap:12px;width:100%;padding:13px 15px;border:1px solid #84adb882;background:#163447d9;border-radius:12px;text-align:left;color:#f0fcfd}
+.ph-internal .ph-account-row:hover{border-color:#96e5da;background:#255166}
+.ph-internal .ph-account-row>span{display:flex;flex-direction:column;gap:5px;min-width:0}
+.ph-internal .ph-account-row strong{font-size:14px;overflow-wrap:anywhere}
+.ph-internal .ph-account-row small{font-size:10px;color:#b5d9e0}
+.ph-internal .ph-account-row b{font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.company-teams .community-section-head{margin-bottom:14px}
+.company-teams-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:13px 0}
+.company-team-card{min-width:0;padding:16px;background:linear-gradient(138deg,#1b4151e8,#102a3be8);border:1px solid #84b2b77e;border-radius:17px}
+.company-team-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:9px}
+.company-team-heading small{font-size:10px;letter-spacing:.11em;color:#9ce7da}
+.company-team-heading h3{font-size:19px;color:#f3fbff;margin:7px 0}
+.company-team-heading p{font-size:12px;color:#b7d4dc;line-height:1.45;margin:0}
+.company-team-heading button,.company-teams button[data-action]{padding:9px 12px;border:1px solid #9ad2cc;border-radius:10px;background:#214e5d;color:#dcfff6;font-size:12px;font-weight:700;white-space:nowrap}
+.company-team-facts{display:flex;gap:6px;flex-wrap:wrap;margin:15px 0 12px}
+.company-team-facts span{padding:6px 9px;color:#c0e6e0;font-size:11px;background:#2e5a5d70;border-radius:9px;border:1px solid #89b3b16b}
+.company-team-members{display:flex;flex-direction:column;gap:6px}
+.company-team-member{width:100%;display:flex;align-items:center;gap:10px;padding:9px;background:#163448cf;color:#e7f8fa;border:1px solid #7ea6b27a;border-radius:11px;text-align:left}
+.company-team-member .community-avatar{width:39px;height:39px;border-radius:12px;font-size:18px}
+.company-team-member span:last-child{display:flex;flex-direction:column;gap:4px;min-width:0}
+.company-team-member strong{font-size:13px;overflow-wrap:anywhere}
+.company-team-member small{font-size:11px;color:#add1db}
+.company-team-work{border-top:1px solid #5b9da376;margin-top:12px;padding-top:10px}
+.company-team-work h4{margin:0 0 9px;font-size:12px;color:#c6e9e5}
+.company-team-work button{display:flex;width:100%;justify-content:space-between;gap:10px;align-items:center;padding:10px 9px;color:#e7f8fc;text-align:left;border:1px solid #5a8d9c70;background:#1d3d4d;border-radius:9px;margin:6px 0;font-size:12px}
+.company-team-work span{font-size:10px;color:#b0d8db}
+.company-teams-empty{grid-column:1/-1;padding:26px;text-align:center;border:1px dashed #8cc2c379;border-radius:15px;background:#1534469a}
+.company-teams-empty strong{font-size:17px;color:#e8fcf7}
+.company-teams-empty p{font-size:12px;color:#c3d9db}
+.company-team-picker{display:flex;flex-direction:column;gap:7px;margin:13px 0;padding:12px;border:1px solid #7fb2bb75;border-radius:12px}
+.company-team-picker legend{font-size:13px;font-weight:730;color:#d7f3f3}
+.company-team-picker label{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #7099a56e;border-radius:9px;color:#dbedf3;font-size:12px}
+.company-team-picker input{height:18px;width:18px;flex:none;accent-color:#7fd9c8}
+@media(max-width:800px){.ph-internal .ph-account-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.company-teams-list{grid-template-columns:1fr}}
+@media(max-width:700px){
+ .command-top .nvtsk-brand-caption strong{font-size:12px}
+ .command-top .nvtsk-brand-caption small{font-size:7px;letter-spacing:0}
+ .workspace-brand strong{font-size:13px}
+ .workspace-brand small{font-size:9px}
+ .company-identity-settings{grid-template-columns:1fr;padding:12px;gap:8px}
+ .company-identity-settings>div{padding:12px}
+ .ph-internal .ph-account-stats{gap:7px}
+ .ph-internal .ph-account-stats>div{padding:12px 9px}
+ .ph-internal .ph-account-stats strong{font-size:17px}
+ .ph-internal .ph-account-stats small{font-size:10px}
+ .ph-internal .ph-account-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 13px;padding:12px}
+ .ph-internal .ph-account-row>span:first-child{grid-column:1/-1}
+ .ph-internal .ph-account-row>span:last-child{grid-column:2}
+ .ph-internal .ph-account-row b{font-size:13px}
+ .company-team-card{padding:13px}
+ .company-team-heading h3{font-size:17px}
+ .company-team-heading button{font-size:11px;padding:8px}
+ .company-team-member{padding:8px}
+ .community-tabs button{font-size:11px;min-width:0}
+}
