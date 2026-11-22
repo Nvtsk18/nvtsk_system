@@ -199,6 +199,53 @@ function filterProjectHub(){
  if(result)result.textContent=shown+" найдено";
  if(empty)empty.hidden=shown>0||cards.length===0;
 }
+
+function counterpartyForProject(c){return state.counterparties.find(p=>p.id===c.counterpartyId)}
+function counterpartySelector(value=null){
+ return '<label>Контрагент / Auftraggeber<select name="counterpartyId">'+options([["","Без контрагента"],...state.counterparties.map(p=>[p.id,p.name])],value||"")+'</select></label>';
+}
+function contractorContacts(p){
+ const website=typeof p.website==="string"&&p.website.startsWith("https://")?p.website:"";
+ const tel=typeof p.phone==="string"&&/^\+?[\d\s()-]{6,50}$/.test(p.phone)?p.phone:"";
+ const email=typeof p.email==="string"&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email)?p.email:"";
+ return '<div class="cp-contact-grid">'+contactDetail("Адрес",p.address||"",null)+
+ contactDetail("Телефон",tel,tel?"tel:"+tel.replace(/[^\d+]/g,""):null)+
+ contactDetail("Email",email,email?"mailto:"+email:null)+
+ contactDetail("Официальный сайт",website?website.replace(/^https:\/\//,""):null,website)+'</div>';
+}
+function counterpartiesView(){
+ const items=state.counterparties.map(p=>{
+  const projects=state.cases.filter(c=>c.counterpartyId===p.id);
+  return '<article class="cp-list-card"><div class="cp-list-symbol">S</div><div class="cp-list-content"><small>AUFTRAGGEBER · КОНТРАГЕНТ</small><h3>'+esc(p.name)+'</h3><p>'+esc(p.city||"")+' · '+esc(p.category||"Компания")+'</p><div class="cp-list-tags"><span>DC · субподряд</span><span>AC · электрики заказчика</span><span>'+projects.length+' Projects</span></div></div><button data-route="partner/'+esc(p.id)+'">Профиль →</button></article>';
+ }).join("");
+ return '<section class="cp-partners"><div class="cp-list-heading"><span class="ph-eyebrow">BUSINESS NETWORK</span><h2>Контрагенты SolAn Plus</h2><p>Компании-заказчики, контакты и связи с объектами — отдельно от внутренних Teams.</p></div>'+items+
+ '<p class="cp-note">Привязка к Project создаётся вручную. Существующие объекты не привязаны автоматически.</p></section>';
+}
+function counterpartyProfile(id){
+ const p=state.counterparties.find(x=>x.id===id);
+ if(!p)return heading("Контрагент не найден");
+ const projects=state.cases.filter(c=>c.counterpartyId===p.id);
+ const linked=state.shards.filter(sh=>projects.some(c=>c.id===sh.caseId));
+ const dc=linked.filter(sh=>sh.kind==="DC");
+ const accepted=dc.filter(sh=>sh.status==="accepted");
+ return '<div class="community cp-profile"><button class="back" data-route="projects">← Projects / Контрагенты</button>'+
+ '<section class="cp-hero"><div class="cp-hero-title"><span class="cp-eyebrow">EXTERNAL PARTNER · AUFTRAGGEBER</span><h1>'+esc(p.name)+'</h1><p>'+esc(p.city||"")+' · '+esc(p.category||"Контрагент")+'</p></div><div class="cp-badge-mark"><span>sunpaur</span><small>SOLAR & ENERGY</small></div></section>'+
+ '<div class="cp-stats"><div><b>'+projects.length+'</b><small>Связанные Projects</small></div><div><b>'+dc.length+'</b><small>DC Shards</small></div><div><b>'+accepted.length+'</b><small>Принято DC</small></div></div>'+
+ '<section class="community-section cp-relationship"><div class="community-section-head"><div><h2>Схема сотрудничества</h2><small>Рабочие условия SolAn Plus GmbH</small></div></div>'+
+ '<div class="cp-rel-graph"><div class="cp-rel-box"><small>ЗАКАЗЧИК / AUFTRAGGEBER</small><strong>'+esc(p.name)+'</strong><span>Передаёт объекты на монтаж</span></div><div class="cp-rel-arrow">↓ DC Shards</div>'+
+ '<div class="cp-rel-box cp-rel-sol"><small>ИСПОЛНИТЕЛЬ / AUFTRAGNEHMER</small><strong>SolAn Plus GmbH</strong><span>Монтаж панелей · DC</span></div></div>'+
+ '<div class="cp-scope-grid"><div><small>В нашей зоне ответственности</small><strong>DC-Montage</strong><p>Монтаж PV-модулей и DC-работы согласно Shard.</p></div>'+
+ '<div><small>На стороне контрагента</small><strong>AC / Elektro</strong><p>Подключение выполняют собственные электрики Sunpaur.</p></div></div>'+
+ '<p class="cp-note">Эта схема основана на информации о сотрудничестве, полученной от пользователя. Публичный сайт Sunpaur не подтверждает условия конкретного субподряда.</p></section>'+
+ '<section class="community-section cp-contact-section"><div class="community-section-head"><div><h2>Юридические данные и контакты</h2><small>Из официального Impressum</small></div></div>'+
+ contractorContacts(p)+
+ '<div class="cp-legal"><div><small>Handelsregister</small><strong>'+esc(p.register||"")+'</strong></div><div><small>USt-IdNr.</small><strong>'+esc(p.vatId||"")+'</strong></div></div>'+
+ '<h3>Geschäftsführung</h3><div class="cp-directors">'+(p.directors||[]).map((n,i)=>'<div><span>GF</span><strong>'+esc(n)+'</strong><small>'+esc(i===0?"Geschäftsführer · B.Eng. Elektrotechnik":"Geschäftsführer · Elektromeister")+'</small></div>').join("")+'</div>'+
+ '<p class="cp-source">Источники: <a href="https://sunpaur.com/impressum/" target="_blank" rel="noopener noreferrer">Impressum</a> · <a href="https://sunpaur.com/" target="_blank" rel="noopener noreferrer">Сайт</a></p></section>'+
+ '<section class="community-section cp-projects"><div class="community-section-head"><div><h2>Совместные Projects</h2><small>Привязанные объекты и DC-работы</small></div>'+(lead()?button("＋ Project от Sunpaur","new-case-partner",p.id):"")+'</div>'+
+ (projects.length?projects.map(c=>'<button class="cp-project-row" data-route="case/'+esc(c.id)+'"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city)+' · '+shardCount(state.shards.filter(sh=>sh.caseId===c.id).length)+'</small></span><b>Открыть →</b></button>').join(""):'<div class="cp-empty"><strong>Пока нет привязанных Projects</strong><p>Создай новый объект Sunpaur или привяжи существующий вручную. Неподтверждённые связи не создаются автоматически.</p></div>')+
+ '</section></div>';
+}
 function projectHubAccounting(){
  const budget=state.cases.reduce((sum,c)=>sum+Number(c.price||0),0);
  const allocated=state.shards.reduce((sum,sh)=>sum+Number(sh.price||0),0);
