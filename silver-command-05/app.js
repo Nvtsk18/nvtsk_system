@@ -67,7 +67,7 @@ function dashboard(){
  return '<section class="hero"><div><h1>Добро пожаловать в NVTSK <em>//</em></h1><p>Оперативное управление PV-проектами</p></div></section><div class="stats desktopmetrics">'+statsHtml+'</div><div class="columns">'+panel("Активные кейсы ("+state.cases.length+")","projects",caseRows)+'<div>'+panel("Шарды (в работе)","tasks",shardRows)+panel("Гараж / Автопарк","garage",'<div class="fleet">'+cars+'</div>')+'</div><div>'+panel("Быстрые действия","projects",quick)+panel("Ближайшие задачи","tasks",tasks)+'</div></div>'+footer;
 }
 const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+action+'</div>';
-function projects(){return heading("Case / Проекты",button("＋ Новый Case","new-case"))+'<div class="cards">'+state.cases.map(c=>'<section class="panel item"><h2>'+esc(c.title)+'</h2><p>⌖ '+esc(c.city)+' · '+money(c.price)+' €</p><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div><button class="action" data-route="case/'+esc(c.id)+'">Открыть Case →</button></section>').join("")+'</div>'}
+function projects(){return heading("Case / Проекты",button("＋ Новый Case","new-case")+button("⚡ Электромонтаж","new-electrical"))+'<div class="cards">'+state.cases.map(c=>'<section class="panel item"><h2>'+esc(c.title)+'</h2><p>⌖ '+esc(c.city)+' · '+money(c.price)+' €</p><div class="progress"><i style="width:'+pct(c.id)+'%"></i></div><button class="action" data-route="case/'+esc(c.id)+'">Открыть Case →</button></section>').join("")+'</div>'}
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
 const member=id=>state.crew.find(c=>c.id===id)?.name||"Без назначения";
 const options=(items,value)=>items.map(([id,name])=>'<option value="'+esc(id)+'" '+(id===value?'selected':'')+'>'+esc(name)+'</option>').join("");
@@ -157,10 +157,11 @@ const pairs=items=>items.map(x=>[x,x]);
 let pending;
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={case:"Новый Case",shard:"Новый Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={electrical:"Электромонтаж · новый Case",case:"Новый Case",shard:"Новый Shard",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","shard","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
- if(kind==="case")fields+=input("city","Город")+input("price","Бюджет, €","number");
+ if(kind==="case"||kind==="electrical")fields+=input("city","Город")+input("price","Бюджет, €","number");
+ if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Другое"]))+input("price","Стоимость Shard, €","number");
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
@@ -203,7 +204,28 @@ $("#editor").onsubmit=async e=>{
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
  p.id=crypto.randomUUID();if(kind==="shard")p.caseId=id;if(kind==="assign")p.shardId=id;if(kind==="move")p.itemId=id;
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
- try{if(await change(()=>apply(state,kind,p))){$("#dialog").close();if(kind==="case")location.hash="case/"+p.id}}finally{submit.disabled=false}
+ try{
+   const operation=()=>{
+     if(kind!=="electrical")return apply(state,kind,p);
+     const caseId=p.id;
+     let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price});
+     const steps=[
+       ["Разметка, штробы и подготовка трасс","Elektro · Rohbau",20],
+       ["Прокладка кабелей и крепление трасс","Elektro · Kabel",25],
+       ["Подрозетники, розетки, выключатели и световые точки","Elektro · Installation",20],
+       ["Монтаж и сборка распределительного щита","Elektro · Verteiler",25],
+       ["Измерения, проверка и приёмка Elektrofachkraft","Elektro · Prüfung",10]
+     ];
+     let allocated=0;
+     steps.forEach(([title,kindName,percent],i)=>{
+       const price=i===steps.length-1?Math.round((p.price-allocated)*100)/100:Math.round(p.price*percent)/100;
+       allocated+=price;
+       next=apply(next,"shard",{id:crypto.randomUUID(),caseId,title,kind:kindName,price,assignee:null});
+     });
+     return next;
+   };
+   if(await change(operation)){$("#dialog").close();if(kind==="case"||kind==="electrical")location.hash="case/"+p.id}
+ }finally{submit.disabled=false}
 };
 const navigation=[["dashboard","home","Главная"],["projects","layers","Проекты"],["garage","box","Склад"],["tasks","check","Задачи"],["settings","settings","Настройки"]];
 $("#nav").innerHTML=navigation.map(([route,sym,name])=>'<button data-route="'+route+'">'+icon(sym)+'<span>'+name+'</span></button>').join("");
