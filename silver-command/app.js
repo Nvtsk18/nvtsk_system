@@ -40,7 +40,7 @@ function normalize(raw) {
  const warnings=[];
  if(Array.isArray(raw.stages)&&raw.stages.length!==stages.length)warnings.push("Фотоэтапы: отклонено или ограничено записей "+(raw.stages.length-stages.length));
  if(Array.isArray(raw.posts)&&raw.posts.length!==posts.length)warnings.push("Лента: отклонено или ограничено записей "+(raw.posts.length-posts.length));
- return {...fresh(),...raw,stages,posts,recoveryWarnings:warnings,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice(-300):[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
+ return {...fresh(),...raw,stages,posts,recoveryWarnings:warnings,schemaVersion:2,audit:Array.isArray(raw.audit)?raw.audit.slice():[],name:String(raw.name||"Участник").slice(0,80),merit:Number.isFinite(raw.merit)&&raw.merit>=0?raw.merit:0,crew:Array.isArray(raw.crew)?raw.crew.slice(0,100):[]};
 }
 let state,storageError="";
 let recoveryLock=false;
@@ -50,7 +50,7 @@ catch (err) {
  console.warn("NVTSK storage recovery:",err);
 }
 if(state.recoveryWarnings?.length){recoveryLock=true;storageError="При загрузке отклонены некорректные записи: "+state.recoveryWarnings.join("; ")+". Запись заблокирована, чтобы не уничтожить исходные данные. Экспортируйте исходную копию; восстановление требует проверки.";}
-const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOString(),action,lotId,actor:"me",details});state.audit=state.audit.slice(-300)};
+const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOString(),action,lotId,actor:"me",details});state.audit=state.audit.slice(-3000)};
 
 let screen = "dashboard";
 let selected = "singen";
@@ -285,7 +285,7 @@ document.addEventListener("submit",e=>{
    const message="Проверка пройдена. Лотов: "+restored.lots.length+", фотоэтапов: "+restored.stages.length+", записей: "+restored.posts.length+". Заменить текущие локальные демоданные? Сначала экспортируйте старую копию.";
    if(!window.confirm(message))return;
    restored.audit.push({at:new Date().toISOString(),action:"import",lotId:null,actor:"me",details:"Local demo backup restored"});
-   restored.audit=restored.audit.slice(-300);
+   restored.audit=restored.audit.slice(-3000);
    const serialized=JSON.stringify(restored);
    localStorage.setItem(KEY,serialized); // one atomic localStorage replacement; no second save
    state=restored;recoveryLock=false;storageError="";demoActor="me";selected=state.lots[0]?.id||"";
