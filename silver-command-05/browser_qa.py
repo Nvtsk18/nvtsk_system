@@ -260,6 +260,28 @@ with sync_playwright() as pw:
         route("member/member-0")
         expect(page.locator(".community-profile-stats")).to_contain_text("75")
         expect(page.locator(".community-progress")).to_contain_text("75 XP")
+                # Accepted Shard appears as a verified social milestone (never a premature badge).
+        route("team/feed")
+        expect(page.locator(".community-work-event")).to_have_count(1)
+        expect(page.locator(".community-work-event")).to_contain_text("QA монтаж")
+        expect(page.locator(".community-work-event")).to_contain_text("Demo Monteur")
+        page.locator('[data-action="feed-view"][data-view="posts"]').click()
+        expect(page.locator(".community-work-event")).to_have_count(0)
+        expect(page.locator(".socialpost")).to_contain_text("QA: DC installation complete")
+        page.locator('[data-action="feed-view"][data-view="work"]').click()
+        expect(page.locator(".community-work-event")).to_have_count(1)
+        expect(page.locator(".socialpost")).to_have_count(0)
+        page.locator('[data-action="feed-view"][data-view="all"]').click()
+        expect(page.locator(".community-work-event")).to_have_count(1)
+        expect(page.locator(".socialpost")).to_have_count(1)
+        route("member/member-0")
+        expect(page.locator(".community-profile-activity .community-work-event")).to_have_count(1)
+        expect(page.locator(".community-profile-activity")).to_contain_text("QA монтаж")
+        route("team/feed")
+        page.locator('[data-action="social-delete"]').click()
+        expect(page.locator(".socialpost")).to_have_count(0)
+        expect(page.locator(".community-work-event")).to_have_count(1)
+        assert not page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent_social')).posts.length"""), "Deleting own post must persist"
                 # Browser-runtime regression: an accepted Shard cannot consume or return stock,
         # even if the actor is the manager. The persisted local snapshot must stay intact.
         closed_guard = page.evaluate("""() => {
