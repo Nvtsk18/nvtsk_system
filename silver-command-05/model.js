@@ -95,7 +95,7 @@ globalThis.NVModel = (() => {
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[]}); break;
       case "shard": allowed(lead);
         requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
-      case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; break;
+      case "assign": allowed(lead && s && s.status==="draft"); s.assignee=p.assignee; s.teamId=null; break;
       case "task": {
         allowed(s && s.status==="draft" && (lead || s.assignee===actor.id));
         requireValue(label(p.title)&&optional(p.notes,2000),"Укажите название и описание задачи");
