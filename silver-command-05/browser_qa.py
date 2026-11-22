@@ -33,6 +33,10 @@ with sync_playwright() as pw:
         def save():
             page.locator('#editor [type=submit]').click()
             expect(page.locator('dialog')).not_to_be_visible()
+        def capture(name):
+            out=Path("/tmp/nvtsk-visual")
+            out.mkdir(parents=True,exist_ok=True)
+            page.screenshot(path=str(out / f"{name}-{width}.png"),full_page=True)
         def fits():
             overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
