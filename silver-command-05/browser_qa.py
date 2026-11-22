@@ -117,7 +117,8 @@ with sync_playwright() as pw:
           const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
           const item=d.garage.find(m=>m.id==='rail');
           const shard=d.shards.find(s=>s.title==='QA монтаж');
-          const other=d.shards.find(s=>s.id!==shard.id&&s.status!=='accepted');
+          const issuedIds=new Set(d.moves.filter(m=>m.itemId===item.id&&m.type==='issue').map(m=>m.shardId));
+          const other=d.shards.find(s=>s.id!==shard.id&&s.status!=='accepted'&&!issuedIds.has(s.id));
           const cases=[{type:'issue',qty:item.qty+1,shardId:shard.id},{type:'return',qty:3,shardId:shard.id},{type:'issue',qty:.5,shardId:shard.id}];
           if(other)cases.push({type:'return',qty:1,shardId:other.id});
           return cases.every((p,i)=>{try{NVModel.apply(d,'move',{id:'guard-'+i,itemId:item.id,...p});return false}catch{return true}})&&item.qty===22;
