@@ -476,3 +476,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Three perspectives/conflicts considered (design review, NOT executed):** owner exporting a full project; Garage operator with corrupted inventory must not produce falsely complete backup; field installer attempting restore must not be treated as authenticated. These are design checks only.
 
 **Verification:** GitHub accepted both code commits; exact old source anchors were checked before replacement. **No JavaScript parser, Node tests, browser click, role tests, import/reload, or iPhone Safari tests were executed in this pass.** Therefore no runtime PASS claimed. Next run: execute source-linked JS tests, implement safe validated combined restore using rollback journal or single-envelope storage migration, test failure injection, and update UI to distinguish archival export from restorable backup.
+
+
+## Iteration · 2026-11-22 02:00 CET · combined backup preflight
+
+**Code commit:** `123dcb8b591f993cc703a7dffa5dfe5dcf2f07bf`; scope `silver-command/app.js` only. Root 0.3 unchanged.
+
+**Priority:** prevent the combined JSON exporter from silently creating an unusable/lossy backup. Before downloading, run project normalization, reject records that would be dropped by restore, validate Garage snapshot, and reject consumption usage referring to nonexistent project IDs. Also reject export while project recovery lock is active. Fail closed with a visible alert and no mutation.
+
+**Perspectives/conflicts reviewed:** (1) project manager with invalid stage or feed entry; (2) warehouse operator with consumption referring to a deleted project; (3) device owner with locked project recovery. Code guards are present. These are NOT role-authorization tests.
+
+**Verification:** exact source anchor matched and GitHub content update returned commit SHA. No Node syntax test, browser execution, import/export/reload end-to-end test, iPhone/Safari test, or 3-role runtime test in this iteration. Mark these NOT RUN. The backup is still EXPORT ONLY as a combined artifact; unified atomic restore and rollback are NOT IMPLEMENTED. UI wording still needs alignment. Keep prior separate backups. Do not mark MVP ready.
+
+**Next:** design and implement a validated, rollback-safe combined restore; exercise actual syntax/runtime tests and browser reload, then role conflicts and navigation.
