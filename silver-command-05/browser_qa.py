@@ -57,6 +57,26 @@ with sync_playwright() as pw:
         task.get_by_role("button",name="На проверку").click()
         expect(task).to_contain_text("На проверке")
         page.locator('#actor').select_option("lead");route("tasks");act("accept")
+        # Browser-runtime regression: an accepted Shard cannot consume or return stock,
+        # even if the actor is the manager. The persisted local snapshot must stay intact.
+        closed_guard = page.evaluate("""() => {
+            const raw = JSON.parse(localStorage.getItem('nvtsk05_independent'));
+            const data = raw.format === 1 ? raw.data : raw;
+            const shard = data.shards.find(s => s.title === 'QA монтаж');
+            const item = data.garage.find(m => m.id === 'rail');
+            if (!shard || shard.status !== 'accepted' || !item) return false;
+            const before = JSON.stringify(data);
+            return ['issue','return'].every((type,i) => {
+                try {
+                    NVModel.apply(data,'move',{id:'closed-qa-'+i,type,qty:1,itemId:item.id,shardId:shard.id});
+                    return false;
+                } catch (_) {
+                    return JSON.stringify(data) === before;
+                }
+            });
+        }""")
+        assert closed_guard, "Accepted Shard permitted stock mutation in browser model"
+
         route("settings")
         with page.expect_download() as download:
             act("export")
