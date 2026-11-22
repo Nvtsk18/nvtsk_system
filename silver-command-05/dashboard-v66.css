@@ -93,3 +93,9 @@
 .ref66-toolbar{z-index:5}
 @media(max-width:850px){.ref66-scene{height:410px;padding:16px}.ref66-greeting{max-width:295px}.ref70-workshop{inset:100px -25px 4px 8%}}
 @media(max-width:600px){.ref66-scene{height:355px;padding:56px 6px 8px}.ref66-greeting{max-width:240px;padding:8px 10px}.ref66-greeting p{font-size:11px}.ref66-greeting h1{font-size:20px}.ref66-greeting>span:last-child{font-size:9px}.ref70-workshop{inset:120px -42px 3px -10px}.ref70-workshop img{object-position:center bottom}.ref66-toolbar{top:8px}}
+
+/* v71: hero identity is a single monogram, no greeting or repeated product title */
+.ref71-identity{position:absolute;top:18px;left:22px;z-index:4;width:68px;height:68px;display:grid;place-items:center;border-radius:16px;background:#101a25b5;border:1px solid #a8c9d54d;box-shadow:0 10px 30px #0008;backdrop-filter:blur(9px);overflow:hidden}
+.ref71-identity img{display:block;width:100%;height:100%;object-fit:contain}
+.ref70-workshop{inset:28px 8px 5px 11%}
+@media(max-width:600px){.ref71-identity{top:52px;left:9px;width:48px;height:48px;border-radius:12px}.ref70-workshop{inset:85px -35px 3px -10px}}
