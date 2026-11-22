@@ -49,7 +49,7 @@ catch (err) {
  state=fresh();recoveryLock=true;storageError="Сохранённые данные повреждены или недоступны. Исходная запись не перезаписана; экспортируйте её перед созданием новых данных.";
  console.warn("NVTSK storage recovery:",err);
 }
-if(state.recoveryWarnings?.length)storageError="При загрузке отклонены некорректные записи: "+state.recoveryWarnings.join("; ")+". Перед продолжением сохраните исходную копию.";
+if(state.recoveryWarnings?.length){recoveryLock=true;storageError="При загрузке отклонены некорректные записи: "+state.recoveryWarnings.join("; ")+". Запись заблокирована, чтобы не уничтожить исходные данные. Экспортируйте исходную копию; восстановление требует проверки.";}
 const log=(action,lotId,details="")=>{state.audit.push({at:new Date().toISOString(),action,lotId,actor:"me",details});state.audit=state.audit.slice(-300)};
 
 let screen = "dashboard";
