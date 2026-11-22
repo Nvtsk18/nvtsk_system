@@ -241,3 +241,31 @@
 .command-home-map .casemappins{z-index:2}
 .command-home-map .mapcasepin{outline-offset:3px}
 .command-home-map .mapcasepin:focus-visible{outline:2px solid #d9fff3;border-radius:50%}
+
+/* v47: genuine text overlay keeps labels readable at every aspect ratio. */
+.command-home-map .casemap-places{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.command-home-map .casemap-places span{
+ position:absolute;
+ font-size:clamp(9px,.85vw,12px);
+ line-height:1;
+ font-weight:730;
+ letter-spacing:.07em;
+ color:#d4eaf0;
+ text-transform:uppercase;
+ text-shadow:0 1px 3px #0c2531,0 0 7px #061d2d;
+ white-space:nowrap;
+}
+.command-home-map .casemap-places .place-stockach{left:38%;top:13%}
+.command-home-map .casemap-places .place-singen{left:8%;top:38%}
+.command-home-map .casemap-places .place-ueberlingen{left:68%;top:30%}
+.command-home-map .casemap-places .place-konstanz{left:69%;top:77%}
+.command-home-map .casemap-places .place-bodensee{left:76%;top:52%;font-style:italic;color:#a3e9f2;font-size:clamp(8px,.8vw,11px)}
+.command-home-map .casemap-places .place-north{left:6%;top:11%;color:#9bcdd8}
+@media(max-width:720px){
+ .command-home-map .casemap-places span{font-size:7px;letter-spacing:0}
+ .command-home-map .casemap-places .place-stockach{left:39%;top:14%}
+ .command-home-map .casemap-places .place-singen{left:8%;top:37%}
+ .command-home-map .casemap-places .place-ueberlingen{left:62%;top:30%}
+ .command-home-map .casemap-places .place-konstanz{left:67%;top:80%}
+ .command-home-map .casemap-places .place-bodensee{left:73%;top:55%;font-size:7px}
+}
