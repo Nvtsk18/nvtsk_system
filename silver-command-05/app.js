@@ -177,7 +177,7 @@ function edit(kind,id){
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
  if(kind==="crew")fields+=select("role","Роль",pairs(roles),roles[1]);
  if(kind==="move")fields+=select("type","Операция",state.shards.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"]]:[["receive","Приход"]])+select("shardId","Case / Shard",(state.shards.length?[]:[["stock","Склад"]]).concat(state.shards.map(s=>[s.id,state.cases.find(c=>c.id===s.caseId).title+" / "+s.title])));
- if(kind==="material"||kind==="move")fields+=input("qty","Количество","number");
+ if(kind==="material"||kind==="move")fields+=input("qty","Количество, шт.","number").replace('step=".01"','step="1"').replace('min="0"','min="1"');
  if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ, всего до 2 МБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Case/Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;$("#dialog").showModal();
 }
