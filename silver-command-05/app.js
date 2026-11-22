@@ -100,11 +100,21 @@ function caseMaterialHistory(caseId){
   return '<div class="taskrow"><div><strong>'+esc(kind)+' · '+esc(item?.title||"Материал")+' · '+esc(m.qty)+'</strong><small>'+esc(shard?.title||"Shard")+' · '+esc(operator?.name||"Участник")+'</small></div></div>';
  }).join("");
 }
+function caseTeam(id){
+ const linked=state.shards.filter(s=>s.caseId===id);
+ const ids=new Set(linked.map(s=>s.assignee).filter(Boolean));
+ const rows=state.crew.filter(c=>ids.has(c.id)||c.role==="Руководитель").map(c=>{
+ const assigned=linked.filter(s=>s.assignee===c.id);
+ return '<article class="taskrow"><div><strong>'+esc(c.name)+'</strong><small>'+esc(c.role)+' · '+(assigned.length?assigned.map(x=>esc(x.title)).join(", "):"Управление Case")+'</small></div><div>'+(lead()?'<button data-route="team">Участники →</button>':'')+'</div></article>';
+ }).join("");
+ const unassigned=linked.filter(s=>!s.assignee);
+ return '<section class="panel"><div class="panelhead"><h2>Команда Case</h2>'+(lead()?'<button data-route="team">Управление участниками →</button>':'')+'</div>'+(rows||'<p>Участники пока не назначены</p>')+(unassigned.length?'<p class="hint">Без исполнителя: '+unassigned.map(x=>esc(x.title)).join(", ")+'</p>':'')+'<p class="hint">Приглашения между устройствами пока недоступны. Назначения сохраняются локально; доступ не синхронизируется.</p></section>';
+}
 function detail(id){
   const c=state.cases.find(x=>x.id===id);
   if(!c)return heading("Case не найден");
   const shards=state.shards.filter(s=>s.caseId===id);
-  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="garage">Garage</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section><section class="panel"><h2>Материалы Case · история</h2>'+caseMaterialHistory(id)+'</section>';
+  return '<button class="back" data-route="projects">← Проекты</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shard",shards.length,"Этапы")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Case")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Новый Shard","new-shard",id):"")+'</section>'+caseTeam(id)+'<section class="panel"><h2>Материалы Case · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 const warehousePhotos=[
  {name:"novotegra Einlegeschiene",brand:"novotegra",kind:"Einlegesystem · не привязано к артикулу",image:"https://www.novotegra.com/fileadmin/_processed_/d/9/csm_einlegeschiene-kombination-03-0013xx_e3262ee072.jpg",url:"https://www.novotegra.com/fileadmin/04_Downloads/Certificates/novotegra_system/Montagesystemkatalog/DE-novotegra-Montage-Systemkatalog.pdf",verified:false},
