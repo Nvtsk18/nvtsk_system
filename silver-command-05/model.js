@@ -150,6 +150,14 @@ globalThis.NVModel = (() => {
         break;
       }
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
+      case "case-media": {
+        allowed(lead);
+        const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
+        requireValue(Array.isArray(p.files)&&p.files.length>0,"Выберите медиафайлы");
+        c.files=[...(c.files||[]),...p.files];
+        requireValue(c.files.length<=8,"Максимум 8 медиафайлов на Case");
+        break;
+      }
       case "pv-tech": {
         allowed(lead);
         const c=d.cases.find(x=>x.id===p.caseId); allowed(c);
