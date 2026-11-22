@@ -67,14 +67,14 @@ with sync_playwright() as pw:
           background:getComputedStyle(document.querySelector('.command-stage'),'::before').backgroundImage,
           dock:document.querySelector('.command-dock').getBoundingClientRect().toJSON(),
           panels:document.querySelector('.command-panels').getBoundingClientRect().toJSON(),
-          tiles:getComputedStyle(document.querySelector('.command-mobile-tiles')).display
+          projects:getComputedStyle(document.querySelector('.command-myprojects')).display
         })""")
         assert "office-command-v40.png" in office["background"], (width, "Real office image missing",office["background"])
         if width > 720:
             assert office["dock"]["left"] >= office["panels"]["right"] - 4 and office["dock"]["top"] < office["panels"]["bottom"], (width, "Desktop side dock misplaced",office)
         else:
             assert office["dock"]["top"] < height and office["dock"]["bottom"] >= height - 5, (width, "Mobile dock not fixed",office)
-            assert office["tiles"] != "none", (width,"Mobile photo tiles not visible")
+            assert office["projects"] != "none", (width,"Personal project list not visible")
         fits()
         def capture(screen):
             folder=Path(os.environ.get("QA_IMAGES","/tmp/nvtsk-visual"))
@@ -91,18 +91,20 @@ with sync_playwright() as pw:
         assert not symmetry, (width, 'Dashboard symmetry', symmetry)
         # Reference dashboard must keep the approved desktop/mobile structure.
         expect(page.locator(".command-metrics .command-metric")).to_have_count(7)
-        expect(page.locator(".command-panels .command-panel")).to_have_count(3)
+        expect(page.locator(".command-panels .command-panel")).to_have_count(2)
+        expect(page.locator(".command-myproject")).to_have_count(4)
+        assert page.locator(".command-mobile-tiles").count() == 0, "Duplicated navigation tiles must be removed"
         expect(page.locator(".command-dock")).to_be_visible()
         expect(page.locator(".command-dock")).to_contain_text("Shards")
         expect(page.locator(".command-mission")).to_be_visible()
         if width <= 720:
-            expect(page.locator(".command-mobile-tiles")).to_be_visible()
+            expect(page.locator(".command-myprojects")).to_be_visible()
             order = page.evaluate("""() => {
-                const a=document.querySelector('.command-mobile-tiles').getBoundingClientRect();
+                const a=document.querySelector('.command-myprojects').getBoundingClientRect();
                 const b=document.querySelector('.command-metrics').getBoundingClientRect();
                 return {tileTop:a.top,metricTop:b.top}
             }""")
-            assert order["tileTop"] < order["metricTop"], (width,"Photo navigation must precede metrics on mobile",order)
+            assert order["tileTop"] < order["metricTop"], (width,"My Projects list must precede metrics on mobile",order)
         capture("dashboard")
         # Residential electrical template must create one Case and five
         # budget-balanced Shards without changing the PV workflow.
@@ -121,7 +123,17 @@ with sync_playwright() as pw:
                 shards.every(s=>s.status==='draft' && s.assignee===null) &&
                 Math.round(shards.reduce((n,s)=>n+s.price,0)*100)===100000;
         }"""), "Electrical Case template failed to create five balanced Shards"
-        # Dashboard dock navigation must reach its linked workspace.
+        # Role-specific participation: demo installer sees its assigned Shard project,
+        # not unrelated projects or new unassigned electrical templates.
+        route("team");page.locator("#actor").select_option("member-0")
+        route("dashboard")
+        expect(page.locator(".command-myproject")).to_have_count(1)
+        expect(page.locator(".command-myproject")).to_contain_text("PV Dachmontage")
+        assert page.locator(".command-mobile-tiles").count()==0
+        route("team");page.locator("#actor").select_option("lead")
+        route("dashboard")
+        expect(page.locator(".command-myproject")).to_have_count(5)
+                # Dashboard dock navigation must reach its linked workspace.
         route("dashboard")
         expect(page.locator(".command-dock button")).to_have_count(5)
         page.locator(".command-dock [data-route=projects]").first.click()
