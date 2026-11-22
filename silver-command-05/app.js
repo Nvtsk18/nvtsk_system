@@ -251,7 +251,7 @@ function projects(){
  '<header class="ph-hero"><div class="ph-hero-content"><span class="ph-eyebrow">SOLAN PLUS · COMPANY WORKSPACE</span><h1>Projects</h1>'+
  '<p>Объекты SolAn Plus GmbH, личные назначения и управленческий учёт.</p>'+
  '<div class="ph-hero-metrics"><span><strong>'+own.length+'</strong> мои объекты</span><span><strong>'+joined.length+'</strong> участвую</span><span><strong>'+state.teams.length+'</strong> Teams</span></div></div>'+
- '<div class="ph-hero-actions">'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
+ '<div class="ph-hero-actions"><button class="ph-company-lead" data-route="member/lead">Капитан · '+esc(displayMemberName(state.crew.find(c=>c.id==="lead")))+' →</button>'+(lead()?button("＋ Project","new-case")+button("⚡ Elektro","new-electrical"):"")+'</div></header>'+
  '<nav class="ph-tabs" aria-label="Разделы Projects">'+tabs.map(([id,label,count])=>'<button type="button" data-action="project-tab" data-tab="'+id+'" class="'+(tab===id?"is-active":"")+'" aria-current="'+(tab===id?"page":"false")+'"><span>'+label+'</span><small>'+count+'</small></button>').join("")+'</nav>'+
  '<section class="ph-board"><div class="ph-board-head"><div><span class="ph-eyebrow">'+(tab==="accounting"?"MANAGEMENT":tab==="joined"?"MY PARTICIPATION":"MY PROJECTS")+'</span><h2>'+info[0]+'</h2><p>'+info[1]+'</p></div></div>'+right+'</section></div>';
 }
@@ -386,7 +386,7 @@ function teamsWorkspace(){
    (linked.length?'<div class="company-team-work"><h4>Назначенные Shards</h4>'+linked.map(sh=>'<button data-route="shard/'+esc(sh.id)+'">'+esc(sh.title)+' <span>'+esc(statusName[sh.status])+' ›</span></button>').join("")+'</div>':"")+'</article>';
  }).join("");
  return '<section class="community-section company-teams"><div class="community-section-head"><div><h2>Teams SolAn Plus GmbH</h2><small>Сформируйте бригады, назначьте капитанов и участников</small></div>'+(lead()?button("＋ Team","new-team"):"")+'</div>'+
- '<p class="community-muted">Teams — внутренние рабочие бригады. Капитан компании может назначить Team на Shard; капитан Team отвечает за передачу выполненных работ на приёмку.</p>'+
+ '<p class="community-muted">Teams — внутренние рабочие бригады. Капитан компании может назначить Team на Shard; капитан Team отвечает за передачу выполненных работ на приёмку.</p><button class="company-team-owner-link" data-route="member/lead">Профиль капитана SolAn Plus GmbH →</button>'+
  '<div class="company-teams-list">'+(list||'<div class="company-teams-empty"><strong>Пока нет сформированных Teams</strong><p>Создайте первую бригаду, выберите капитана и участников.</p>'+(lead()?button("＋ Создать Team","new-team"):"")+'</div>')+'</div>'+
  '<p class="community-disclaimer">Данные Teams хранятся локально. Общее управление бригадами с разных телефонов требует авторизации и синхронизации.</p></section>';
 }
