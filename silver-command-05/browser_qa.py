@@ -99,6 +99,18 @@ with sync_playwright() as pw:
         print("WAREHOUSE_PHOTOS",engine.name,width,json.dumps(photos,ensure_ascii=False))
         capture("garage");act("move");page.get_by_label("Количество").fill("2");save()
         expect(page.locator(".stockitem").filter(has_text="Einlegeschiene").get_by_text("22",exact=True)).to_be_visible()
+        # Inventory invariants: insufficient stock, cross-Shard returns and
+        # fractional quantities must fail without modifying persisted data.
+        stock_guards = page.evaluate("""() => {
+          const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+          const item=d.garage.find(m=>m.id==='rail');
+          const shard=d.shards.find(s=>s.title==='QA монтаж');
+          const other=d.shards.find(s=>s.id!==shard.id&&s.status!=='accepted');
+          const cases=[{type:'issue',qty:item.qty+1,shardId:shard.id},{type:'return',qty:3,shardId:shard.id},{type:'issue',qty:.5,shardId:shard.id}];
+          if(other)cases.push({type:'return',qty:1,shardId:other.id});
+          return cases.every((p,i)=>{try{NVModel.apply(d,'move',{id:'guard-'+i,itemId:item.id,...p});return false}catch{return true}})&&item.qty===22;
+        }""")
+        assert stock_guards, (width,"Stock movement invariants failed")
         page.locator('.mode [data-route=field]').click()
         page.locator('#actor').select_option("member-0")
         task=page.locator("article.taskrow").filter(has_text="QA монтаж")
