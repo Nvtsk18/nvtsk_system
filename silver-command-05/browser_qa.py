@@ -110,6 +110,12 @@ with sync_playwright() as pw:
         # searchable directory, experience and skill-based career progression.
         route("team")
         expect(page.locator(".community-hero")).to_be_visible()
+        expect(page.locator(".community-hero h1")).to_have_text("Сообщество")
+        expect(page.locator("#nav [data-route=team]")).to_contain_text("Сообщество")
+        expect(page.locator(".community-identity-copy")).to_contain_text("Капитан")
+        assert page.locator(".community-person").filter(has_text="Координатор").count()==0, "Legacy Coordinator must not appear"
+        assert page.locator(".community-person").filter(has_text="Капитан").count() >= 1
+
         expect(page.locator(".community-person")).to_have_count(2)
         expect(page.locator(".community-tabs button")).to_have_count(3)
         expect(page.locator("#actor")).to_have_value("lead")
