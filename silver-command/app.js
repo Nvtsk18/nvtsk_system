@@ -275,6 +275,13 @@ document.addEventListener("submit",e=>{
    if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.audit)||!Array.isArray(raw.crew))throw Error("В копии отсутствуют необходимые разделы");
    const restored=normalize(raw);
    if(restored.recoveryWarnings.length)throw Error("Обнаружены повреждённые записи: "+restored.recoveryWarnings.join("; "));
+   // A project-only restore must not orphan material consumption already recorded in Garage.
+   // Garage remains untouched; fail closed rather than creating an inconsistent two-store state.
+   const garageSnapshot=window.NVTSK_GARAGE?.snapshot();
+   if(!garageSnapshot)throw Error("Garage недоступен или повреждён: восстановление проектов остановлено.");
+   const restoredIds=new Set(restored.lots.map(l=>l.id));
+   const missingGarageProjects=garageSnapshot.usage.filter(u=>!restoredIds.has(u.project));
+   if(missingGarageProjects.length)throw Error("Импорт удалит проекты, к которым привязаны расходы Garage ("+missingGarageProjects.length+"). Склад не изменён; восстановление остановлено.");
    const message="Проверка пройдена. Лотов: "+restored.lots.length+", фотоэтапов: "+restored.stages.length+", записей: "+restored.posts.length+". Заменить текущие локальные демоданные? Сначала экспортируйте старую копию.";
    if(!window.confirm(message))return;
    restored.audit.push({at:new Date().toISOString(),action:"import",lotId:null,actor:"me",details:"Local demo backup restored"});
