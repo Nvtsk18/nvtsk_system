@@ -77,11 +77,9 @@ function caseMiniMap(){
     '<path d="M39 -5 Q50 20 46 32 T71 72"/></g>',
     '<path d="M61 41 C68 40 70 43 76 43 C83 42 86 45 103 43 L105 73 C93 77 86 69 80 64 C74 60 68 60 64 64 C62 61 58 56 58 50 Z" fill="url(#lake-gradient)" stroke="#75bbc7" stroke-width=".48"/>',
     '<path d="M67 64 C59 64 56 72 50 71 C43 68 39 75 38 82 C47 83 52 79 56 78 C61 78 67 77 72 72 Z" fill="#246f86" stroke="#75bbc7" stroke-width=".4"/>',
-    '<g fill="#c2dbe0" font-family="system-ui,-apple-system,Arial,sans-serif" font-weight="650" font-size="3.8" letter-spacing=".15">',
-    '<text x="40" y="22">STOCKACH</text><text x="9" y="44">SINGEN</text><text x="68" y="34">ÜBERLINGEN</text><text x="72" y="78">KONSTANZ</text>',
-    '<text x="72" y="55" font-size="3.4" fill="#b2e8f1" font-style="italic">BODENSEE</text></g>',
+
     '<g transform="translate(6 8)" stroke="#c9eaed" fill="none" stroke-width=".6"><path d="M0 7 L0 0 M-2.3 4 L0 0 L2.3 4"/></g>',
-    '<text x="4.6" y="19" font-family="system-ui" fill="#c9eaed" font-size="3">N</text></svg></div>'
+    '</svg><div class="casemap-places" aria-hidden="true"><span class="place-stockach">Stockach</span><span class="place-singen">Singen</span><span class="place-ueberlingen">Überlingen</span><span class="place-konstanz">Konstanz</span><span class="place-bodensee">Bodensee</span><span class="place-north">N</span></div></div>'
   ].join("");
   return '<section class="panel casemap"><div class="panelhead"><h2>Карта проектов</h2><small>'+placed.length+' с отметками · '+state.cases.length+' всего</small></div><div class="casemapviewport">'+schematic+'<div class="casemappins">'+pins+'</div><span class="casemapcredit">СХЕМА РЕГИОНА</span></div><div class="casemaplegend"><span><i></i> Демо-проекты</span><button data-route="projects">Все проекты →</button></div><p class="casemapnote">Карта схематическая. Точки показывают только проекты с известными координатами.</p></section>';
 }
