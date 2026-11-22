@@ -582,3 +582,12 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Critical blockers:** Combined Case/Shard/Garage archive export exists, but atomic combined import is not implemented; separate localStorage keys make crash-safe cross-store import nontrivial. `normalize` filters invalid stages/posts, and rejects them for import, but legacy migration and exhaustive reload proof remain open. Client-side demo roles are not authentication. Stage evidence is metadata only. Garage snapshot validates movements but must be tested for recovery under corrupted storage.
 
 **Next:** design and test crash-recoverable combined import (staging journal and rollback / deterministic recovery), migrate old backups without silent loss; then run 3-role conflict tests and browser navigation checks. Do not claim MVP complete.
+
+
+## 2026-11-22 · daytime visual pass (iPad feedback)
+- User reports deployed UI does not resemble approved concept images. Prioritised graphite/silver Tactical + Industrial + Legacy styling without replacing the functional app.
+- Commit: `b26eebee0f05cd90ac098f6935990875f771f1b2` updates **only** `silver-command/style.css` with sidebar, active navigation, hero, panels, buttons, typography and responsive bottom navigation refinements.
+- Safety: existing selectors and CSS remain; additive overrides only. No JavaScript, state, import/export or routes changed. No real user/client data committed.
+- Checks: GitHub update returned commit SHA (PASS); CSS content appended successfully (PASS). **NOT TESTED:** actual Safari rendering, iPad/iPhone layout, full browser interactions, JavaScript syntax, three roles, conflicts, import/export/reload. These are not claimed as passing.
+- Known gaps: current screen structure still differs from approved concepts; five-tab information architecture and exact canonical 3D N logo not implemented. Do not substitute a generic N for the approved reference. Unified atomic Case/Shard/Garage restore remains blocked.
+- Next: user visually reviews deployment after refresh; implement actual Command/Field screen structure incrementally and test navigation; separately address atomic restore and regression coverage.
