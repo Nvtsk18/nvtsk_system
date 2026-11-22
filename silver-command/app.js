@@ -192,7 +192,7 @@ function chat() {
 }
 function profile() {
  return '<div class="stack">'+panel('<div class="row"><div class="avatar big">'+encode(state.name[0])+'</div><div><h2>'+encode(state.name)+'</h2><p>Ваше имя, без выбора роли при регистрации</p></div></div><div style="margin-top:14px">'+button("edit-name","✎ Изменить имя")+'</div>')+
- '<p class="small">⚠ Проекты и Garage хранятся отдельно. Для полной копии отдельно экспортируйте Garage во вкладке «Склад». Импорт проектов не восстанавливает склад.</p><div style="margin:12px 0" class="row">'+button("export","↓ Экспорт проектов (без Garage)")+button("import","↑ Импорт проектов")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
+ '<p class="small">⚠ Общий экспорт включает проекты и Garage, но пока архивный: единое восстановление не поддерживается. Сохраните также отдельные резервные копии. Импорт ниже принимает только копию проектов и не меняет Garage.</p><div style="margin:12px 0" class="row">'+button("export","↓ Архив Case + Garage (без общего импорта)")+button("import","↑ Импорт только проектов")+'</div><div class="grid g3">'+panel('<div class="statlabel">Legacy</div><div class="stat">8500</div>')+panel('<div class="statlabel">Merit</div><div class="stat">'+money(state.merit)+'</div>')+panel('<div class="statlabel">Бригада</div><div class="stat">'+state.crew.length+'</div>')+'</div>'+
  panel('<h2>Команда и MentorGate</h2><p>Здесь будут навыки, Merit, финансовая история, капитан и администраторы бригад, наставничество и личные проекты.</p><div class="tile">'+state.crew.map(encode).join(" • ")+'</div>')+'</div>';
 }
 function render() {
@@ -268,7 +268,9 @@ document.addEventListener("submit",e=>{
  if(f.id==="importForm"){
   try{
    const input=String(data.backup||"");if(input.length>1500000)throw Error("Размер копии превышает 1,5 МБ");
-   const parsed=JSON.parse(input),raw=parsed&&typeof parsed==="object"&&"data" in parsed?parsed.data:parsed;
+   const parsed=JSON.parse(input);
+   if(parsed&&typeof parsed==="object"&&(parsed.kind==="nvtsk-silver-combined-export"||Object.prototype.hasOwnProperty.call(parsed,"garage")))throw Error("Общий архив Case/Garage пока нельзя восстановить: импорт проектов не восстанавливает Garage. Никакие данные не изменены.");
+   const raw=parsed&&typeof parsed==="object"&&"data" in parsed?parsed.data:parsed;
    if(!raw||typeof raw!=="object"||Array.isArray(raw)||raw.schemaVersion!==2)throw Error("Неподдерживаемая версия копии");
    if(!Array.isArray(raw.stages)||!Array.isArray(raw.posts)||!Array.isArray(raw.audit)||!Array.isArray(raw.crew))throw Error("В копии отсутствуют необходимые разделы");
    const restored=normalize(raw);
