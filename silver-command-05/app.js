@@ -364,7 +364,7 @@ function detail(id){
   const partner=counterpartyForProject(c);
   const partnerInfo='<section class="panel cp-case-link"><div class="panelhead"><h2>Заказчик / Auftraggeber</h2>'+(lead()?button("Связать контрагента","link-counterparty",id):"")+'</div>'+
     (partner?'<button data-route="partner/'+esc(partner.id)+'" class="cp-case-partner"><strong>'+esc(partner.name)+'</strong><span>DC-монтаж · SolAn Plus · AC — электрики заказчика</span><small>Открыть профиль →</small></button>':'<p>Контрагент не назначен. Исторические проекты сохраняются без автоматически установленного заказчика.</p>')+'</section>';
-  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div><section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+partnerInfo+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
+  return '<button class="back" data-route="projects">← Projects</button><section class="panel casehead"><img src="art/roof.webp" alt=""><div><h1>'+esc(c.title)+'</h1><p>'+esc(c.city)+'</p><p>'+esc(c.address||'')+'</p><p>'+esc(c.notes||'')+'</p><div>'+fileLinks(c.files)+'</div><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section><div class="details">'+stat("▤","Shards",shards.length,"Рабочие блоки")+stat("€","Бюджет",money(c.price),"EUR")+stat("◇","Merit",money(c.price),"Эмиссия Project")+'</div>'+PVProjectCard.render(c,state,lead())+'<section class="panel"><div class="panelhead"><h2>Shards</h2><button data-route="lager">Lager</button></div>'+shards.map(shardRow).join("")+(lead()?button("＋ Shard","new-shard",id):"")+'</section>'+partnerInfo+caseTeam(id)+'<section class="panel"><h2>Материалы объекта · история</h2>'+caseMaterialHistory(id)+'</section>';
 }
 const warehousePhotos=[
  {name:"novotegra Einlegeschiene",brand:"novotegra",kind:"Einlegesystem · не привязано к артикулу",image:"https://www.novotegra.com/fileadmin/_processed_/d/9/csm_einlegeschiene-kombination-03-0013xx_e3262ee072.jpg",url:"https://www.novotegra.com/fileadmin/04_Downloads/Certificates/novotegra_system/Montagesystemkatalog/DE-novotegra-Montage-Systemkatalog.pdf",verified:false},
@@ -620,9 +620,15 @@ let pending;
 function fileLinks(files){return (files||[]).map(a=>'<a href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+esc(a.name)+'</a>').join(" · ")}
 function edit(kind,id){
  const s=state.shards.find(x=>x.id===id);
- const titles={electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
+ const titles={"pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
+ if(["pv-tech","pv-zone","pv-material","pv-document"].includes(kind)){
+   if(!lead())return;
+   const project=state.cases.find(c=>c.id===id);
+   if(!project)return;
+   fields=PVProjectCard.form(kind,project);
+ }
  if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number")+counterpartySelector(kind==="case"?id:null);
  if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Elektro · Rohbau","Elektro · Kabel","Elektro · Installation","Elektro · Verteiler","Elektro · Prüfung","Другое"]))+input("price","Бюджет Shard, €","number");
@@ -691,6 +697,12 @@ document.addEventListener("click",async e=>{
  if(e.target.closest('[data-action="social-delete"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p&&p.author===state.actor&&confirm("Удалить свою публикацию и комментарии?")){d.posts=d.posts.filter(x=>x.id!==id);try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
  if(e.target.closest('[data-action="social-like"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];try{localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}}return}
 
+ const jump=e.target.closest("[data-pv-target]");
+ if(jump){
+   const target=document.getElementById(jump.dataset.pvTarget);
+   if(target)target.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"instant":"smooth",block:"start"});
+   return;
+ }
  const b=e.target.closest("[data-route],[data-action]");if(!b)return;
  if(b.dataset.route){location.hash=b.dataset.route;return}
  const a=b.dataset.action,id=b.dataset.id;
@@ -700,6 +712,18 @@ document.addEventListener("click",async e=>{
      else sessionStorage.removeItem(BASE+"_mode");
      location.reload();
    }catch(error){alert(error.message)}
+   return;
+ }
+ if(["pv-tech","pv-zone","pv-material","pv-document"].includes(a)){edit(a,id);return}
+ if(a==="pv-check"){
+   const key=b.dataset.check;
+   const current=Boolean(state.cases.find(c=>c.id===id)?.pvPlan?.checks?.[key]);
+   await change(()=>apply(state,"pv-check",{caseId:id,key,value:!current}));
+   return;
+ }
+ if(a==="pv-remove"){
+   if(!confirm("Удалить эту запись из Project?"))return;
+   await change(()=>apply(state,"pv-remove",{caseId:id,list:b.dataset.list,rowId:b.dataset.row}));
    return;
  }
  if(a==="edit-profile"){edit("profile",id);return}
@@ -734,6 +758,11 @@ $("#editor").onsubmit=async e=>{
  e.preventDefault();const {kind,id}=pending,p=Object.fromEntries(new FormData(e.target));
  const selected=e.target.elements.media?.files;
  const avatarFile=e.target.elements.avatarFile?.files?.[0];
+ if(kind==="pv-tech")p.caseId=id;
+ if(["pv-zone","pv-material","pv-document"].includes(kind)){
+   p.caseId=id;
+   p.list={"pv-zone":"zones","pv-material":"materials","pv-document":"documents"}[kind];
+ }
  if(kind==="team"||kind==="team-update"){
    p.memberIds=new FormData(e.target).getAll("memberIds");
    if(kind==="team-update")p.teamId=id;
@@ -770,7 +799,7 @@ $("#editor").onsubmit=async e=>{
      }));
    }
    const operation=()=>{
-     if(kind!=="electrical")return apply(state,kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p.counterpartyId===""?{...p,counterpartyId:null}:p);
+     if(kind!=="electrical")return apply(state,["pv-zone","pv-material","pv-document"].includes(kind)?"pv-add":kind==="team"?"team-create":kind==="assign-team"?"team-assign":kind,p.counterpartyId===""?{...p,counterpartyId:null}:p);
      const caseId=p.id;
      let next=apply(state,"case",{id:caseId,title:p.title,city:p.city,price:p.price,address:p.address,notes:p.notes,files:p.files,counterpartyId:p.counterpartyId||null});
      const steps=[
