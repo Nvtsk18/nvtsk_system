@@ -187,3 +187,28 @@ body:not(:has(.command-center)) .visualtile:hover,body:not(:has(.command-center)
  body:not(:has(.command-center)) .casehead>img{width:100%;height:180px}
  body:not(:has(.command-center)) .casehead h1{font-size:23px}
 }
+
+/* v44 — case usability and legible navigation icons */
+body:not(:has(.command-center)) .casehead>img{max-width:none!important;min-width:0;align-self:stretch;object-fit:cover;object-position:center center}
+body:not(:has(.command-center)) .casehead>div{align-items:flex-start}
+body:not(:has(.command-center)) .casehead .progress{background:#284052;border:1px solid #658ba5;border-radius:9px;height:10px}
+body:not(:has(.command-center)) .casehead .progress i{background:linear-gradient(90deg,#22bce9,#88edc4)}
+body:not(:has(.command-center)) .casehead small{color:#afcfda}
+body:not(:has(.command-center)) .panelhead h2,body:not(:has(.command-center)) .panel>h2{font-size:clamp(17px,1.6vw,21px);font-weight:750;color:#f4fbff}
+body:not(:has(.command-center)) .panelhead{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #76b8d53a}
+body:not(:has(.command-center)) .panel button[data-action="new-shard"],body:not(:has(.command-center)) .screenhead button[data-action],body:not(:has(.command-center)) .panel button[data-action="move"]{min-height:42px;padding:10px 15px;border-radius:11px;background:linear-gradient(165deg,#c8e9fa,#89cde7);border:1px solid #d1f5ff;color:#092b3e;font-weight:800;box-shadow:0 5px 0 #1c4d66,0 8px 19px #0007}
+body:not(:has(.command-center)) .panel button[data-action="new-shard"]:active,body:not(:has(.command-center)) .screenhead button[data-action]:active{transform:translateY(3px);box-shadow:0 2px 0 #1c4d66,0 4px 10px #0007}
+body:not(:has(.command-center)) #nav .nav-glyph{display:grid!important;place-items:center!important;width:27px!important;height:27px!important;flex:0 0 27px!important}
+body:not(:has(.command-center)) #nav .nav-glyph .ui-icon{width:24px!important;height:24px!important;fill:none!important;stroke:#b8ecff!important;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+body:not(:has(.command-center)) #nav button.active .ui-icon{stroke:#d2ffff!important}
+body:not(:has(.command-center)) .details .stat{min-width:0;min-height:74px;display:flex;align-items:center;gap:12px;padding:13px}
+body:not(:has(.command-center)) .details .stat strong{font-size:clamp(21px,2.1vw,29px)}
+@media(max-width:720px){
+ body:not(:has(.command-center)) .casehead>img{width:100%!important;max-width:none!important;min-height:166px;height:184px!important}
+ body:not(:has(.command-center)) .details{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ body:not(:has(.command-center)) .details .stat{padding:11px;gap:8px;min-height:70px}
+ body:not(:has(.command-center)) .details .stat strong{font-size:21px}
+ body:not(:has(.command-center)) #nav .nav-glyph{flex:none!important;width:25px!important;height:25px!important}
+ body:not(:has(.command-center)) #nav .nav-glyph .ui-icon{width:22px!important;height:22px!important}
+ body:not(:has(.command-center)) .panelhead h2,body:not(:has(.command-center)) .panel>h2{font-size:17px}
+}
