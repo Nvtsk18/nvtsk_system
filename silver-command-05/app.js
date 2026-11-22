@@ -368,8 +368,24 @@ function communityStats(c){
 function memberAvatar(c,large=false){
   return '<span class="community-avatar'+(large?" is-large":"")+'">'+(c.avatar?'<img src="'+esc(c.avatar)+'" alt="">':'<span>'+esc(displayMemberName(c).trim().slice(0,1).toUpperCase())+'</span>')+'</span>';
 }
+
+function teamsWorkspace(){
+ const list=state.teams.map(t=>{
+  const memberCards=t.memberIds.map(id=>{const c=state.crew.find(x=>x.id===id);return c?'<button data-route="member/'+esc(c.id)+'" class="company-team-member">'+memberAvatar(c)+'<span><strong>'+esc(displayMemberName(c))+'</strong><small>'+(id===t.captainId?"Капитан Team":esc(c.headline||displayRole(c)))+'</small></span></button>':""}).join("");
+  const linked=state.shards.filter(sh=>sh.teamId===t.id);
+  const projectCount=new Set(linked.map(sh=>sh.caseId)).size;
+  return '<article class="company-team-card"><div class="company-team-heading"><div><small>NVTSK · TEAM</small><h3>'+esc(t.name)+'</h3><p>'+esc(t.description||"Рабочая бригада компании")+'</p></div>'+(lead()?button("Настроить","team-edit",t.id):"")+'</div>'+
+   '<div class="company-team-facts"><span>'+t.memberIds.length+' участников</span><span>'+linked.length+' Shards</span><span>'+projectCount+' Projects</span></div>'+
+   '<div class="company-team-members">'+memberCards+'</div>'+
+   (linked.length?'<div class="company-team-work"><h4>Назначенные Shards</h4>'+linked.map(sh=>'<button data-route="shard/'+esc(sh.id)+'">'+esc(sh.title)+' <span>'+esc(statusName[sh.status])+' ›</span></button>').join("")+'</div>':"")+'</article>';
+ }).join("");
+ return '<section class="community-section company-teams"><div class="community-section-head"><div><h2>Teams компании</h2><small>Сформируйте бригады, назначьте капитанов и участников</small></div>'+(lead()?button("＋ Team","new-team"):"")+'</div>'+
+ '<p class="community-muted">Teams — внутренние рабочие бригады. Капитан компании может назначить Team на Shard; капитан Team отвечает за передачу выполненных работ на приёмку.</p>'+
+ '<div class="company-teams-list">'+(list||'<div class="company-teams-empty"><strong>Пока нет сформированных Teams</strong><p>Создайте первую бригаду, выберите капитана и участников.</p>'+(lead()?button("＋ Создать Team","new-team"):"")+'</div>')+'</div>'+
+ '<p class="community-disclaimer">Данные Teams хранятся локально. Общее управление бригадами с разных телефонов требует авторизации и синхронизации.</p></section>';
+}
 function communityTabs(active){
-  const tabs=[["people","Люди","team"],["feed","Лента","team/feed"],["achievements","Достижения","team/achievements"]];
+  const tabs=[["people","Люди","team"],["teams","Teams","team/teams"],["feed","Лента","team/feed"],["achievements","Награды","team/achievements"]];
   return '<nav class="community-tabs" aria-label="Разделы сообщества">'+tabs.map(([id,label,route])=>'<button class="'+(active===id?"is-active":"")+'" data-route="'+route+'">'+esc(label)+'</button>').join("")+'</nav>';
 }
 function communityShell(active,body){
@@ -382,7 +398,8 @@ function communityShell(active,body){
     '<p class="community-disclaimer">Пилот социальной системы: профили, публикации и достижения хранятся локально на этом устройстве. Это не общая сеть между телефонами; XP не является Merit и не влияет на оплату.</p></div>';
 }
 function team(){
-  const route=location.hash.slice(1),view=route==="team/feed"?"feed":route==="team/achievements"?"achievements":"people";
+  const route=location.hash.slice(1),view=route==="team/feed"?"feed":route==="team/teams"?"teams":route==="team/achievements"?"achievements":"people";
+  if(view==="teams")return communityShell(view,teamsWorkspace());
   if(view==="feed")return communityShell(view,social());
   if(view==="achievements"){
     const members=state.crew.map(c=>({c,stats:communityStats(c)})).sort((a,b)=>b.stats.xp-a.stats.xp);
