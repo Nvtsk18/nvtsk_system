@@ -107,6 +107,14 @@ with sync_playwright() as pw:
                 return {tileTop:a.top,metricTop:b.top}
             }""")
             assert order["tileTop"] < order["metricTop"], (width,"My Projects list must precede metrics on mobile",order)
+        # Platform identity must not be confused with the active company workspace.
+        expect(page.locator(".command-brand .nvtsk-brand-caption")).to_contain_text("NVTSK SYSTEM")
+        workspace = page.locator(".command-brand .workspace-switch")
+        expect(workspace).to_be_visible()
+        workspace.locator("summary").click()
+        expect(workspace.locator(".workspace-switch-current")).to_contain_text("SolAn Plus GmbH")
+        expect(workspace.locator(".workspace-switch-note")).to_contain_text("изолированного хранения")
+        workspace.locator("summary").click()
         capture("dashboard")
         # Social Team hub: actual member profiles, owner-editable details, feed,
         # searchable directory, experience and skill-based career progression.
