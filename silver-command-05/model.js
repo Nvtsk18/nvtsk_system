@@ -56,7 +56,13 @@ globalThis.NVModel = (() => {
         const item=d.garage.find(x=>x.id===p.itemId);
         allowed(stock && item && (p.type==="receive" || (s && s.status!=="accepted")));
         // Accepted work is closed: further stock movements require a new open Shard.
-        requireValue(amount(p.qty)&&p.qty>0,"Введите положительное количество");
+        requireValue(Number.isSafeInteger(p.qty)&&p.qty>0,"Количество должно быть положительным целым числом");
+        requireValue(["issue","return","receive"].includes(p.type),"Неизвестная складская операция");
+        if(p.type==="issue")requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
+        if(p.type==="return"){
+          const outstanding=d.moves.filter(m=>m.itemId===item.id&&m.shardId===s.id).reduce((n,m)=>n+(m.type==="issue"?m.qty:m.type==="return"?-m.qty:0),0);
+          requireValue(outstanding>=p.qty,"Нельзя вернуть больше, чем выдано этому Shard");
+        }
         item.qty=Math.round((item.qty+(p.type==="issue"?-p.qty:p.qty))*1e6)/1e6;
         d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:p.type==="receive"?null:s.id,actor:actor.id});
         break;
