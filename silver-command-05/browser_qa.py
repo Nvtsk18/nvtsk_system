@@ -34,7 +34,8 @@ with sync_playwright() as pw:
             page.locator('#editor [type=submit]').click()
             expect(page.locator('dialog')).not_to_be_visible()
         def fits():
-            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), (width,page.url)
+            overflow = page.evaluate("""() => ({viewport:innerWidth,scroll:document.documentElement.scrollWidth, offenders:[...document.querySelectorAll('body *')].filter(e=>{const r=e.getBoundingClientRect();return r.right>innerWidth+1||r.left < -1}).slice(0,12).map(e=>({tag:e.tagName,cls:String(e.className).slice(0,80),width:Math.round(e.getBoundingClientRect().width),right:Math.round(e.getBoundingClientRect().right)}))})""")
+            assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
         expect(page.get_by_role("heading",name="Добро пожаловать",exact=False)).to_be_visible()
         expect(page.locator(".edition")).to_contain_text("0.5")
         fits()
