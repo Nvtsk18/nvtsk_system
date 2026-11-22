@@ -38,6 +38,8 @@ with sync_playwright() as pw:
             assert overflow["scroll"] <= overflow["viewport"], (width,page.url,overflow)
         expect(page.locator(".command-brand")).to_contain_text("NVTSK SYSTEM")
         expect(page.locator(".command-center")).to_be_visible()
+        expect(page.locator(".command-brand")).to_contain_text("SolAn Plus GmbH")
+        expect(page.locator(".command-brand")).to_contain_text("NVTSK SYSTEM")
         # The hero must place TWO independent actions vertically to the left
         # of a project map, on both desktop and mobile.
         expect(page.locator(".command-home-actions .command-home-action")).to_have_count(2)
@@ -117,7 +119,22 @@ with sync_playwright() as pw:
         assert page.locator(".community-person").filter(has_text="Капитан").count() >= 1
 
         expect(page.locator(".community-person")).to_have_count(2)
-        expect(page.locator(".community-tabs button")).to_have_count(3)
+        expect(page.locator(".community-hero .community-kicker")).to_contain_text("SOLAN PLUS")
+        route("team/teams")
+        expect(page.locator(".company-teams-empty")).to_be_visible()
+        act("new-team")
+        page.locator("#editor [name=title]").fill("QA DC Crew")
+        page.locator("#editor [name=captainId]").select_option("member-0")
+        page.locator('#editor [name=memberIds][value="member-0"]').check()
+        save()
+        expect(page.locator(".company-team-card")).to_have_count(1)
+        expect(page.locator(".company-team-card")).to_contain_text("Demo Monteur")
+        page.locator(".company-team-card [data-action=team-edit]").click()
+        page.locator("#editor [name=title]").fill("QA DC Team")
+        save()
+        expect(page.locator(".company-team-card")).to_contain_text("QA DC Team")
+        route("team")
+        expect(page.locator(".community-tabs button")).to_have_count(4)
         expect(page.locator("#actor")).to_have_value("lead")
         capture("team")
         page.locator(".community-person").filter(has_text="Demo Monteur").click()
@@ -186,7 +203,7 @@ with sync_playwright() as pw:
         expect(page.get_by_role("heading",name="Projects")).to_be_visible()
         # Project Hub search and tabs must work without altering case ownership.
         route("projects")
-        expect(page.locator(".ph-tabs [data-action=project-tab]")).to_have_count(4)
+        expect(page.locator(".ph-tabs [data-action=project-tab]")).to_have_count(3)
         expect(page.locator(".ph-tabs [data-tab=mine]")).to_have_attribute("aria-current", "page")
         page.locator("#project-hub-search").fill("NO_SUCH_PROJECT_9999")
         expect(page.locator("#ph-no-match")).to_be_visible()
@@ -195,10 +212,12 @@ with sync_playwright() as pw:
         expect(page.locator("#ph-no-match")).to_be_hidden()
         page.locator(".ph-tabs [data-tab=joined]").click()
         expect(page.locator(".ph-tabs [data-tab=joined]")).to_have_attribute("aria-current", "page")
-        page.locator(".ph-tabs [data-tab=discover]").click()
-        expect(page.locator(".ph-local-note")).to_contain_text("Локальный каталог")
-        page.locator(".ph-tabs [data-tab=market]").click()
-        expect(page.locator(".ph-local-note")).to_contain_text("Предпросмотр рынка")
+        expect(page.locator(".ph-tabs [data-tab=market]")).to_have_count(0)
+        page.locator(".ph-tabs [data-tab=accounting]").click()
+        expect(page.locator(".ph-account-stats > div")).to_have_count(4)
+        expect(page.locator(".ph-account")).to_contain_text("Управленческая сводка")
+        expect(page.locator(".ph-account")).to_contain_text("не подтверждённые поступления")
+        expect(page.locator(".ph-account-row")).to_have_count(4)
         page.locator(".ph-tabs [data-tab=mine]").click()
         route("projects");act("new-case")
         page.get_by_label("Название").fill("QA Roof")
@@ -207,6 +226,13 @@ with sync_playwright() as pw:
         expect(page.get_by_role("heading",name="QA Roof")).to_be_visible();fits();capture("case")
         act("new-shard");page.get_by_label("Название").fill("QA монтаж")
         page.get_by_label("Бюджет Shard").fill("250");save()
+        act("assign-team")
+        expect(page.locator('#editor [name=teamId]')).to_have_value(page.locator('#editor [name=teamId]').input_value())
+        save()
+        assert page.evaluate("""() => {
+          const d=JSON.parse(localStorage.getItem('nvtsk05_independent')).data;
+          return d.shards.some(s=>s.title==='QA монтаж'&&s.teamId===d.teams[0].id&&s.assignee==='member-0');
+        }"""), "Team assignment must link Shard and captain"
         # Project -> Shard -> Task must be a real nested hierarchy.
         act("new-task")
         page.locator("#editor [name=title]").fill("QA закрепить рельсы")
@@ -304,7 +330,12 @@ with sync_playwright() as pw:
         expect(page.locator(".socialpost")).to_have_count(0)
         expect(page.locator(".community-work-event")).to_have_count(1)
         assert not page.evaluate("""() => JSON.parse(localStorage.getItem('nvtsk05_independent_social')).posts.length"""), "Deleting own post must persist"
-                # Browser-runtime regression: an accepted Shard cannot consume or return stock,
+                route("settings")
+        expect(page.locator(".company-identity-settings")).to_contain_text("SolAn Plus GmbH")
+        expect(page.locator(".company-identity-settings")).to_contain_text("NVTSK SYSTEM")
+        route("projects")
+        expect(page.locator(".ph-tabs [data-action=project-tab]")).to_have_count(3)
+        # Browser-runtime regression: an accepted Shard cannot consume or return stock,
         # even if the actor is the manager. The persisted local snapshot must stay intact.
         closed_guard = page.evaluate("""() => {
             const raw = JSON.parse(localStorage.getItem('nvtsk05_independent'));
