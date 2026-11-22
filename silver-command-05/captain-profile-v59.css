@@ -62,3 +62,18 @@
  .company-network-link strong{font-size:11px}
  .company-network-company strong,.company-network-captain strong{font-size:15px}
 }
+
+/* Direct relationship: Captain -> people in the company's local roster. */
+.company-network-people{width:100%;padding:13px;margin-top:4px;border:1px solid #8eb5b383;border-radius:13px;background:#17394b97}
+.company-network-people-header{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:11px}
+.company-network-people-header small{font-size:10px;color:#a9e6d4;letter-spacing:.1em;font-weight:800}
+.company-network-people-header button{color:#e8fff9;border:1px solid #8ac7bb;padding:7px 11px;border-radius:9px;font-weight:750;font-size:11px;background:#235769}
+.company-network-people-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.company-network-person{display:flex;align-items:center;gap:9px;padding:10px;text-align:left;border:1px solid #719da98f;border-radius:11px;background:#1a4052;color:#f2fffe;min-width:0}
+.company-network-person:hover{border-color:#ace8de;background:#28566a}
+.company-network-person:focus-visible{outline:2px solid #cefff5;outline-offset:2px}
+.company-network-person .community-avatar{width:38px;height:38px;border-radius:11px;font-size:16px}
+.company-network-person>span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.company-network-person strong{font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.company-network-person small{font-size:10px;color:#afd4dc}
+@media(max-width:720px){.company-network-people{padding:9px}.company-network-people-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.company-network-person{padding:7px}.company-network-person .community-avatar{height:29px;width:29px;font-size:14px}.company-network-person strong{font-size:10px}.company-network-person small{font-size:9px}}
