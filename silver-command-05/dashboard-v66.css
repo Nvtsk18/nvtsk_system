@@ -48,3 +48,18 @@
 @media(max-width:1180px){.ref66-panels{grid-template-columns:minmax(0,1.3fr) minmax(220px,1fr)}.ref66-actions{grid-column:2;grid-row:1}.ref66-tasks{grid-column:1/-1}.ref66-metrics{gap:8px}.ref66-kpi{padding:10px;gap:7px}.ref66-kpi svg{width:25px;height:25px}}
 @media(max-width:850px){.ref66{padding:0 12px 25px}.ref66-scene{height:350px;padding:70px 17px 18px}.ref66-greeting h1{font-size:37px}.ref66-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.ref66-panels{grid-template-columns:1fr}.ref66-actions,.ref66-tasks{grid-column:auto;grid-row:auto}.ref66-actions{grid-row:1}.ref66-action-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.ref66-action-grid button{min-height:83px}}
 @media(max-width:600px){.ref66{padding:0 10px 22px}.ref66:before{height:480px;background-position:center top}.ref66-scene{height:300px;padding:95px 7px 16px}.ref66-greeting p{font-size:19px}.ref66-greeting h1{font-size:31px}.ref66-greeting>span:last-child{font-size:11px}.ref66-toolbar{top:10px;right:0;gap:5px}.ref66-toolbar>button{height:34px;width:34px}.ref66-toolbar .workspace-switch summary{min-height:36px;padding:4px 6px}.ref66-toolbar .workspace-switch-text small{display:none}.ref66-toolbar .workspace-switch-text strong{font-size:10px}.ref66-toolbar .workspace-switch-symbol{width:24px;height:24px}.ref66-date{font-size:10px;padding:8px}.ref66-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ref66-kpi{min-height:77px;border-radius:13px}.ref66-kpi strong{font-size:20px}.ref66-kpi small{font-size:10px}.ref66-kpi svg{width:23px;height:23px}.ref66-kpi:last-child{grid-column:1/-1}.ref66-panel{padding:12px}.ref66-project-grid{gap:6px}.ref66-project-photo{height:83px}.ref66-project-body{padding:8px 6px 0}.ref66-project-body strong{font-size:12px}.ref66-project-body small{font-size:10px}.ref66-status{font-size:9px;padding:3px 5px;left:4px;bottom:4px}.ref66-action-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ref66-bottom>span{margin-left:0;width:100%}}
+
+/* Profile-scoped financial summaries: no fictional payment records */
+.ref66-section{padding:22px;max-width:1450px;margin:auto}
+.ref66-section-tabs{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0 20px}
+.ref66-section-tabs button{padding:10px 16px;border:1px solid #607e89;border-radius:12px;background:#22343e}
+.ref66-finance-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:17px}
+.ref66-finance-cards .panel{margin:0;min-width:0}
+.ref66-finance-cards small{color:#aec7d0}
+.ref66-finance-cards h2{font-size:clamp(19px,2vw,30px);margin:10px 0 0}
+.ref66-finance-warning{padding:12px;border-left:3px solid #d8bb7a;color:#d6dce0;line-height:1.55}
+.ref66-finance-row{width:100%;display:flex;gap:12px;align-items:center;text-align:left;justify-content:space-between;padding:15px 5px;border-bottom:1px solid #6d82944a}
+.ref66-finance-row>span:first-child{display:grid;gap:5px;flex:1;min-width:0}
+.ref66-finance-row small{color:#9eb8c6}
+.ref66-finance-unknown{font-size:11px;color:#d3c4a2}
+@media(max-width:650px){.ref66-section{padding:12px}.ref66-finance-cards{grid-template-columns:1fr}.ref66-finance-row{flex-wrap:wrap}.ref66-finance-unknown{width:100%}}
