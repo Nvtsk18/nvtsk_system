@@ -635,3 +635,16 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Verification:** complete updated app.js parsed using V8 `new Function` before commit (PASS). Exact startup listener and Case save rollback code paths verified in source (PASS). Three perspectives considered: manager opening dashboard without old button; project creator encountering quota/write failure; warehouse operator relying on unchanged Case IDs after failed save. **NOT RUN:** physical browser/iPhone, full DOM startup, three-role runtime conflicts, combined import/export/reload, and full Case→Shard→Garage→acceptance. No claim of 75% visual similarity or functional MVP readiness.
 
 **P0 remaining:** atomic combined Case/Shard/Garage restore, role-conflict integration tests, actual browser click-through, stable Field Mode. Reference visual requires further asset/layout work and a screenshot comparison; cosmetic progress must not mask functional regressions.
+
+
+## 2026-11-22 ~13:05 CET · assignment/bid persistence rollback
+
+**Commit:** `2fc8a4a7cd56ac113e33b9ce7a1abab6b4de475d` (`silver-command/app.js` only). Root 0.3 untouched.
+
+**Source review:** read current `app.js` and existing audit before edit. Identified two mutation paths (assign executor; place/replace bid) that called `save()` without handling failure. In-memory state and audit could diverge from persisted state after quota/blocked-storage errors.
+
+**Changes:** snapshot previous assignee/bids and audit, then rollback both on `save()===false`; display storage error instead of rendering a false success. No change to role rules, import/export, Garage or financial behavior.
+
+**Checks performed:** exact replacement anchors each occurred once; full updated JavaScript parsed using V8 `new Function` before commit (PASS); GitHub returned commit SHA (PASS). **NOT RUN:** runtime storage-fault injection, browser/iPhone testing, three-role conflict integration, unified Case/Shard/Garage restore, end-to-end workflow. This is a targeted code-path fix, not proof of a stable MVP.
+
+**Open P0:** crash-safe combined import and migration, reproducible storage/reload tests, actor conflict tests, full Field Mode and navigation. Do not use real customer records.
