@@ -421,6 +421,54 @@ function team(){
   const content='<div class="community-grid"><section class="community-section"><div class="community-section-head"><div><h2>Участники</h2><small>Профили и специализации</small></div><span>'+state.crew.length+' человек</span></div><label class="community-search">Поиск участников<input id="member-search" type="search" placeholder="Имя, специализация, город…" autocomplete="off"></label><div class="community-people">'+roster+'</div></section><aside class="community-aside"><section class="community-section"><div class="community-section-head"><h2>Мой прогресс</h2><button data-route="team/achievements">Подробнее →</button></div><div class="community-progress"><strong>'+communityStats(actor()).xp+' XP</strong><span>'+esc(communityStats(actor()).level)+'</span><div class="community-progress-rail"><i style="width:'+communityStats(actor()).percent+'%"></i></div><small>Следующий уровень · '+communityStats(actor()).next+' XP</small></div><div class="community-badges">'+(communityStats(actor()).badges.map(([iconName,b])=>'<span>'+esc(b)+'</span>').join("")||'<p>Достижения появятся после выполненных и принятых работ.</p>')+'</div></section><section class="community-section"><div class="community-section-head"><h2>Лента сообщества</h2><button data-route="team/feed">Открыть →</button></div>'+preview+'<button class="community-write-link" data-route="team/feed">＋ Новая публикация</button></section></aside></div>';
   return communityShell(view,content);
 }
+
+function companyMainCaptain(){
+  const manager=state.crew.find(c=>c.id==="lead"&&c.role===roles[0]);
+  if(!manager)return "";
+  return '<section class="company-captain-entry" aria-label="Главный управляющий профиль">'+
+    '<div class="company-captain-overline"><span>SolAn Plus GmbH</span><small>Центр управления</small></div>'+
+    '<div class="company-captain-person">'+memberAvatar(manager,true)+
+    '<div><small>ГЛАВНЫЙ ПРОФИЛЬ · CAPTAIN</small><strong>'+esc(displayMemberName(manager))+'</strong><span>'+esc(manager.location||"Überlingen")+'</span></div>'+
+    '<button data-route="member/'+esc(manager.id)+'">Открыть профиль →</button></div>'+
+    '<div class="company-captain-relations"><span>'+state.cases.length+' Projects</span><span>'+state.teams.length+' Teams</span><span>'+state.crew.length+' участников</span></div></section>';
+}
+function contactDetail(label,content,href){
+ if(!content)return "";
+ return '<div class="company-contact-detail"><small>'+esc(label)+'</small>'+(href?'<a href="'+esc(href)+'" target="_blank" rel="noopener noreferrer">'+esc(content)+'</a>':'<strong>'+esc(content)+'</strong>')+'</div>';
+}
+function memberContacts(c){
+ const website=typeof c.website==="string"&&/^https:\/\/[a-z0-9.-]+(?:\/[a-zA-Z0-9._~!function memberProfile(id){'()*+,;=:@%/?#-]*)?$/i.test(c.website)?c.website:"";
+ const phone=typeof c.phone==="string"&&/^\+?[\d\s()-]{6,50}$/.test(c.phone)?c.phone:"";
+ const email=typeof c.email==="string"&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)?c.email:"";
+ const address=c.address||"";
+ const pieces=[
+   contactDetail("Адрес",address,null),
+   contactDetail("Телефон",phone,phone?"tel:"+phone.replace(/[^\d+]/g,""):null),
+   contactDetail("Email",email,email?"mailto:"+email:null),
+   contactDetail("Веб-сайт",website?website.replace(/^https:\/\//,""):null,website||null)
+ ].join("");
+ return pieces?'<section class="community-section company-contact-section"><div class="community-section-head"><h2>Контакты</h2><small>Данные профиля</small></div><div class="company-contact-grid">'+pieces+'</div></section>':"";
+}
+function captainRelations(c){
+ const managing=c.id==="lead"&&c.role===roles[0];
+ const memberTeams=state.teams.filter(t=>t.memberIds.includes(c.id));
+ const title=managing?"Структура управления":"Рабочие связи";
+ const manager=state.crew.find(t=>t.id==="lead"&&t.role===roles[0]);
+ const allTeams=managing?state.teams:memberTeams;
+ const membership=allTeams.map(t=>'<button class="company-network-link" data-route="team/teams"><span>TEAM</span><strong>'+esc(t.name)+'</strong><small>'+t.memberIds.length+' участников</small></button>').join("");
+ const ownShards=state.shards.filter(sh=>sh.assignee===c.id||sh.teamId&&memberTeams.some(t=>t.id===sh.teamId)||state.tasks.some(t=>t.shardId===sh.id&&t.assignee===c.id));
+ const relatedProjectIds=managing?state.cases.map(p=>p.id):[...new Set(ownShards.map(sh=>sh.caseId))];
+ const relations='<div class="company-network">'+
+  '<div class="company-network-company"><small>COMPANY</small><strong>SolAn Plus GmbH</strong><span>Внутренняя рабочая среда</span></div>'+
+  '<div class="company-network-arrow">↓</div>'+
+  '<div class="company-network-captain"><small>'+(managing?"ГЛАВНЫЙ CAPTAIN":"РУКОВОДСТВО")+'</small><strong>'+esc(managing?displayMemberName(c):displayMemberName(manager||{name:"Капитан"}))+'</strong><span>Управление Projects и Teams</span></div>'+
+  '<div class="company-network-branches"><div><small>TEAMS · '+allTeams.length+'</small>'+(membership||'<span class="company-network-empty">Будут сформированы здесь</span>')+'</div>'+
+  '<div><small>PROJECTS · '+relatedProjectIds.length+'</small>'+relatedProjectIds.slice(0,5).map(pid=>{
+   const p=state.cases.find(x=>x.id===pid);return p?'<button class="company-network-link" data-route="case/'+esc(p.id)+'"><span>PROJECT</span><strong>'+esc(p.title)+'</strong><small>'+esc(p.city)+'</small></button>':"";
+  }).join("")+(relatedProjectIds.length>5?'<button class="company-network-more" data-route="projects">Все Projects →</button>':"")+'</div></div>'+
+  '</div>';
+ return '<section class="community-section company-network-section"><div class="community-section-head"><h2>'+title+'</h2><small>Связи формируются из Teams, Projects и назначений</small></div>'+relations+'</section>';
+}
 function memberProfile(id){
   const c=state.crew.find(x=>x.id===id);
   if(!c)return heading("Профиль не найден");
