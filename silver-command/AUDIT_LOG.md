@@ -563,3 +563,22 @@ Next: execute browser DOM + import/reload integration harness, paired project/Ga
 **Checks actually run:** fetched source after commit; V8 `new Function(app.js)` full-source syntax parse PASS; static guard presence PASS. **NOT RUN:** browser URL test, iPhone Safari, 3-role runtime conflicts, combined import/export/reload or end-to-end Case→Shard→Garage→acceptance. No claim of a tested browser MVP.
 
 **Remaining P0:** atomic crash-recoverable combined restore, lossless migration, actual browser flow and role-conflict tests. Next iteration should prioritise those rather than cosmetic work. Existing combined export is archival only; preserve separate backups.
+
+
+## Iteration · 2026-11-22 ~08:55 CET
+
+**Scope:** only `silver-command/app.js`, `silver-command/TOKENOMICS_SPEC.md`, and this audit log. Root 0.3 untouched.
+
+**Code commit:** `4cc956503248019061898be6bb811abb701d1786`.
+- Project-only swipe start now ignores buttons, anchors, labels, modal content and horizontally scrolling garage tables, in addition to input/textarea/select.
+- `touchcancel` clears the start point to avoid a stale gesture after OS/browser cancellation.
+- Minimum horizontal travel raised from 75px to 90px. Existing mapping RIGHT → next page, LEFT → previous page remains unchanged; no swipes between top-level tabs.
+
+**Specification commit:** `babea4e03e9f8bca39c6231401b46bb3e5d9edea`.
+- Separate non-executable Merit spec: Case €1,000 → 1,010 new Merit (10 extra to platform creator), €10 fee; Shard €250 → 250 additional new Merit, €3 fee paid by Shard creator; aggregate 1,260 Merit / €13. No 80/20 split, no old 2% fee. Open allocation, idempotency, issuance ceiling and backing questions remain explicit.
+
+**Verification:** Source text and exact replacements verified in the connector write operation; GitHub returned commit SHAs. This iteration did **not** execute a JS parser, browser, iPhone Safari, role/conflict harness, backup import/export/reload or end-to-end UI tests. No PASS is claimed for those. Existing source inspection confirms project navigation is scoped to `screen === "lot"`; interactive target guard remains a UI heuristic, not a security boundary.
+
+**Critical blockers:** Combined Case/Shard/Garage archive export exists, but atomic combined import is not implemented; separate localStorage keys make crash-safe cross-store import nontrivial. `normalize` filters invalid stages/posts, and rejects them for import, but legacy migration and exhaustive reload proof remain open. Client-side demo roles are not authentication. Stage evidence is metadata only. Garage snapshot validates movements but must be tested for recovery under corrupted storage.
+
+**Next:** design and test crash-recoverable combined import (staging journal and rollback / deterministic recovery), migrate old backups without silent loss; then run 3-role conflict tests and browser navigation checks. Do not claim MVP complete.
