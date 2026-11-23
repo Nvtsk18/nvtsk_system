@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-label="SolAn Plus GmbH">
+<defs>
+<radialGradient id="disc" cx=".35" cy=".2" r=".9"><stop stop-color="#35404a"/><stop offset=".55" stop-color="#1a232a"/><stop offset="1" stop-color="#080e13"/></radialGradient>
+<linearGradient id="steel" x1="0" x2="1" y1="0" y2=".8"><stop stop-color="#8d9aa1"/><stop offset=".2" stop-color="#252e35"/><stop offset=".48" stop-color="#e2e7e9"/><stop offset=".7" stop-color="#34414b"/><stop offset="1" stop-color="#99a8b0"/></linearGradient>
+<linearGradient id="gold" x1="0" x2=".8" y1="0" y2="1"><stop stop-color="#fff0b0"/><stop offset=".35" stop-color="#d8ae55"/><stop offset=".75" stop-color="#8e682b"/><stop offset="1" stop-color="#e6c67b"/></linearGradient>
+<linearGradient id="turq" x1="0" x2="1" y1="0" y2=".7"><stop stop-color="#073a46"/><stop offset=".45" stop-color="#1cc3c8"/><stop offset="1" stop-color="#05636c"/></linearGradient>
+<filter id="shadow"><feDropShadow dx="0" dy="8" stdDeviation="9" flood-color="#000" flood-opacity=".7"/></filter>
+</defs>
+<circle cx="250" cy="250" r="239" fill="url(#steel)" stroke="#060a0d" stroke-width="5"/>
+<circle cx="250" cy="250" r="226" fill="url(#disc)" stroke="#6d858e" stroke-width="2"/>
+<circle cx="250" cy="250" r="215" fill="none" stroke="#18b9be" stroke-width="4" opacity=".9"/>
+<circle cx="250" cy="250" r="209" fill="none" stroke="#4f6a71" stroke-width="1"/>
+<g filter="url(#shadow)">
+<g fill="url(#gold)" stroke="#7e5d25" stroke-width="1.5">
+<path d="M250 76 263 122 237 122Z M201 91 221 132 197 140Z M156 122 190 148 172 165Z M127 164 170 178 163 201Z M299 91 303 140 279 132Z M344 122 328 165 310 148Z M373 164 337 201 330 178Z"/>
+<path d="M169 210a81 81 0 0 1 162 0Z"/>
+</g>
+<path d="M124 244 187 201 212 216 252 173 298 216 319 204 378 244 335 251 253 231 170 254Z" fill="#c5d1d6" stroke="#f0f4f5" stroke-width="4"/>
+<path d="m183 220 29 12 39-42 42 41 25-13" fill="none" stroke="#4b5b64" stroke-width="6"/>
+<path d="M104 260q146-75 292 0-140 40-292 0Z" fill="#0a2830" stroke="#a5c8ce" stroke-width="4"/>
+<g stroke="#b8d9de" stroke-width="3" fill="none"><path d="M112 260q140-65 277 0M120 270q132-26 260 0M160 244l-22 33M205 231l-9 51M250 228v57M294 232l13 50M339 245l23 30"/></g>
+<path d="M92 297q25-21 51-3t54 0q30-17 59 1t56 0q31-15 54 0t43 0" stroke="#0a4b53" stroke-width="17" fill="none" stroke-linecap="round"/>
+<path d="M92 291q25-21 51-3t54 0q30-17 59 1t56 0q31-15 54 0t43 0" stroke="url(#turq)" stroke-width="11" fill="none" stroke-linecap="round"/>
+</g>
+<text x="250" y="380" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="500" font-size="54" fill="#e3e9eb" letter-spacing="-2">SolAn Plus</text>
+<text x="349" y="404" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="17" fill="#b6c8cf" letter-spacing="3">GmbH</text>
+</svg>
