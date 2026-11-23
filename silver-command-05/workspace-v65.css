@@ -20,3 +20,13 @@
 .workspace-switch-note{color:#aabfc9;font-size:11px;line-height:1.55;margin:13px 2px 1px}
 @media(max-width:740px){.command-brand,.workspace-brand{gap:8px}.workspace-switch summary{min-height:43px;padding:6px 8px;max-width:220px}.workspace-switch-symbol{width:26px;height:26px}.workspace-switch-text strong{font-size:11px}.workspace-switch-menu{left:auto;right:0}.command-brand .nvtsk-brand-caption{min-width:100px}}
 @media(max-width:440px){.workspace-switch{width:100%}.workspace-switch summary{max-width:100%;width:100%}.workspace-switch-menu{left:0;right:auto}.workspace-switch-text strong{font-size:12px}}
+
+/* v76: local company profiles and workspace switcher */
+.workspace-switch-menu .workspace-switch-current{display:flex;width:100%;align-items:center;text-align:left;gap:10px;color:#edf3f6;cursor:pointer;border:1px solid #8195a55b;border-radius:11px;background:#16232f;margin:7px 0;padding:9px}
+.workspace-switch-menu .workspace-switch-current:hover{border-color:#d1e1e8}
+.workspace-switch-menu .workspace-switch-current span:nth-child(2){display:grid;gap:3px;min-width:0}
+.workspace-switch-menu .workspace-switch-current strong{overflow-wrap:anywhere}
+.workspace-switch-menu .workspace-add,.workspace-admin-actions button{background:linear-gradient(140deg,#394c59,#101923);border:1px solid #a5bac67e;color:#edf4f8;border-radius:11px;padding:11px 14px;cursor:pointer}
+.workspace-admin{margin:15px 0}
+.workspace-admin .workspace-switch{margin:15px 0;display:block;max-width:440px}
+.workspace-admin-actions{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
