@@ -670,7 +670,7 @@ function edit(kind,id){
  const titles={"case-media":"Добавить фото / PDF","pv-tech":"PV · Паспорт объекта","pv-zone":"Новая Modulfläche","pv-string":"Новый DC String","pv-cut":"Раскрой шины","pv-material":"Материал для монтажа","pv-document":"Документ проекта",electrical:"Электромонтаж · New Project",case:"New Project",shard:"New Shard",task:"New Task","link-counterparty":"Заказчик Project",team:"Новая Team", "team-update":"Настроить Team", "assign-team":"Назначить Team",profile:"Редактировать профиль",material:"Новая позиция",crew:"Новый участник",assign:"Назначение",move:"Движение материала"};
 
  let fields=["case","electrical","shard","task","material","crew"].includes(kind)?input("title",kind==="crew"?"Имя":"Название"):"";
- if(kind==="case-media"){if(!lead()||!state.cases.some(c=>c.id===id))return;fields='<p class="hint">Медиа сохраняются локально. До 8 файлов на Case, до 650 КБ каждый.</p>';}
+ if(kind==="case-media"){if(!lead()||!state.cases.some(c=>c.id===id))return;fields='<p class="hint">Медиа сохраняются локально. До 8 файлов на Case, изображения до 5 МБ (автоматическое сжатие), PDF до 650 КБ.</p>';}
 
  if(["pv-tech","pv-zone","pv-string","pv-cut","pv-material","pv-document"].includes(kind)){
    if(!lead())return;
@@ -725,7 +725,7 @@ function edit(kind,id){
  if(kind==="move"){const open=state.shards.filter(s=>s.status==="draft");fields+=select("type","Операция",open.length?[["issue","Выдача"],["return","Возврат"],["receive","Приход"],["writeoff","Списание"]]:[["receive","Приход"],["writeoff","Списание"]]);fields+='<div id="move-shard-wrap" hidden>'+select("shardId","Project / Shard",open.map(s=>[s.id,(state.cases.find(c=>c.id===s.caseId)?.title||"Project")+" / "+s.title]))+"</div>";}
  if(kind==="move")fields+=`<label>Причина списания<input name="reason" maxlength="300" placeholder="Брак, потеря, инвентаризация"></label>`;
  if(kind==="material"||kind==="move")fields+=input("qty","Количество, шт.","number").replace('step=".01"','step="1"').replace('min="0"','min="1"');
- if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, каждый до 650 КБ, всего до 2 МБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Project и Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
+ if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, изображения до 5 МБ с автоматическим сжатием, PDF до 650 КБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Project и Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
  if(kind==="case-media")fields+='<label>Выбрать фото / PDF<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple required></label>';
  pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
@@ -797,7 +797,7 @@ document.addEventListener("click",async e=>{
 document.addEventListener("submit",e=>{const form=e.target;if(form.id!=="social-compose"&&!form.matches(".socialcommentform"))return;e.preventDefault();const d=socialData(),isPost=form.id==="social-compose",value=String(new FormData(form).get(isPost?"text":"comment")||"").trim();if(!value||value.length>(isPost?1200:500))return;try{if(isPost){const caseId=new FormData(form).get("caseId");d.posts.push({id:crypto.randomUUID(),author:state.actor,created:new Date().toISOString(),text:value,caseId:state.cases.some(c=>c.id===caseId)?caseId:null,likes:[],comments:[]})}else{const p=d.posts.find(x=>x.id===form.dataset.post);if(!p)return;p.comments.push({id:crypto.randomUUID(),author:state.actor,text:value})}localStorage.setItem(SOCIAL_KEY,JSON.stringify(d));render()}catch(err){alert(err.message)}});
 function syncMoveFields(){const type=$("#fields [name=type]")?.value;const wrap=$("#move-shard-wrap");if(!wrap)return;const linked=type==="issue"||type==="return";wrap.hidden=!linked;const picker=wrap.querySelector("select");if(picker)picker.required=linked;const reason=$("#fields [name=reason]");if(reason)reason.required=type==="writeoff";}
 document.addEventListener("change",async e=>{
- if(e.target.id==="company-logo-upload"&&e.target.files?.length){try{const file=e.target.files[0];if(!file.type.startsWith("image/")||file.size>3000000)throw Error("Нужен JPG, PNG или WebP до 3 МБ");const bitmap=await createImageBitmap(file),canvas=document.createElement("canvas"),scale=Math.min(1,720/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const logoData=canvas.toDataURL("image/webp",0.72);if(logoData.length>400000)throw Error("Изображение слишком большое");const r=workspaceRegistry();localStorage.setItem(WORKSPACES_KEY,JSON.stringify({...r,items:r.items.map(w=>w.id===activeWorkspace().id?{...w,logoData}:w)}));render()}catch(err){alert(err.message)}return}
+ if(e.target.id==="company-logo-upload"&&e.target.files?.length){try{const file=e.target.files[0];if(!file.type.startsWith("image/")||file.size>5000000)throw Error("Нужен JPG, PNG или WebP до 5 МБ");const bitmap=await createImageBitmap(file),canvas=document.createElement("canvas"),scale=Math.min(1,720/Math.max(bitmap.width,bitmap.height));canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();const logoData=canvas.toDataURL("image/webp",0.72);if(logoData.length>400000)throw Error("Изображение слишком большое");const r=workspaceRegistry();localStorage.setItem(WORKSPACES_KEY,JSON.stringify({...r,items:r.items.map(w=>w.id===activeWorkspace().id?{...w,logoData}:w)}));render()}catch(err){alert(err.message)}return}
 
  if(e.target.id==="ph-city"){projectHubCity=e.target.value;filterProjectHub();return}
  if(e.target.id==="ph-kind"){projectHubKind=e.target.value;filterProjectHub();return}
@@ -845,13 +845,31 @@ $("#editor").onsubmit=async e=>{
      if(!["image/png","image/jpeg","image/webp"].includes(avatarFile.type))throw Error("Допустимы PNG, JPEG или WebP");
      p.avatar=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Не удалось прочитать фото"));reader.readAsDataURL(avatarFile)});
    }
-   if(selected){
-     if(selected.length>8)throw Error("Максимум 8 файлов");
-     if(Array.from(selected).reduce((n,file)=>n+file.size,0)>2000000)throw Error("Суммарный размер вложений не должен превышать 2 МБ");
+   if(selected&&selected.length){
+     if(selected.length>8)throw Error("Максимум 8 файлов за раз");
      p.files=await Promise.all(Array.from(selected,async file=>{
-       if(file.size>650000)throw Error("Файл "+file.name+" превышает 650 КБ");
-       if(!["image/png","image/jpeg","image/webp","image/gif","application/pdf"].includes(file.type))throw Error("Недопустимый тип файла");
-       const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error("Ошибка чтения файла"));reader.readAsDataURL(file)});
+       const imageTypes=["image/png","image/jpeg","image/webp","image/gif"];
+       if(imageTypes.includes(file.type)){
+         if(file.size>5000000)throw Error("Изображение "+file.name+" больше 5 МБ");
+         const bitmap=await createImageBitmap(file);
+         try{
+           let width=bitmap.width,height=bitmap.height;
+           const maxSide=1600,scale=Math.min(1,maxSide/Math.max(width,height));
+           const canvas=document.createElement("canvas");
+           canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+           canvas.getContext("2d").drawImage(bitmap,0,0,canvas.width,canvas.height);
+           let data="";
+           for(const quality of [0.8,0.65,0.5,0.35]){
+             data=canvas.toDataURL("image/webp",quality);
+             if(data.length<=680000)break;
+           }
+           if(data.length>680000)throw Error("Не удалось сжать "+file.name+" для локального хранения");
+           return {id:crypto.randomUUID(),name:file.name.slice(0,180),data};
+         }finally{bitmap.close()}
+       }
+       if(file.type!=="application/pdf")throw Error("Недопустимый тип файла");
+       if(file.size>650000)throw Error("PDF "+file.name+" больше 650 КБ");
+       const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error("Ошибка чтения файла"));reader.readAsDataURL(file)});
        return {id:crypto.randomUUID(),name:file.name.slice(0,180),data};
      }));
    }
