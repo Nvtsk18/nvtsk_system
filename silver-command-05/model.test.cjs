@@ -75,7 +75,7 @@ act('shard',{id:'s',caseId:'c',title:'DC',kind:'DC',price:50,assignee:'member-0'
 act('material',{id:'m',title:'Clamp',sku:'CLAMP-001',qty:20});
 assert.throws(()=>act('material',{id:'missing-sku',title:'Unknown',qty:1}),/артикул/);
 assert.throws(()=>act('material',{id:'duplicate-sku',title:'Duplicate',sku:' clamp-001 ',qty:1}),/артикул/);
-const move=(id,type,qty)=>act('move',{id,type,qty,itemId:'m',shardId:'s'});
+const move=(id,type,qty)=>act('move',{id,type,qty,itemId:'m',shardId:'s',recipientId:'member-0'});
 move('one','issue',4);
 assert.throws(()=>move('two','return',5));assert.throws(()=>move('two','issue',17));
 move('two','return',2); assert.equal(d.garage[0].qty,18);
