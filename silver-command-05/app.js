@@ -678,7 +678,7 @@ function edit(kind,id){
    if(!project)return;
    fields=PVProjectCard.form(kind,project);
  }
- if(kind==="case"||kind==="electrical")fields+=input("city","Город")+'<label>Адрес объекта<input name="address" maxlength="300" placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number")+counterpartySelector(kind==="case"?id:null);
+ if(kind==="case"||kind==="electrical")fields+='<label>Адрес объекта<input name="address" maxlength="300" required placeholder="Straße, Hausnummer, PLZ, Ort"></label>'+input("price","Бюджет, €","number")+counterpartySelector(kind==="case"?id:null);
  if(kind==="electrical")fields+='<p>Этапы: разметка и штробы; кабельные трассы; подрозетники, розетки и освещение; сборка щита; измерения и приёмка. Подключение и ввод в эксплуатацию — только уполномоченным электроспециалистом (Elektrofachkraft).</p>';
  if(kind==="shard")fields+=select("kind","Этап",pairs(["Projektierung","DC","AC","Anmeldung","Elektro · Rohbau","Elektro · Kabel","Elektro · Installation","Elektro · Verteiler","Elektro · Prüfung","Другое"]))+input("price","Бюджет Shard, €","number");
  if(kind==="shard"||kind==="assign")fields+=select("assignee","Исполнитель",teamOptions(),s?.assignee||state.crew.find(c=>c.role===roles[1])?.id);
@@ -836,6 +836,8 @@ $("#editor").onsubmit=async e=>{
  }
  delete p.media;
  for(const k of ["title","city"])if(k in p)p[k]=p[k].trim();
+ if(kind==="case"||kind==="electrical"){p.address=String(p.address||"").trim();if(!p.address)throw Error("Укажите адрес объекта");const segments=p.address.split(",").map(x=>x.trim()).filter(Boolean);p.city=(segments[segments.length-1]||p.address).replace(/^\d{4,5}\s+/,"").slice(0,120);}
+
  for(const k of ["price","qty"])if(k in p)p[k]=Number(p[k]);
  p.id=crypto.randomUUID();if(kind==="link-counterparty")p.caseId=id;if(kind==="shard")p.caseId=id;if(kind==="task")p.shardId=id;if(kind==="assign")p.shardId=id;if(kind==="move"){p.itemId=id;if(p.type==="receive"||p.type==="writeoff")p.shardId=null;}
  const submit=e.target.querySelector('[type="submit"]');submit.disabled=true;
