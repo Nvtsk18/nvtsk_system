@@ -241,6 +241,7 @@ globalThis.NVModel = (() => {
         // Accepted work is closed: further stock movements require a new open Shard.
         requireValue(Number.isSafeInteger(p.qty)&&p.qty>0,"Количество должно быть положительным целым числом");
         requireValue(["issue","return","receive","writeoff"].includes(p.type),"Неизвестная складская операция");
+        if(p.type==="issue"||p.type==="return")requireValue(typeof p.recipientId==="string"&&has(d.crew,p.recipientId),"Выберите получателя из участников компании");
         if(["issue","writeoff"].includes(p.type))requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
         if(p.type==="writeoff")requireValue(typeof p.reason==="string"&&p.reason.trim().length>=3&&p.reason.length<=300,"Укажите причину списания");
         if(p.type==="return"){
@@ -248,7 +249,7 @@ globalThis.NVModel = (() => {
           requireValue(outstanding>=p.qty,"Возврат превышает выдачу по Shard");
         }
         item.qty=Math.round((item.qty+(["issue","writeoff"].includes(p.type)?-p.qty:p.qty))*1e6)/1e6;
-        d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,reason:p.type==="writeoff"?p.reason.trim():""});
+        d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,recipientId:["issue","return"].includes(p.type)?p.recipientId:null,reason:p.type==="writeoff"?p.reason.trim():""});
         break;
       }
       default: throw Error("Неизвестная операция");
