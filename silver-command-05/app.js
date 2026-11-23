@@ -291,7 +291,8 @@ function projects(){
  const mediaFor=c=>(c.files||[]).filter(f=>f.data&&f.data.startsWith("data:image/"));
  const photo=c=>mediaFor(c)[0]?.data||"art/roof.webp";
  const status=x=>projectHubStatusLabel[x.status]||"Планирование";
- const cards=list.map(x=>'<button class="sc75-project'+(current&&current.c.id===x.c.id?' is-current':'')+'" data-action="project-select" data-id="'+esc(x.c.id)+'" data-hubsearch="'+esc(projectHubMeta(x).search)+'"><img src="'+photo(x.c)+'" alt=""><span class="sc75-card-info"><strong>'+esc(x.c.title)+'</strong><small>'+esc(x.c.city||x.c.address||"Объект")+'</small><span>'+x.shards.length+' Shards · '+x.tasks.length+' Tasks</span><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span></span><span class="sc75-card-end"><em>'+status(x)+'</em><b>'+x.percent+'%</b></span></button>').join("");
+ const originLabel=c=>c.origin?'<small class="cp78-origin">Получено от '+esc(c.origin.workspaceName)+'</small>':"";
+ const cards=list.map(x=>'<button class="sc75-project'+(current&&current.c.id===x.c.id?' is-current':'')+'" data-action="project-select" data-id="'+esc(x.c.id)+'" data-hubsearch="'+esc(projectHubMeta(x).search)+'"><img src="'+photo(x.c)+'" alt=""><span class="sc75-card-info"><strong>'+esc(x.c.title)+'</strong>'+originLabel(x.c)+'<small>'+esc(x.c.city||x.c.address||"Объект")+'</small><span>'+x.shards.length+' Shards · '+x.tasks.length+' Tasks</span><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span></span><span class="sc75-card-end"><em>'+status(x)+'</em><b>'+x.percent+'%</b></span></button>').join("");
  let pane='<section class="sc75-empty">Выберите Case, чтобы открыть паспорт, медиа и задачи.</section>';
  if(current){
   const x=current,c=x.c,p=c.pvPlan||{},images=mediaFor(c);
