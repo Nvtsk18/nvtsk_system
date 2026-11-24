@@ -6,7 +6,7 @@ const APP_BRAND=Object.freeze({developer:"NVTSK SYSTEM",workspace:"SolAn Plus Gm
 const WORKSPACES_KEY=BASE+"_workspaces_v1";
 function workspaceRegistry(){try{const r=JSON.parse(localStorage.getItem(WORKSPACES_KEY)||"null");if(r&&Array.isArray(r.items)&&r.items.length){if(!r.items.some(x=>x.id==="sunpaur"))return {...r,items:[...r.items,{id:"sunpaur",name:"Sunpaur GmbH",symbol:"☀",kind:"auftraggeber"}]};return r}}catch{}return {active:"solan-plus",items:[{id:"solan-plus",name:"SolAn Plus GmbH",symbol:"S"},{id:"sunpaur",name:"Sunpaur GmbH",symbol:"☀",kind:"auftraggeber"}]}}
 function activeWorkspace(){const r=workspaceRegistry();return r.items.find(w=>w.id===r.active)||r.items[0]}
-function workspaceBadge(){const w=activeWorkspace();return '<div class="nv90-identity"><span class="workspace-switch-symbol">'+esc(w.symbol||w.name[0])+'</span><strong>'+esc(w.name)+'</strong></div>'}
+function workspaceBadge(){return '<span class="nv91-company-name" style="display:block;min-width:0;font-weight:700;font-size:14px;overflow-wrap:anywhere">'+esc(activeWorkspace().name)+'</span>'}
 function workspaceKey(id){return id==="solan-plus"?BASE:BASE+"_company_"+id}
 function ensureWorkspace(id){if(id==="solan-plus"||localStorage.getItem(workspaceKey(id)))return;const seed=migrate({version:1,cases:[],shards:[],tasks:[],garage:[],crew:[],actor:"lead"});const company=id==="sunpaur"?"Sunpaur GmbH":activeWorkspace().name;const data=validate({...seed,crew:[{id:"lead",name:"Администратор · "+company,role:roles[0],company}],counterparties:[]});localStorage.setItem(workspaceKey(id),JSON.stringify({format:1,data,history:[]}))}
 const SHARED_CASES_KEY=BASE+"_case_access_v1";
