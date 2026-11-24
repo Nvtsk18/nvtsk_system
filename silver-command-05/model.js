@@ -58,7 +58,7 @@ globalThis.NVModel = (() => {
     return true;
   };
   function migrate(old) {
-    if (old.version === 2) return upgradeCaptain({...old,teams:Array.isArray(old.teams)?old.teams:[],counterparties:seedCounterparties(old.counterparties)});
+    if (old.version === 2) {const normalized={...old,teams:Array.isArray(old.teams)?old.teams:[]};if(old.personalProfile===true)return {...normalized,counterparties:Array.isArray(old.counterparties)?old.counterparties:[]};return upgradeCaptain({...normalized,counterparties:seedCounterparties(old.counterparties)});}
     if (old.version !== 1) return old;
     const data = JSON.parse(JSON.stringify(old));
     requireValue(["cases","garage","tasks","crew","shards"].every(k => Array.isArray(data[k])), "Неверная схема v1");
