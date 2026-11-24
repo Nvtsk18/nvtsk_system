@@ -8,14 +8,14 @@ function workspaceRegistry(){try{const r=JSON.parse(localStorage.getItem(WORKSPA
 function activeWorkspace(){const r=workspaceRegistry();return r.items.find(w=>w.id===r.active)||r.items[0]}
 function workspaceBadge(){return '<span class="nv91-company-name" style="display:block;min-width:0;font-weight:700;font-size:14px;overflow-wrap:anywhere">'+esc(activeWorkspace().name)+'</span>'}
 function workspaceKey(id){return id==="solan-plus"?BASE:BASE+"_company_"+id}
-function ensureWorkspace(id){if(id==="solan-plus"||localStorage.getItem(workspaceKey(id)))return;const seed=migrate({version:1,cases:[],shards:[],tasks:[],garage:[],crew:[],actor:"lead"});const company=id==="sunpaur"?"Sunpaur GmbH":activeWorkspace().name;const data=validate({...seed,crew:[{id:"lead",name:"Администратор · "+company,role:roles[0],company}],counterparties:[]});localStorage.setItem(workspaceKey(id),JSON.stringify({format:1,data,history:[]}))}
+async function ensureWorkspace(id){const key=workspaceKey(id);if(id==="solan-plus"||projectRecords.get(key)!=null)return;const seed=migrate({version:1,cases:[],shards:[],tasks:[],garage:[],crew:[],actor:"lead"});const company=id==="sunpaur"?"Sunpaur GmbH":activeWorkspace().name;const data=validate({...seed,crew:[{id:"lead",name:"Администратор · "+company,role:roles[0],company}],counterparties:[]});await projectWrite(key,null,JSON.stringify({format:1,data,history:[]}))}
 const SHARED_CASES_KEY=BASE+"_case_access_v1";
 function caseAccessRegistry(){try{const r=JSON.parse(localStorage.getItem(SHARED_CASES_KEY)||"{}");return r&&typeof r==="object"?r:{}}catch{return {}}}
-function sharedCase(id){const entry=caseAccessRegistry()[id];if(!entry||entry.status!=="accepted"||entry.executorId!==activeWorkspace().id)return null;const ownerRaw=localStorage.getItem(workspaceKey(entry.ownerId));if(!ownerRaw)return null;try{const rec=JSON.parse(ownerRaw),data=validate(migrate(rec.format===1?rec.data:rec));return data.cases.find(c=>c.id===id)||null}catch{return null}}
+function sharedCase(id){const entry=caseAccessRegistry()[id];if(!entry||entry.status!=="accepted"||entry.executorId!==activeWorkspace().id)return null;const ownerRaw=projectRecords.get(workspaceKey(entry.ownerId));if(!ownerRaw)return null;try{const rec=JSON.parse(ownerRaw),data=validate(migrate(rec.format===1?rec.data:rec));return data.cases.find(c=>c.id===id)||null}catch{return null}}
 function incomingCases(){const entries=Object.entries(caseAccessRegistry()).filter(([id,x])=>x.status==="accepted"&&x.executorId===activeWorkspace().id);return entries.map(([id])=>sharedCase(id)).filter(Boolean)}
 function transferCase(caseId,targetId){if(!lead()||lab)return;const owner=activeWorkspace(),target=workspaceRegistry().items.find(w=>w.id===targetId),c=state.cases.find(x=>x.id===caseId);if(!target||!c||target.id===owner.id)return;if(!confirm("Открыть доступ к Case «"+c.title+"» для "+target.name+"? Карточка останется единственной."))return;const reg=caseAccessRegistry();reg[caseId]={ownerId:owner.id,executorId:target.id,status:"offered",offeredAt:new Date().toISOString()};localStorage.setItem(SHARED_CASES_KEY,JSON.stringify(reg));render()}
 function acceptCase(id){const reg=caseAccessRegistry(),entry=reg[id];if(!entry||entry.executorId!==activeWorkspace().id||entry.status!=="offered")return;reg[id]={...entry,status:"accepted",acceptedAt:new Date().toISOString()};localStorage.setItem(SHARED_CASES_KEY,JSON.stringify(reg));render()}
-function offeredCases(){return Object.entries(caseAccessRegistry()).filter(([id,e])=>e.executorId===activeWorkspace().id&&e.status==="offered").map(([id,e])=>{try{const record=JSON.parse(localStorage.getItem(workspaceKey(e.ownerId))||"null");if(!record)return null;const data=validate(migrate(record.format===1?record.data:record));return {id,case:data.cases.find(c=>c.id===id),ownerId:e.ownerId}}catch{return null}}).filter(x=>x&&x.case)}
+function offeredCases(){return Object.entries(caseAccessRegistry()).filter(([id,e])=>e.executorId===activeWorkspace().id&&e.status==="offered").map(([id,e])=>{try{const record=JSON.parse(projectRecords.get(workspaceKey(e.ownerId))||"null");if(!record)return null;const data=validate(migrate(record.format===1?record.data:record));return {id,case:data.cases.find(c=>c.id===id),ownerId:e.ownerId}}catch{return null}}).filter(x=>x&&x.case)}
 function sharedCaseReadOnly(id){return !state.cases.some(c=>c.id===id)&&!!sharedCase(id)}
 function companyProfile(){const w=activeWorkspace(),sun=w.id==="sunpaur";const emblem=w.logoData?'<img class="cp78-custom-logo" src="'+w.logoData+'" alt="Логотип компании">':sun?'<div class="cp78-sun-logo"><div class="cp78-sun">☀</div><div class="cp78-mountain">⌁</div><div class="cp78-panels">▱▱▱▱▱</div></div>':'<div class="cp78-monogram">'+esc(w.symbol||w.name[0])+'</div>';const rows=sun?state.cases.map(c=>'<div class="cp78-handoff-row"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city||c.address||"Объект")+'</small></span><button data-action="case-transfer" data-id="'+esc(c.id)+'" data-target="solan-plus">Открыть доступ SolAn Plus →</button></div>').join(""):"";return '<div class="cp78-company"><div class="cp78-hero"><div class="cp78-art">'+emblem+'</div><div class="cp78-title"><small>ПРОФИЛЬ КОМПАНИИ · '+(sun?"ЗАКАЗЧИК / AUFTRAGGEBER":"ИСПОЛНИТЕЛЬ / AUFTRAGNEHMER")+'</small><h1>'+esc(w.name)+'</h1><p>'+(sun?"Создание проектов и передача исполнителю":"Монтаж PV и управление работами")+'</p></div></div><div class="cp78-logo-tools"><label>Логотип компании <input id="company-logo-upload" type="file" accept="image/png,image/jpeg,image/webp"></label><small>Загрузите изображение с визитки · хранение на этом устройстве.</small></div><div class="cp78-stats"><div><strong>'+state.cases.length+'</strong><small>Case</small></div><div><strong>'+state.crew.length+'</strong><small>Участники</small></div><div><strong>'+state.shards.length+'</strong><small>Shards</small></div></div><section class="panel"><h2>Рабочее пространство</h2><div class="cp78-buttons"><button data-route="projects">Проекты</button><button data-route="team">Участники</button>'+(lead()?'<button data-action="new-case">＋ Создать Case</button>':'')+'</div></section>'+'<section class="panel"><h2>Приглашения к Case</h2>'+((offeredCases().map(x=>'<div class="cp78-handoff-row"><strong>'+esc(x.case.title)+'</strong><button data-action="case-accept" data-id="'+esc(x.id)+'">Принять Case</button></div>').join(""))||'<p>Новых приглашений нет.</p>')+'</section>'+(sun?'<section class="panel"><h2>Передача Case → SolAn Plus</h2><p>Создайте и заполните Case, затем передайте его исполнителю. Открывается доступ к единой карточке, включая паспорт и медиа. Исполнитель должен принять Case.</p>'+(rows||'<p>Пока нет Case для передачи.</p>')+'</section>':'<section class="panel"><h2>Полученные Case</h2><p>Принятые Case отображаются в разделе Projects.</p></section>')+'</div>'}
 const ACCOUNT_KEY=BASE+"_accounts_v1", SESSION_KEY=BASE+"_session_v1";
@@ -53,27 +53,37 @@ const initial=()=>({version:1,cases:[{id:"demo-1",title:"PV Dachmontage · Demo"
 const {roles,migrate,validate,apply}=NVModel;
 const actor=()=>state.crew.find(c=>c.id===(account()?.actorId||state.actor));
 const lead=()=>actor().role===roles[0], warehouse=()=>lead()||actor().role===roles[2];
-let state, raw, history=[], damaged=false;
+// Workspace snapshots live in IndexedDB; small account/settings records remain in localStorage.
+const projectRecords=new Map();
+let projectDBPromise,projectReady=false,projectChannel=null;
+function projectDB(){if(!projectDBPromise)projectDBPromise=new Promise((resolve,reject)=>{if(!globalThis.indexedDB){reject(Error("IndexedDB недоступна"));return}const req=indexedDB.open("nvtsk-workspaces",1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains("records"))req.result.createObjectStore("records")};req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>{db.close();projectDBPromise=null};resolve(db)};req.onerror=()=>reject(req.error||Error("Не удалось открыть хранилище"));req.onblocked=()=>reject(Error("Закройте другие вкладки NVTSK и повторите вход"))}).catch(e=>{projectDBPromise=null;throw e});return projectDBPromise}
+async function projectTransaction(key,mode,expected,next,backup=false){const db=await projectDB();return new Promise((resolve,reject)=>{const tx=db.transaction("records","readwrite"),store=tx.objectStore("records");let result=null,problem=null;const req=store.get(key);req.onsuccess=()=>{const current=req.result??null;result=current;if(mode==="migrate"&&current===null&&next!==null){store.put(next,key);result=next}else if(mode==="write"){if(current!==expected){problem=Error("Данные изменились в другой вкладке. Обновите страницу.");tx.abort();return}if(backup&&current!==null)store.put(current,key+"_damaged");store.put(next,key);result=next}};tx.oncomplete=()=>resolve(result);tx.onabort=tx.onerror=()=>reject(problem||tx.error||req.error||Error("Не удалось сохранить данные"))})}
+async function projectLoad(key){const legacy=localStorage.getItem(key),stored=await projectTransaction(key,"migrate",null,legacy);projectRecords.set(key,stored);if(legacy!==null&&stored===legacy&&localStorage.getItem(key)===legacy){try{localStorage.removeItem(key)}catch{}}return stored}
+async function projectWrite(key,expected,next,backup=false){const saved=await projectTransaction(key,"write",expected,next,backup);projectRecords.set(key,saved);try{projectChannel?.postMessage({key})}catch{}return saved}
+function projectKeys(){return [...new Set([BASE,BASE+"_lab",KEY,...workspaceRegistry().items.flatMap(w=>[workspaceKey(w.id),workspaceKey(w.id)+"_lab"])])]}
+async function loadProjectRecords(){await Promise.all(projectKeys().map(projectLoad))}
+let state,raw=null,history=[],damaged=false;
 function readStore(){
-  raw=localStorage.getItem(KEY);
-  const record=raw?JSON.parse(raw):initial();
-  state=validate(migrate(record.format===1?record.data:record));
-  history=record.format===1?record.history.map(item=>validate(migrate(item))):[];
-  if(account()&&state.crew.some(c=>c.id===account().actorId))state={...state,actor:account().actorId};
-  damaged=false;
+ raw=projectRecords.get(KEY)??null;
+ const record=raw?JSON.parse(raw):initial();
+ state=validate(migrate(record.format===1?record.data:record));
+ history=record.format===1?record.history.map(item=>validate(migrate(item))):[];
+ if(account()&&state.crew.some(c=>c.id===account().actorId))state={...state,actor:account().actorId};
+ damaged=false;
 }
-try{ensureWorkspace(activeWorkspace().id);readStore()}catch{damaged=true;state=validate(migrate(initial()));history=[]}
+function readProjectState(){try{readStore()}catch{damaged=true;state=validate(migrate(initial()));history=[]}}
+function projectError(error){return error?.name==="QuotaExceededError"?"Хранилище устройства заполнено. Проект не сохранён, исходные данные не изменены. Освободите место на устройстве и повторите.":error?.message||"Не удалось сохранить проект."}
 async function change(operation,undo=false,recovery=false){
-  const write=()=>{
-    if(damaged&&!recovery)throw Error("Повреждённые данные. Откройте настройки для восстановления.");
-    if(localStorage.getItem(KEY)!==raw)throw Error("Данные изменились в другой вкладке. Обновите страницу.");
-    const next=validate({...operation(),actor:account()?.actorId||state.actor}), past=undo?history.slice(0,-1):[...history,state].slice(-10);
-    const record=JSON.stringify({format:1,data:next,history:past});
-    if(damaged&&raw!==null)localStorage.setItem(KEY+"_damaged",raw);
-    localStorage.setItem(KEY,record);raw=record;state=next;history=past;damaged=false;render();
-  };
-  try{if(navigator.locks)await navigator.locks.request(KEY,write);else write();return true}
-  catch(error){alert(error.message);return false}
+ const write=async()=>{
+  if(!projectReady)throw Error("Хранилище ещё не готово.");
+  if(damaged&&!recovery)throw Error("Повреждённые данные. Откройте настройки для восстановления.");
+  const next=validate({...operation(),actor:account()?.actorId||state.actor}),past=undo?history.slice(0,-1):[...history,state].slice(-10);
+  const record=JSON.stringify({format:1,data:next,history:past});
+  await projectWrite(KEY,raw,record,damaged);
+  raw=record;state=next;history=past;damaged=false;render();
+ };
+ try{if(navigator.locks)await navigator.locks.request(KEY,write);else await write();return true}
+ catch(error){alert(projectError(error));return false}
 }
 const money=n=>Number(n||0).toLocaleString("de-DE",{maximumFractionDigits:2});
 const shardCount=n=>n+" Shard"+(n===1?"":"s");
@@ -815,7 +825,7 @@ document.addEventListener("click",async e=>{
  const a=b.dataset.action,id=b.dataset.id;
  if(a==="sandbox"){
    try{
-     if(!lab){localStorage.setItem(BASE+"_lab",JSON.stringify({format:1,data:state,history:[]}));sessionStorage.setItem(BASE+"_mode","lab")}
+     if(!lab){const key=workspaceKey(activeWorkspace().id)+"_lab";const prior=await projectLoad(key);await projectWrite(key,prior,JSON.stringify({format:1,data:state,history:[]}));sessionStorage.setItem(BASE+"_mode","lab")}
      else sessionStorage.removeItem(BASE+"_mode");
      location.reload();
    }catch(error){alert(error.message)}
@@ -856,7 +866,7 @@ document.addEventListener("change",async e=>{
  if(e.target.name==="type"&&pending?.kind==="move")syncMoveFields();
 
  if(e.target.id==="import"&&lead()&&e.target.files.length){try{
- const file=e.target.files[0];if(file.size>5000000)throw Error("Файл больше 5 МБ");
+ const file=e.target.files[0];if(file.size>100000000)throw Error("JSON-файл больше 100 МБ");
  const data=validate(migrate(JSON.parse(await file.text())));
  if(confirm("Заменить локальные данные данными из файла?"))await change(()=>data,false,true);
  }catch(err){alert(err.message)}finally{e.target.value=""}}
@@ -954,8 +964,14 @@ document.querySelector('.mode [data-route="network"]').innerHTML=icon("team")+" 
 document.querySelector('.mode [data-route="field"]').innerHTML=icon("field")+" Field Mode";
 const navIconNames={network:"team",dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"coins",analytics:"layers",pulse:"coins",field:"field",social:"team",settings:"settings"};
 document.querySelectorAll("#nav button[data-route]").forEach(b=>{const holder=b.querySelector(".nav-glyph");if(holder)holder.innerHTML=icon(navIconNames[b.dataset.route]||"box")});
-addEventListener("hashchange",()=>{render();scrollTo(0,0)});
-addEventListener("storage",e=>{if(e.key===KEY||e.key===null){try{readStore()}catch{damaged=true}$("#dialog").close();render()}});
-render();
+addEventListener("hashchange",()=>{if(projectReady){render();scrollTo(0,0)}});
+async function refreshProjectRecords(key){if(!projectReady||!projectKeys().includes(key))return;try{await projectLoad(key);if(key===KEY){if((projectRecords.get(KEY)??null)===raw)return;readProjectState();if($("#dialog").open){$("#dialog").close();alert("Проект изменён в другой вкладке. Откройте форму снова.")}}render()}catch(error){console.warn("NVTSK storage refresh",error)}}
+addEventListener("storage",e=>{if(e.key&&projectKeys().includes(e.key))refreshProjectRecords(e.key)});
+async function bootProjects(){
+ $("#nav").hidden=true;$(".top").hidden=true;
+ try{await loadProjectRecords();await ensureWorkspace(activeWorkspace().id);readProjectState();if(typeof BroadcastChannel==="function"){projectChannel=new BroadcastChannel("nvtsk-workspaces");projectChannel.onmessage=e=>refreshProjectRecords(e.data?.key)}projectReady=true;render()}
+ catch(error){projectReady=false;$("#app").innerHTML='<section class="panel"><h2>Хранилище временно недоступно</h2><p>'+esc(projectError(error))+'</p><p>Существующие данные не удалены. Не очищайте данные сайта.</p><button id="nv101-retry-store">Повторить</button></section>';$("#nv101-retry-store").onclick=bootProjects}
+}
+bootProjects();
 if("serviceWorker" in navigator)navigator.serviceWorker.register("./sw.js").catch(()=>{});
 })();
