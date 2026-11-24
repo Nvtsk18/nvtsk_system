@@ -70,12 +70,16 @@ globalThis.NVModel = (() => {
     data.version = 2;
     return data;
   }
+  const cashCategories={income:["customer","pay","refund","other"],expense:["materials","fuel","travel","tools","crew","other"]};
+  const cashDate=s=>typeof s==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s))&&new Date(s).toISOString().slice(0,10)===s;
   function validate(d) {
     requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams","counterparties"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
     for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams,d.counterparties]) {
       requireValue(list.every(x => x && ident(x.id)) && new Set(list.map(x=>x.id)).size === list.length,"Ошибка идентификаторов");
     }
     const has = (list,id) => list.some(x=>x.id===id);
+    const cash=d.cashLedger??[];
+    requireValue(Array.isArray(cash)&&cash.length<=20000&&new Set(cash.map(e=>e?.id)).size===cash.length&&cash.every(e=>e&&ident(e.id)&&has(d.crew,e.memberId)&&(e.caseId===null||has(d.cases,e.caseId))&&Object.hasOwn(cashCategories,e.direction)&&cashCategories[e.direction].includes(e.category)&&Number.isSafeInteger(e.cents)&&e.cents>0&&e.cents<=100000000000&&cashDate(e.date)&&typeof e.note==="string"&&e.note.length<=500&&(e.voided===undefined||typeof e.voided==="boolean")),"Ошибка денежного журнала");
     requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
     requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
     requireValue(d.counterparties.every(p=>label(p.name)&&optional(p.category,80)&&optional(p.address,240)&&optional(p.city,120)&&optional(p.phone,50)&&optional(p.email,160)&&optional(p.website,180)&&optional(p.register,180)&&optional(p.vatId,80)&&Array.isArray(p.directors)&&p.directors.length<=8&&p.directors.every(x=>label(x))&&Array.isArray(p.services)&&p.services.length<=15&&p.services.every(x=>typeof x==="string"&&x.length<=100)&&(!p.relationship||(typeof p.relationship==="object"&&optional(p.relationship.service,150)&&optional(p.relationship.ac,150)&&optional(p.relationship.status,120)))&&(!p.sources||(Array.isArray(p.sources)&&p.sources.length<=8&&p.sources.every(x=>typeof x==="string"&&x.startsWith("https://")&&x.length<=250)))),"Ошибка карточки контрагента");
@@ -147,6 +151,20 @@ globalThis.NVModel = (() => {
         if(p.avatar!==undefined)requireValue(p.avatar===""||(typeof p.avatar==="string"&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(p.avatar)&&p.avatar.length<=240000),"Недопустимое фото профиля");
         Object.assign(target,{headline:p.headline.trim(),location:p.location.trim(),bio:p.bio.trim(),address:contact.address.trim(),phone:contact.phone.trim(),email:contact.email.trim(),website:contact.website.trim(),skills:p.skills.map(x=>x.trim()).filter(Boolean)});
         if(p.avatar!==undefined)target.avatar=p.avatar;
+        break;
+      }
+      case "cash-add": {
+        requireValue(p.caseId===null||has(d.cases,p.caseId),"Выберите существующий объект");
+        requireValue(Object.hasOwn(cashCategories,p.direction)&&cashCategories[p.direction].includes(p.category),"Выберите категорию операции");
+        requireValue(Number.isSafeInteger(p.cents)&&p.cents>0&&p.cents<=100000000000&&cashDate(p.date),"Проверьте сумму и дату");
+        requireValue(typeof p.note==="string"&&p.note.length<=500,"Комментарий до 500 символов");
+        d.cashLedger=[...(d.cashLedger||[]),{id:p.id,memberId:actor.id,caseId:p.caseId,direction:p.direction,category:p.category,cents:p.cents,date:p.date,note:p.note.trim()}];
+        break;
+      }
+      case "cash-void": {
+        const entry=(d.cashLedger||[]).find(e=>e.id===p.id);
+        allowed(entry&&entry.memberId===actor.id&&!entry.voided);
+        entry.voided=true;
         break;
       }
       case "case": allowed(lead); d.cases.push({id:p.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
