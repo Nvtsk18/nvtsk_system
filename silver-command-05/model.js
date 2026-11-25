@@ -268,7 +268,7 @@ globalThis.NVModel = (() => {
       case "finance-shard-cancel": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.moves.some(m=>m.shardId===s.id),"Сначала урегулируйте складские операции");requireValue(!d.tasks.some(t=>t.shardId===s.id&&t.status!=="todo"),"Нельзя отменить начатые задачи");d.tasks=d.tasks.filter(t=>t.shardId!==s.id);d.shards=d.shards.filter(x=>x.id!==s.id);break}
       case "finance-case-cancel": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id)&&!(d.cashLedger||[]).some(e=>e.caseId===c.id),"Сначала урегулируйте Shards и денежный журнал");d.cases=d.cases.filter(x=>x.id!==c.id);break}
       case "case-media": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
         requireValue(Array.isArray(p.files)&&p.files.length>0,"Выберите медиафайлы");
         c.files=[...(c.files||[]),...p.files];
@@ -276,7 +276,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "pv-tech": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId); allowed(c);
         const keys=["bauherr","revision","roofType","tileType","mounting","moduleType","insulation","cableRoute","hazards","safetyPlan","sourcePlan","model3d","acScope","dcScope"];
         const nums=["declaredModules","panelWp","declaredKwp","slopeDeg","eaveHeightM","rafterSpacingCm","roofLengthM"];
@@ -287,7 +287,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "pv-add": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
         const type=p.list;
         requireValue(["zones","strings","cuts","materials","documents"].includes(type),"Некорректный раздел PV");
@@ -303,7 +303,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "pv-remove": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
         requireValue(["zones","strings","cuts","materials","documents"].includes(p.list),"Некорректный раздел PV");
         const cur=c.pvPlan||{};
@@ -311,7 +311,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "pv-check": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
         requireValue(pvChecks.includes(p.key)&&typeof p.value==="boolean","Неизвестный пункт проверки");
         const cur=c.pvPlan||{};
@@ -319,7 +319,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "link-counterparty": {
-        allowed(lead);
+        allowed(ownsCase(d,p.caseId));
         const project=d.cases.find(c=>c.id===p.caseId);
         allowed(project);
         requireValue(p.counterpartyId===null||has(d.counterparties,p.counterpartyId),"Неизвестный контрагент");
