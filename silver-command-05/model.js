@@ -137,7 +137,7 @@ globalThis.NVModel = (() => {
     return {gross,fee,cost,net,ownerCash:gross-fee,fund,platformIncome,merit:net,providerMerit,renterMerit,brokerMerit,platformMerit,days:rentalDays(r.start,r.end)};
   }
   function rentalCapital(d){
-    const out={turnover:0,fee:0,cost:0,fund:0,platformIncome:0,merit:0,platformMerit:0,partners:{},members:{},count:0};
+    const out={turnover:0,fee:0,cost:0,fund:0,platformIncome:0,merit:0,platformMerit:0,partners:Object.create(null),members:Object.create(null),count:0};
     for(const r of d.rentals||[]){if(r.status!=="settled")continue;const q=rentalQuote(r);out.count++;for(const k of ["fee","cost","fund","platformIncome","merit","platformMerit"])out[k]+=q[k];out.turnover+=q.gross;out.partners[r.partnerId]=(out.partners[r.partnerId]||0)+q.providerMerit;out.members[r.renterId]=(out.members[r.renterId]||0)+q.renterMerit;if(r.brokerId)out.members[r.brokerId]=(out.members[r.brokerId]||0)+q.brokerMerit}
     return out;
   }
