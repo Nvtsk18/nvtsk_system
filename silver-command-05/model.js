@@ -84,6 +84,7 @@ globalThis.NVModel = (() => {
   // v105: euro earnings are independent from Merit; one allocation per top-level Shard.
   // Existing activated v104 plans retain their original fee terms unless explicitly converted.
   const freeEconomy=c=>c.economy==="free-v105"||!c.fin;
+  const ownsCase=(d,id,memberId=d.actor)=>{const c=d.cases.find(x=>x.id===id);return !!c&&ownerOf(d,c)===memberId};
   const organizerOf=s=>s.organizerId||s.assignee||null;
   const memberLine=id=>({memberId:id,gross:0,commission:0,net:0,expected:0,review:0,confirmed:0,available:0,paid:0,merit:0,meritLocked:0,meritWork:0,meritOrganize:0,meritCase:0});
   // Largest remainder allocation: exact hundredths of Merit, no floating-point drift.
@@ -136,18 +137,21 @@ globalThis.NVModel = (() => {
     const gross=r.dailyCents*rentalDays(r.start,r.end),fee= Math.floor((gross+5)/10),cost=r.costCents||0,net=Math.max(0,fee-cost),[fund,platformIncome]=apportion(net,[80,20]),[providerMerit,renterMerit,brokerMerit,platformMerit]=apportion(net,r.brokerId?[80,80,30,10]:[95,95,0,10]);
     return {gross,fee,cost,net,ownerCash:gross-fee,fund,platformIncome,merit:net,providerMerit,renterMerit,brokerMerit,platformMerit,days:rentalDays(r.start,r.end)};
   }
+  const rentalProvider=(d,partnerId)=> (d.rentalPartners||[]).find(x=>x.id===partnerId)?.memberId||null;
+  const managesRental=(d,partnerId,actorId=d.actor)=>{const p=(d.rentalPartners||[]).find(x=>x.id===partnerId);return !!p&&(p.memberId?p.memberId===actorId:d.crew.some(c=>c.id===actorId&&c.role===roles[0]))};
   function rentalCapital(d){
     const out={turnover:0,fee:0,cost:0,fund:0,platformIncome:0,merit:0,platformMerit:0,partners:Object.create(null),members:Object.create(null),count:0};
-    for(const r of d.rentals||[]){if(r.status!=="settled")continue;const q=rentalQuote(r);out.count++;for(const k of ["fee","cost","fund","platformIncome","merit","platformMerit"])out[k]+=q[k];out.turnover+=q.gross;out.partners[r.partnerId]=(out.partners[r.partnerId]||0)+q.providerMerit;out.members[r.renterId]=(out.members[r.renterId]||0)+q.renterMerit;if(r.brokerId)out.members[r.brokerId]=(out.members[r.brokerId]||0)+q.brokerMerit}
+    for(const r of d.rentals||[]){if(r.status!=="settled")continue;const q=rentalQuote(r);out.count++;for(const k of ["fee","cost","fund","platformIncome","merit","platformMerit"])out[k]+=q[k];out.turnover+=q.gross;out.partners[r.partnerId]=(out.partners[r.partnerId]||0)+q.providerMerit;const provider=rentalProvider(d,r.partnerId);if(provider)out.members[provider]=(out.members[provider]||0)+q.providerMerit;out.members[r.renterId]=(out.members[r.renterId]||0)+q.renterMerit;if(r.brokerId)out.members[r.brokerId]=(out.members[r.brokerId]||0)+q.brokerMerit}
     return out;
   }
   function validateRental(d){
     const ps=d.rentalPartners??[],ls=d.rentalListings??[],rs=d.rentals??[],member=id=>d.crew.some(x=>x.id===id);
     for(const list of [ps,ls,rs])requireValue(Array.isArray(list)&&list.length<=10000&&list.every(x=>x&&ident(x.id))&&new Set(list.map(x=>x.id)).size===list.length,"Ошибка реестра Rental");
-    requireValue(ps.every(p=>label(p.name)&&label(p.region)&&optional(p.contact,240)&&optional(p.notes,1500)),"Ошибка профиля партнёра");
+    requireValue(ps.every(p=>label(p.name)&&label(p.region)&&optional(p.contact,240)&&optional(p.notes,1500)&&(p.memberId===undefined||member(p.memberId))),"Ошибка профиля партнёра");
+    requireValue(new Set(ps.filter(p=>p.memberId).map(p=>p.memberId)).size===ps.filter(p=>p.memberId).length,"У участника уже есть профиль проката");
     requireValue(ls.every(l=>ps.some(p=>p.id===l.partnerId)&&label(l.title)&&rentalKinds.includes(l.kind)&&validMoney(l.dailyCents)&&l.dailyCents>0&&l.dailyCents<=1000000000&&optional(l.notes,1500)),"Ошибка предложения аренды");
     const occupied=[],refs=new Set();
-    for(const r of rs){const l=ls.find(x=>x.id===r.listingId);requireValue(l&&l.partnerId===r.partnerId&&member(r.renterId)&&(r.brokerId===null||member(r.brokerId)&&r.brokerId!==r.renterId)&&(r.caseId===null||d.cases.some(c=>c.id===r.caseId))&&cashDate(r.start)&&cashDate(r.end)&&rentalDays(r.start,r.end)>=1&&rentalDays(r.start,r.end)<=365&&validMoney(r.dailyCents)&&r.dailyCents>0&&r.dailyCents===l.dailyCents&&["requested","confirmed","returned","settled","cancelled"].includes(r.status),"Ошибка сделки Rental");
+    for(const r of rs){const l=ls.find(x=>x.id===r.listingId);requireValue(l&&l.partnerId===r.partnerId&&member(r.renterId)&&rentalProvider(d,r.partnerId)!==r.renterId&&(r.brokerId===null||member(r.brokerId)&&r.brokerId!==r.renterId&&r.brokerId!==rentalProvider(d,r.partnerId))&&(r.caseId===null||d.cases.some(c=>c.id===r.caseId))&&cashDate(r.start)&&cashDate(r.end)&&rentalDays(r.start,r.end)>=1&&rentalDays(r.start,r.end)<=365&&validMoney(r.dailyCents)&&r.dailyCents>0&&r.dailyCents===l.dailyCents&&["requested","confirmed","returned","settled","cancelled"].includes(r.status),"Ошибка сделки Rental");
       if(["confirmed","returned","settled"].includes(r.status)){requireValue(!occupied.some(x=>x.listingId===r.listingId&&x.start<=r.end&&r.start<=x.end),"Пересечение подтверждённых аренд");occupied.push(r)}
       if(r.status==="settled"){const q=rentalQuote(r);requireValue(cashDate(r.paidDate)&&r.paidDate>=r.end&&label(r.ref)&&validMoney(r.costCents)&&r.costCents<=q.fee&&!refs.has(r.ref.trim().toLowerCase()),"Ошибка расчёта Rental");refs.add(r.ref.trim().toLowerCase())}else requireValue(r.ref===undefined&&r.costCents===undefined&&r.paidDate===undefined,"Незакрытая аренда не может начислять Merit");
     }
@@ -215,7 +219,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "team-assign": {
-        allowed(lead && s && s.status==="draft");
+        allowed(s && s.status==="draft"&&ownsCase(d,s.caseId));
         const team=d.teams.find(t=>t.id===p.teamId);
         allowed(team && team.captainId!==actor.id);
         const c=d.cases.find(x=>x.id===s.caseId);financePlanEditable(d,c);delete s.shares;delete s.organizerId;
@@ -251,7 +255,7 @@ globalThis.NVModel = (() => {
         entry.voided=true;
         break;
       }
-      case "case": allowed(lead); d.cases.push({id:p.id,economy:"free-v105",ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
+      case "case": d.cases.push({id:p.id,economy:"free-v105",ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
       case "finance-activate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(!c.fin&&c.price>0,"Финансовый план уже активен или бюджет нулевой");const f=financialCase(d,c.id);requireValue(f.ready,"Распределите весь бюджет по Shards и назначьте участвующих организаторов");requireValue(f.feeCovered,"Оставьте в Case сумму для оплаты комиссий Shards");c.economy="free-v105";c.fin={active:true,ownerId:actor.id,settled:false,receipts:[],payouts:[]};break}
       case "finance-convert": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy!=="free-v105","Case уже бесплатный");delete c.fin;c.economy="free-v105";break}
       case "finance-deactivate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy==="free-v105","Нет активного бесплатного плана");delete c.fin;break}
@@ -259,9 +263,9 @@ globalThis.NVModel = (() => {
       case "finance-settle": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id);requireValue(f.active&&!f.settled&&f.fullyPaid&&f.allAccepted&&f.ready&&f.feeCovered&&f.rows.every(r=>r.memberId&&r.net>=0),"Нужны полная оплата, принятые Shards и покрытие комиссий");c.fin.settled=true;break}
       case "finance-payout": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id),person=f.people.find(x=>x.memberId===p.memberId);requireValue(f.settled&&person&&person.available>0&&cashDate(p.date)&&label(p.ref),"Выплата недоступна или уже подтверждена");c.fin.payouts.push({memberId:p.memberId,cents:person.available,date:p.date,ref:p.ref.trim()});break}
       case "finance-case-budget": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id&&s.status!=="draft"),"Нельзя менять бюджет после сдачи работ");requireValue(amount(p.price)&&p.price>0,"Проверьте бюджет");c.price=p.price;break}
-      case "finance-shard-budget": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;delete s.organizerId;break}
-      case "finance-shares": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(s.assignee&&Array.isArray(p.shares),"Назначьте ответственного");s.shares=p.shares;if(freeEconomy(c))s.organizerId=p.organizerId||s.assignee;break}
-      case "finance-shard-cancel": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.moves.some(m=>m.shardId===s.id),"Сначала урегулируйте складские операции");requireValue(!d.tasks.some(t=>t.shardId===s.id&&t.status!=="todo"),"Нельзя отменить начатые задачи");d.tasks=d.tasks.filter(t=>t.shardId!==s.id);d.shards=d.shards.filter(x=>x.id!==s.id);break}
+      case "finance-shard-budget": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;delete s.organizerId;break}
+      case "finance-shares": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(s.assignee&&Array.isArray(p.shares),"Назначьте ответственного");s.shares=p.shares;if(freeEconomy(c))s.organizerId=p.organizerId||s.assignee;break}
+      case "finance-shard-cancel": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.moves.some(m=>m.shardId===s.id),"Сначала урегулируйте складские операции");requireValue(!d.tasks.some(t=>t.shardId===s.id&&t.status!=="todo"),"Нельзя отменить начатые задачи");d.tasks=d.tasks.filter(t=>t.shardId!==s.id);d.shards=d.shards.filter(x=>x.id!==s.id);break}
       case "finance-case-cancel": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id)&&!(d.cashLedger||[]).some(e=>e.caseId===c.id),"Сначала урегулируйте Shards и денежный журнал");d.cases=d.cases.filter(x=>x.id!==c.id);break}
       case "case-media": {
         allowed(lead);
@@ -322,25 +326,25 @@ globalThis.NVModel = (() => {
         project.counterpartyId=p.counterpartyId;
         break;
       }
-      case "shard": allowed(lead); {const c=d.cases.find(x=>x.id===p.caseId);financePlanEditable(d,c);financeOwner(d,c,actor);}
+      case "shard": {const c=d.cases.find(x=>x.id===p.caseId);financePlanEditable(d,c);financeOwner(d,c,actor);}
         requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,createdBy:actor.id,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
-      case "assign": allowed(lead && s && s.status==="draft"); financePlanEditable(d,d.cases.find(x=>x.id===s.caseId)); s.assignee=p.assignee; s.teamId=null; delete s.shares; delete s.organizerId; break;
+      case "assign": allowed(s && s.status==="draft");financeOwner(d,d.cases.find(x=>x.id===s.caseId),actor); financePlanEditable(d,d.cases.find(x=>x.id===s.caseId)); s.assignee=p.assignee; s.teamId=null; delete s.shares; delete s.organizerId; break;
       case "task": {
-        allowed(s && s.status==="draft" && (lead || s.assignee===actor.id));
+        allowed(s && s.status==="draft" && (ownsCase(d,s.caseId)||s.assignee===actor.id));
         requireValue(label(p.title)&&optional(p.notes,2000),"Укажите название и описание задачи");
         d.tasks.push({id:p.id,shardId:s.id,title:p.title.trim(),notes:p.notes||"",status:"todo",assignee:p.assignee||null});
         break;
       }
       case "task-status": {
         const parent=t&&d.shards.find(sh=>sh.id===t.shardId);
-        allowed(t && parent && parent.status==="draft" && (lead || t.assignee===actor.id || (t.assignee===null&&parent.assignee===actor.id)));
+        allowed(t && parent && parent.status==="draft" && (ownsCase(d,parent.caseId) || t.assignee===actor.id || (t.assignee===null&&parent.assignee===actor.id)));
         requireValue(["todo","doing","done"].includes(p.status),"Неизвестный статус задачи");
         t.status=p.status;
         break;
       }
       case "submit": allowed(s && s.status==="draft" && s.assignee===actor.id); requireValue(d.tasks.filter(t=>t.shardId===s.id).every(t=>t.status==="done"),"Завершите все задачи Shard перед приёмкой"); s.status="submitted"; break;
-      case "accept": case "revise": allowed(lead && s && s.status==="submitted" && actor.id!==s.assignee); s.status=action==="accept"?"accepted":"draft"; break;
-      case "finance-self-accept": {allowed(lead&&s&&s.status==="submitted"&&s.assignee===actor.id);financeOwner(d,d.cases.find(x=>x.id===s.caseId),actor);s.status="accepted";s.selfAccepted=true;break}
+      case "accept": case "revise": allowed(s && s.status==="submitted" && actor.id!==s.assignee&&ownsCase(d,s.caseId)); s.status=action==="accept"?"accepted":"draft"; break;
+      case "finance-self-accept": {allowed(s&&s.status==="submitted"&&s.assignee===actor.id);financeOwner(d,d.cases.find(x=>x.id===s.caseId),actor);s.status="accepted";s.selfAccepted=true;break}
       case "material": {
         allowed(stock);
         requireValue(label(p.title)&&Number.isSafeInteger(p.qty)&&p.qty>=0,"Укажите название и целое количество");
@@ -367,15 +371,15 @@ globalThis.NVModel = (() => {
         break;
       }
 
-      case "rental-partner": {allowed(lead);requireValue(label(p.name)&&label(p.region),"Укажите название и регион");d.rentalPartners=[...(d.rentalPartners||[]),{id:p.id,name:p.name.trim(),region:p.region.trim(),contact:String(p.contact||"").trim(),notes:String(p.notes||"").trim()}];break}
-      case "rental-listing": {allowed(lead);requireValue((d.rentalPartners||[]).some(x=>x.id===p.partnerId),"Выберите партнёра");d.rentalListings=[...(d.rentalListings||[]),{id:p.id,partnerId:p.partnerId,title:p.title,kind:p.kind,dailyCents:p.dailyCents,notes:String(p.notes||"")}];break}
-      case "rental-request": {const l=(d.rentalListings||[]).find(x=>x.id===p.listingId);requireValue(l,"Предложение не найдено");d.rentals=[...(d.rentals||[]),{id:p.id,listingId:l.id,partnerId:l.partnerId,renterId:actor.id,brokerId:p.brokerId||null,caseId:p.caseId||null,start:p.start,end:p.end,dailyCents:l.dailyCents,status:"requested"}];break}
-      case "rental-confirm": case "rental-return": case "rental-cancel": {const r=(d.rentals||[]).find(x=>x.id===p.id);allowed(r&&(lead||(action==="rental-cancel"&&r.renterId===actor.id&&r.status==="requested")));if(action==="rental-confirm"){requireValue(r.status==="requested","Неверный статус");r.status="confirmed"}else if(action==="rental-return"){requireValue(r.status==="confirmed"&&cashDate(p.date)&&p.date>=r.end,"Подтвердите возврат после окончания аренды");r.status="returned"}else{requireValue(["requested","confirmed"].includes(r.status),"Закрытую аренду отменить нельзя");r.status="cancelled"}break}
-      case "rental-settle": {allowed(lead);const r=(d.rentals||[]).find(x=>x.id===p.id);requireValue(r&&r.status==="returned","Сначала подтвердите возврат");requireValue(p.paidCents===rentalQuote(r).gross,"Подтвердите полную оплату аренды");r.status="settled";r.costCents=p.costCents;r.paidDate=p.date;r.ref=String(p.ref||"").trim();break}
+      case "rental-partner": {const external=p.external===true;allowed(!external||lead);requireValue(label(p.name)&&label(p.region),"Укажите название и регион");if(!external)requireValue(!(d.rentalPartners||[]).some(x=>x.memberId===actor.id),"У вас уже есть профиль аренды");d.rentalPartners=[...(d.rentalPartners||[]),{id:p.id,...(external?{}:{memberId:actor.id}),name:p.name.trim(),region:p.region.trim(),contact:String(p.contact||"").trim(),notes:String(p.notes||"").trim()}];break}
+      case "rental-listing": {allowed(managesRental(d,p.partnerId,actor.id));d.rentalListings=[...(d.rentalListings||[]),{id:p.id,partnerId:p.partnerId,title:p.title,kind:p.kind,dailyCents:p.dailyCents,notes:String(p.notes||"")}];break}
+      case "rental-request": {const l=(d.rentalListings||[]).find(x=>x.id===p.listingId);requireValue(l,"Предложение не найдено");requireValue(rentalProvider(d,l.partnerId)!==actor.id,"Нельзя арендовать собственное оборудование");d.rentals=[...(d.rentals||[]),{id:p.id,listingId:l.id,partnerId:l.partnerId,renterId:actor.id,brokerId:p.brokerId||null,caseId:p.caseId||null,start:p.start,end:p.end,dailyCents:l.dailyCents,status:"requested"}];break}
+      case "rental-confirm": case "rental-return": case "rental-cancel": {const r=(d.rentals||[]).find(x=>x.id===p.id);allowed(r&&(managesRental(d,r.partnerId,actor.id)||(action==="rental-cancel"&&r.renterId===actor.id&&r.status==="requested")));if(action==="rental-confirm"){requireValue(r.status==="requested","Неверный статус");r.status="confirmed"}else if(action==="rental-return"){requireValue(r.status==="confirmed"&&cashDate(p.date)&&p.date>=r.end,"Подтвердите возврат после окончания аренды");r.status="returned"}else{requireValue(["requested","confirmed"].includes(r.status),"Закрытую аренду отменить нельзя");r.status="cancelled"}break}
+      case "rental-settle": {const r=(d.rentals||[]).find(x=>x.id===p.id);allowed(r&&managesRental(d,r.partnerId,actor.id));requireValue(r.status==="returned","Сначала подтвердите возврат");requireValue(p.paidCents===rentalQuote(r).gross,"Подтвердите полную оплату аренды");r.status="settled";r.costCents=p.costCents;r.paidDate=p.date;r.ref=String(p.ref||"").trim();break}
 
       default: throw Error("Неизвестная операция");
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital};
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase};
 })();
