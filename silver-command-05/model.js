@@ -190,7 +190,7 @@ globalThis.NVModel = (() => {
     const has = (list,id) => list.some(x=>x.id===id);
     const cash=d.cashLedger??[];
     requireValue(Array.isArray(cash)&&cash.length<=20000&&new Set(cash.map(e=>e?.id)).size===cash.length&&cash.every(e=>e&&ident(e.id)&&has(d.crew,e.memberId)&&(e.caseId===null||has(d.cases,e.caseId))&&Object.hasOwn(cashCategories,e.direction)&&cashCategories[e.direction].includes(e.category)&&Number.isSafeInteger(e.cents)&&e.cents>0&&e.cents<=100000000000&&cashDate(e.date)&&typeof e.note==="string"&&e.note.length<=500&&(e.voided===undefined||typeof e.voided==="boolean")),"Ошибка денежного журнала");
-    requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
+    requireValue(d.crew.every(c=>label(c.name)&&roles.includes(c.role)&&(c.alphaId===undefined||(typeof c.alphaId==="string"&&/^ALPHA-[0-9]{3,6}$/.test(c.alphaId)))&&optional(c.headline,120)&&optional(c.location,100)&&optional(c.bio,700)&&optional(c.company,120)&&optional(c.address,240)&&optional(c.phone,50)&&optional(c.email,160)&&optional(c.website,180)&&(c.skills===undefined||(Array.isArray(c.skills)&&c.skills.length<=8&&c.skills.every(x=>typeof x==="string"&&x.length<=36)))&&(c.avatar===undefined||(typeof c.avatar==="string"&&(c.avatar===""||(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(c.avatar)&&c.avatar.length<=240000))))) && has(d.crew,d.actor) && d.crew.some(c=>c.role===roles[0]),"Ошибка участников / профиля");
     requireValue(d.teams.every(t=>label(t.name)&&optional(t.description,500)&&has(d.crew,t.captainId)&&Array.isArray(t.memberIds)&&t.memberIds.length>=1&&t.memberIds.length<=40&&new Set(t.memberIds).size===t.memberIds.length&&t.memberIds.every(id=>has(d.crew,id))&&t.memberIds.includes(t.captainId)),"Ошибка состава Team");
     requireValue(d.counterparties.every(p=>label(p.name)&&optional(p.category,80)&&optional(p.address,240)&&optional(p.city,120)&&optional(p.phone,50)&&optional(p.email,160)&&optional(p.website,180)&&optional(p.register,180)&&optional(p.vatId,80)&&Array.isArray(p.directors)&&p.directors.length<=8&&p.directors.every(x=>label(x))&&Array.isArray(p.services)&&p.services.length<=15&&p.services.every(x=>typeof x==="string"&&x.length<=100)&&(!p.relationship||(typeof p.relationship==="object"&&optional(p.relationship.service,150)&&optional(p.relationship.ac,150)&&optional(p.relationship.status,120)))&&(!p.sources||(Array.isArray(p.sources)&&p.sources.length<=8&&p.sources.every(x=>typeof x==="string"&&x.startsWith("https://")&&x.length<=250)))),"Ошибка карточки контрагента");
     requireValue(d.cases.every(c=>label(c.title)&&label(c.city)&&amount(c.price)&&optional(c.address,300)&&optional(c.notes,4000)&&attachments(c.files)&&pvPlanValid(c.pvPlan)&&(c.counterpartyId===undefined||c.counterpartyId===null||has(d.counterparties,c.counterpartyId))),"Ошибка Project");
@@ -251,6 +251,16 @@ globalThis.NVModel = (() => {
         const c=d.cases.find(x=>x.id===s.caseId);financePlanEditable(d,c);delete s.shares;delete s.organizerId;
         s.teamId=team.id;
         s.assignee=team.captainId;
+        break;
+      }
+      case "profile-import": {
+        const doc=p.profile;
+        requireValue(doc&&doc.format==="nvtsk-personal-profile"&&doc.version===1&&label(doc.name)&&doc.name.length<=100,"Неверный файл персонального профиля");
+        requireValue(typeof doc.headline==="string"&&doc.headline.length<=120&&typeof doc.location==="string"&&doc.location.length<=100&&typeof doc.bio==="string"&&doc.bio.length<=700,"Некорректное описание");
+        requireValue(Array.isArray(doc.skills)&&doc.skills.length<=8&&doc.skills.every(x=>typeof x==="string"&&x.trim().length>0&&x.length<=36),"Некорректные навыки");
+        requireValue(doc.alphaId===undefined||/^ALPHA-[0-9]{3,6}$/.test(doc.alphaId),"Некорректная метка тестового профиля");
+        Object.assign(actor,{name:doc.name.trim(),headline:doc.headline.trim(),location:doc.location.trim(),bio:doc.bio.trim(),skills:doc.skills.map(x=>x.trim())});
+        if(doc.alphaId)actor.alphaId=doc.alphaId;
         break;
       }
       case "profile": {
