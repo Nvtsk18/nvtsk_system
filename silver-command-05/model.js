@@ -128,6 +128,31 @@ globalThis.NVModel = (() => {
   function financePlanEditable(d,c){financeEditable(d,c);requireValue(!(c.fin&&freeEconomy(c)),"Верните бесплатный план в редактирование перед изменением долей")}
   function financeOwner(d,c,actor){requireValue(c&&ownerOf(d,c)===actor.id,"Операция доступна владельцу Case")}
 
+
+  // Network Rental v106: local records of external contracts, not a payment processor.
+  const rentalKinds=["Автомобили","Прицепы","Подъёмники","Леса","Инструменты","Другое"];
+  const rentalDays=(start,end)=>Math.round((Date.parse(end)-Date.parse(start))/86400000)+1;
+  function rentalQuote(r){
+    const gross=r.dailyCents*rentalDays(r.start,r.end),fee= Math.floor((gross+5)/10),cost=r.costCents||0,net=Math.max(0,fee-cost),[fund,platformIncome]=apportion(net,[80,20]),[providerMerit,renterMerit,brokerMerit,platformMerit]=apportion(net,r.brokerId?[80,80,30,10]:[95,95,0,10]);
+    return {gross,fee,cost,net,ownerCash:gross-fee,fund,platformIncome,merit:net,providerMerit,renterMerit,brokerMerit,platformMerit,days:rentalDays(r.start,r.end)};
+  }
+  function rentalCapital(d){
+    const out={turnover:0,fee:0,cost:0,fund:0,platformIncome:0,merit:0,platformMerit:0,partners:{},members:{},count:0};
+    for(const r of d.rentals||[]){if(r.status!=="settled")continue;const q=rentalQuote(r);out.count++;for(const k of ["fee","cost","fund","platformIncome","merit","platformMerit"])out[k]+=q[k];out.turnover+=q.gross;out.partners[r.partnerId]=(out.partners[r.partnerId]||0)+q.providerMerit;out.members[r.renterId]=(out.members[r.renterId]||0)+q.renterMerit;if(r.brokerId)out.members[r.brokerId]=(out.members[r.brokerId]||0)+q.brokerMerit}
+    return out;
+  }
+  function validateRental(d){
+    const ps=d.rentalPartners??[],ls=d.rentalListings??[],rs=d.rentals??[],member=id=>d.crew.some(x=>x.id===id);
+    for(const list of [ps,ls,rs])requireValue(Array.isArray(list)&&list.length<=10000&&list.every(x=>x&&ident(x.id))&&new Set(list.map(x=>x.id)).size===list.length,"Ошибка реестра Rental");
+    requireValue(ps.every(p=>label(p.name)&&label(p.region)&&optional(p.contact,240)&&optional(p.notes,1500)),"Ошибка профиля партнёра");
+    requireValue(ls.every(l=>ps.some(p=>p.id===l.partnerId)&&label(l.title)&&rentalKinds.includes(l.kind)&&validMoney(l.dailyCents)&&l.dailyCents>0&&l.dailyCents<=1000000000&&optional(l.notes,1500)),"Ошибка предложения аренды");
+    const occupied=[],refs=new Set();
+    for(const r of rs){const l=ls.find(x=>x.id===r.listingId);requireValue(l&&l.partnerId===r.partnerId&&member(r.renterId)&&(r.brokerId===null||member(r.brokerId)&&r.brokerId!==r.renterId)&&(r.caseId===null||d.cases.some(c=>c.id===r.caseId))&&cashDate(r.start)&&cashDate(r.end)&&rentalDays(r.start,r.end)>=1&&rentalDays(r.start,r.end)<=365&&validMoney(r.dailyCents)&&r.dailyCents>0&&r.dailyCents===l.dailyCents&&["requested","confirmed","returned","settled","cancelled"].includes(r.status),"Ошибка сделки Rental");
+      if(["confirmed","returned","settled"].includes(r.status)){requireValue(!occupied.some(x=>x.listingId===r.listingId&&x.start<=r.end&&r.start<=x.end),"Пересечение подтверждённых аренд");occupied.push(r)}
+      if(r.status==="settled"){const q=rentalQuote(r);requireValue(cashDate(r.paidDate)&&r.paidDate>=r.end&&label(r.ref)&&validMoney(r.costCents)&&r.costCents<=q.fee&&!refs.has(r.ref.trim().toLowerCase()),"Ошибка расчёта Rental");refs.add(r.ref.trim().toLowerCase())}else requireValue(r.ref===undefined&&r.costCents===undefined&&r.paidDate===undefined,"Незакрытая аренда не может начислять Merit");
+    }
+  }
+
   function validate(d) {
     requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams","counterparties"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
     for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams,d.counterparties]) {
@@ -157,6 +182,7 @@ globalThis.NVModel = (() => {
       skuMovements.set(m.itemId,(skuMovements.get(m.itemId)||0)+(m.type==="receive"||m.type==="return"?m.qty:-m.qty));
     }
     validateFinance(d);
+    validateRental(d);
     return d;
   }
   function apply(source, action, p) {
@@ -340,9 +366,16 @@ globalThis.NVModel = (() => {
         d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,recipientId:["issue","return"].includes(p.type)?p.recipientId:null,reason:p.type==="writeoff"?p.reason.trim():""});
         break;
       }
+
+      case "rental-partner": {allowed(lead);requireValue(label(p.name)&&label(p.region),"Укажите название и регион");d.rentalPartners=[...(d.rentalPartners||[]),{id:p.id,name:p.name.trim(),region:p.region.trim(),contact:String(p.contact||"").trim(),notes:String(p.notes||"").trim()}];break}
+      case "rental-listing": {allowed(lead);requireValue((d.rentalPartners||[]).some(x=>x.id===p.partnerId),"Выберите партнёра");d.rentalListings=[...(d.rentalListings||[]),{id:p.id,partnerId:p.partnerId,title:p.title,kind:p.kind,dailyCents:p.dailyCents,notes:String(p.notes||"")}];break}
+      case "rental-request": {const l=(d.rentalListings||[]).find(x=>x.id===p.listingId);requireValue(l,"Предложение не найдено");d.rentals=[...(d.rentals||[]),{id:p.id,listingId:l.id,partnerId:l.partnerId,renterId:actor.id,brokerId:p.brokerId||null,caseId:p.caseId||null,start:p.start,end:p.end,dailyCents:l.dailyCents,status:"requested"}];break}
+      case "rental-confirm": case "rental-return": case "rental-cancel": {const r=(d.rentals||[]).find(x=>x.id===p.id);allowed(r&&(lead||(action==="rental-cancel"&&r.renterId===actor.id&&r.status==="requested")));if(action==="rental-confirm"){requireValue(r.status==="requested","Неверный статус");r.status="confirmed"}else if(action==="rental-return"){requireValue(r.status==="confirmed"&&cashDate(p.date)&&p.date>=r.end,"Подтвердите возврат после окончания аренды");r.status="returned"}else{requireValue(["requested","confirmed"].includes(r.status),"Закрытую аренду отменить нельзя");r.status="cancelled"}break}
+      case "rental-settle": {allowed(lead);const r=(d.rentals||[]).find(x=>x.id===p.id);requireValue(r&&r.status==="returned","Сначала подтвердите возврат");requireValue(p.paidCents===rentalQuote(r).gross,"Подтвердите полную оплату аренды");r.status="settled";r.costCents=p.costCents;r.paidDate=p.date;r.ref=String(p.ref||"").trim();break}
+
       default: throw Error("Неизвестная операция");
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf};
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital};
 })();
