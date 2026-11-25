@@ -157,6 +157,31 @@ globalThis.NVModel = (() => {
     }
   }
 
+
+  // Network and operations share the workspace graph. Media bytes remain in their own store.
+  function caseRelations(d,id){
+    const c=d.cases.find(x=>x.id===id);if(!c)return null;
+    const shards=d.shards.filter(s=>s.caseId===id),ids=new Set(shards.map(s=>s.id)),tasks=d.tasks.filter(t=>ids.has(t.shardId)),moves=d.moves.filter(m=>ids.has(m.shardId)),rentals=(d.rentals||[]).filter(r=>r.caseId===id),posts=(d.network?.posts||[]).filter(p=>p.caseId===id),deals=(d.network?.deals||[]).filter(x=>x.caseId===id),members=new Set([ownerOf(d,c)]);
+    for(const s of shards){if(s.assignee)members.add(s.assignee);for(const x of sharesFor(s))members.add(x.memberId);const team=d.teams.find(t=>t.id===s.teamId);for(const m of team?.memberIds||[])members.add(m)}
+    for(const t of tasks)if(t.assignee)members.add(t.assignee);
+    const stock=new Map();for(const m of moves){const key=JSON.stringify([m.itemId,m.shardId,m.recipientId||null]);const x=stock.get(key)||{itemId:m.itemId,shardId:m.shardId,recipientId:m.recipientId||null,qty:0};x.qty+=m.type==="issue"?m.qty:m.type==="return"?-m.qty:0;stock.set(key,x)}
+    return {case:c,shards,tasks,moves,rentals,posts,deals,memberIds:[...members].filter(Boolean),stock:[...stock.values()].filter(x=>x.qty!==0),finance:financialCase(d,id),cash:(d.cashLedger||[]).filter(e=>e.caseId===id)};
+  }
+  function normalizeNetwork(d,n){
+    const validCase=id=>d.cases.some(c=>c.id===id)?id:null;
+    const posts=(n?.posts||[]).map(p=>({...p,kind:p.kind||"post",caseId:validCase(p.caseId),likes:p.likes||[],comments:p.comments||[]}));
+    const deals=(n?.deals||[]).map(x=>({...x,caseId:validCase(x.caseId)||validCase("network-"+x.id)}));
+    return {posts,deals};
+  }
+  function validateNetwork(d){
+    if(d.network===undefined)return;const n=d.network,hasCase=id=>id===null||d.cases.some(c=>c.id===id);
+    requireValue(n&&Array.isArray(n.posts)&&Array.isArray(n.deals)&&n.posts.length<=20000&&n.deals.length<=10000,"Ошибка Network");
+    for(const list of [n.posts,n.deals])requireValue(list.every(x=>x&&ident(x.id))&&new Set(list.map(x=>x.id)).size===list.length,"Повторный ID Network");
+    requireValue(n.posts.every(p=>ident(p.author)&&typeof p.text==="string"&&p.text.length<=1200&&p.text.trim()&&typeof p.created==="string"&&["post","video","offer","available"].includes(p.kind)&&hasCase(p.caseId)&&Array.isArray(p.likes)&&Array.isArray(p.comments)&&p.comments.every(c=>c&&ident(c.author)&&typeof c.text==="string"&&c.text.length<=500)&&(!["offer","available"].includes(p.kind)||(label(p.title)&&label(p.region)&&amount(p.budget)))),"Ошибка публикации Network");
+    requireValue(n.deals.every(x=>ident(x.postId)&&label(x.title)&&label(x.region)&&amount(x.budget)&&typeof x.terms==="string"&&x.terms.length<=4000&&hasCase(x.caseId)),"Ошибка сделки Network");
+    const linked=n.deals.filter(x=>x.caseId).map(x=>x.caseId);requireValue(new Set(linked).size===linked.length,"Case уже связан со сделкой");
+  }
+
   function validate(d) {
     requireValue(d && d.version === 2 && ["cases","shards","crew","garage","moves","tasks","teams","counterparties"].every(k => Array.isArray(d[k])), "Неверная версия или структура");
     for (const list of [d.cases,d.shards,d.tasks,d.crew,d.garage,d.moves,d.teams,d.counterparties]) {
@@ -187,6 +212,7 @@ globalThis.NVModel = (() => {
     }
     validateFinance(d);
     validateRental(d);
+    validateNetwork(d);
     return d;
   }
   function apply(source, action, p) {
@@ -255,6 +281,8 @@ globalThis.NVModel = (() => {
         entry.voided=true;
         break;
       }
+      case "network-save": {d.network=normalizeNetwork(d,p.network);const old=source.network?.deals||[];for(const x of old.filter(x=>x.caseId)){const y=d.network.deals.find(v=>v.id===x.id);requireValue(y&&y.caseId===x.caseId&&y.budget===x.budget&&y.terms===x.terms,"Связанная сделка уже зафиксирована в Case")}break}
+      case "network-case": {const x=d.network?.deals.find(v=>v.id===p.dealId);requireValue(x&&!x.caseId,"Case уже создан или сделка не найдена");const id="network-"+x.id;requireValue(!has(d.cases,id),"Case уже существует");d.cases.push({id,economy:"free-v105",ownerId:actor.id,title:x.title,city:x.region,price:x.budget,address:"",notes:x.terms,files:[],counterpartyId:null});x.caseId=id;break}
       case "case": d.cases.push({id:p.id,economy:"free-v105",ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
       case "finance-activate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(!c.fin&&c.price>0,"Финансовый план уже активен или бюджет нулевой");const f=financialCase(d,c.id);requireValue(f.ready,"Распределите весь бюджет по Shards и назначьте участвующих организаторов");requireValue(f.feeCovered,"Оставьте в Case сумму для оплаты комиссий Shards");c.economy="free-v105";c.fin={active:true,ownerId:actor.id,settled:false,receipts:[],payouts:[]};break}
       case "finance-convert": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy!=="free-v105","Case уже бесплатный");delete c.fin;c.economy="free-v105";break}
@@ -266,7 +294,7 @@ globalThis.NVModel = (() => {
       case "finance-shard-budget": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;delete s.organizerId;break}
       case "finance-shares": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(s.assignee&&Array.isArray(p.shares),"Назначьте ответственного");s.shares=p.shares;if(freeEconomy(c))s.organizerId=p.organizerId||s.assignee;break}
       case "finance-shard-cancel": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.moves.some(m=>m.shardId===s.id),"Сначала урегулируйте складские операции");requireValue(!d.tasks.some(t=>t.shardId===s.id&&t.status!=="todo"),"Нельзя отменить начатые задачи");d.tasks=d.tasks.filter(t=>t.shardId!==s.id);d.shards=d.shards.filter(x=>x.id!==s.id);break}
-      case "finance-case-cancel": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id)&&!(d.cashLedger||[]).some(e=>e.caseId===c.id),"Сначала урегулируйте Shards и денежный журнал");d.cases=d.cases.filter(x=>x.id!==c.id);break}
+      case "finance-case-cancel": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id)&&!(d.cashLedger||[]).some(e=>e.caseId===c.id)&&!(d.rentals||[]).some(r=>r.caseId===c.id)&&!(d.network?.deals||[]).some(x=>x.caseId===c.id),"Case связан с работами, финансами или сделкой; удаление недоступно");if(d.network)for(const post of d.network.posts)if(post.caseId===c.id)post.caseId=null;d.cases=d.cases.filter(x=>x.id!==c.id);break}
       case "case-media": {
         allowed(ownsCase(d,p.caseId));
         const c=d.cases.find(x=>x.id===p.caseId);allowed(c);
@@ -363,8 +391,8 @@ globalThis.NVModel = (() => {
         if(["issue","writeoff"].includes(p.type))requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
         if(p.type==="writeoff")requireValue(typeof p.reason==="string"&&p.reason.trim().length>=3&&p.reason.length<=300,"Укажите причину списания");
         if(p.type==="return"){
-          const outstanding=d.moves.filter(m=>m.itemId===item.id&&m.shardId===s.id).reduce((n,m)=>n+(m.type==="issue"?m.qty:m.type==="return"?-m.qty:0),0);
-          requireValue(outstanding>=p.qty,"Возврат превышает выдачу по Shard");
+          const outstanding=d.moves.filter(m=>m.itemId===item.id&&m.shardId===s.id&&m.recipientId===p.recipientId).reduce((n,m)=>n+(m.type==="issue"?m.qty:m.type==="return"?-m.qty:0),0);
+          requireValue(outstanding>=p.qty,"Возврат превышает выдачу этому участнику по Shard");
         }
         item.qty=Math.round((item.qty+(["issue","writeoff"].includes(p.type)?-p.qty:p.qty))*1e6)/1e6;
         d.moves.push({id:p.id,type:p.type,qty:p.qty,itemId:item.id,shardId:["receive","writeoff"].includes(p.type)?null:s.id,actor:actor.id,recipientId:["issue","return"].includes(p.type)?p.recipientId:null,reason:p.type==="writeoff"?p.reason.trim():""});
@@ -381,5 +409,5 @@ globalThis.NVModel = (() => {
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase};
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase,caseRelations,normalizeNetwork};
 })();
