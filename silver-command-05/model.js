@@ -115,11 +115,46 @@ globalThis.NVModel = (() => {
     return {id,policy:"legacy-v104",ready:true,meritReleased:settled?budget:0,meritLocked:active&&!settled?budget:0,meritPlatform:0,meritPlatformLocked:0,unassignedMerit:0,ownerId,budget,allocated,remaining,caseFee,shardFees,due,received,fullyPaid,active,settled,allAccepted,rows,people:[...byMember.values()],feeCovered:remaining>=shardFees,reserve:settled?reserveCase+shardFees:0,development:settled?development:0,operations:settled?operations:0,meritMinted:active?budget:0,meritAllocated:active?allocated:0,receipts:f.receipts||[],payouts:f.payouts||[]};
   }
   function financialMember(d,memberId){const totals={expected:0,review:0,confirmed:0,available:0,paid:0,merit:0,meritLocked:0,meritWork:0,meritOrganize:0,meritCase:0,commission:0};const cases=[];for(const c of d.cases){const f=financialCase(d,c.id),p=f.people.find(x=>x.memberId===memberId);if(!p)continue;for(const k of Object.keys(totals))totals[k]+=p[k]||0;cases.push({caseId:c.id,...p})}return {...totals,cases}}
+
+  // Merit Passport is a read-only projection of the authoritative financial records.
+  // A direction is an event classification, never another minting operation.
+  const meritDirections=Object.freeze({BUILDER:"Создание Case",LEAD:"Организация работ",PRO:"Выполнение работ",COLLAB:"Организация сотрудничества",RENTAL:"Аренда и прокат",SOLO:"Самостоятельное выполнение",LEGACY:"Историческая модель"});
+  function meritPassport(d,memberId){
+    const entries=[],add=(id,direction,amount,status,source,meta)=>{if(amount>0)entries.push({id,direction,amount,status,source,...meta})};
+    for(const c of d.cases){
+      const f=financialCase(d,c.id),date=c.fin?.settledDate||null;
+      if(f.policy!=="free-v105"){
+        const p=f.people.find(x=>x.memberId===memberId);
+        if(p?.merit)add(JSON.stringify(["legacy",c.id,memberId]),"LEGACY",p.merit,"historical","WORK",{caseId:c.id,title:c.title,date:null,detail:"Историческое начисление v104; правила отличались"});
+        continue;
+      }
+      const status=f.settled?"released":"locked";
+      for(const ms of f.meritShards){
+        const s=d.shards.find(x=>x.id===ms.id),base={caseId:c.id,shardId:s.id,title:c.title+" · "+s.title,date};
+        const own=ms.workRows.find(x=>x.memberId===memberId),solo=ms.workRows.length===1&&f.ownerId===memberId&&ms.organizerId===memberId&&own;
+        if(own)add(JSON.stringify(["work",c.id,s.id,memberId,"execution"]),solo?"SOLO":"PRO",own.merit,status,"WORK",{...base,detail:solo?"Самостоятельное выполнение собственного Shard · доля 80%":"Доля за выполнение Shard · из 80%"});
+        if(ms.organizerId===memberId)add(JSON.stringify(["work",c.id,s.id,memberId,"organization"]),"LEAD",ms.organize,status,"WORK",{...base,detail:"Организация Shard · 10%"});
+        if(f.ownerId===memberId)add(JSON.stringify(["work",c.id,s.id,memberId,"creation"]),"BUILDER",ms.caseReward,status,"WORK",{...base,detail:"Создание Case · 5% от Shard"});
+      }
+    }
+    for(const r of d.rentals||[]){
+      if(r.status!=="settled")continue;
+      const q=rentalQuote(r),listing=(d.rentalListings||[]).find(x=>x.id===r.listingId),base={rentalId:r.id,caseId:r.caseId,title:listing?.title||"Аренда",date:r.paidDate};
+      if(rentalProvider(d,r.partnerId)===memberId)add(JSON.stringify(["rental",r.id,memberId,"provider"]),"RENTAL",q.providerMerit,"released","RENTAL",{...base,detail:"Сдача оборудования"});
+      if(r.renterId===memberId)add(JSON.stringify(["rental",r.id,memberId,"renter"]),"RENTAL",q.renterMerit,"released","RENTAL",{...base,detail:"Аренда оборудования"});
+      if(r.brokerId===memberId)add(JSON.stringify(["rental",r.id,memberId,"broker"]),"COLLAB",q.brokerMerit,"released","RENTAL",{...base,detail:"Посредничество в оплаченной аренде · 15%"});
+    }
+    entries.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||a.id.localeCompare(b.id));
+    const totals={released:0,locked:0,historical:0},directions=Object.create(null);
+    for(const e of entries){totals[e.status]+=e.amount;const t=directions[e.direction]||(directions[e.direction]={released:0,locked:0,historical:0,count:0});t[e.status]+=e.amount;t.count++}
+    return {entries,totals,directions};
+  }
+
   function validateFinance(d){
     const member=id=>d.crew.some(x=>x.id===id),unique=items=>new Set(items).size===items.length;
     for(const s of d.shards){const c=d.cases.find(x=>x.id===s.caseId);if(s.organizerId!==undefined)requireValue(member(s.organizerId),"Организатор Shard не найден");if(s.createdBy!==undefined)requireValue(member(s.createdBy),"Автор Shard не найден");if(freeEconomy(c)&&s.organizerId)requireValue(sharesFor(s).some(x=>x.memberId===s.organizerId&&x.cents>0),"Организатор должен участвовать в Shard");if(s.shares!==undefined){requireValue(Array.isArray(s.shares)&&s.shares.length<=40&&s.shares.every(x=>x&&member(x.memberId)&&validMoney(x.cents)&&x.cents>0&&classes.includes(x.className))&&unique(s.shares.map(x=>x.memberId))&&s.shares.reduce((n,x)=>n+x.cents,0)===cents(s.price),"Доли Shard должны в сумме равняться бюджету");requireValue(s.assignee&&s.shares.some(x=>x.memberId===s.assignee),"Ответственный должен входить в распределение Shard")}}
     for(const c of d.cases){const f=financialCase(d,c.id);requireValue(validMoney(f.budget)&&f.allocated<=f.budget,"Распределение превышает бюджет Case");if(c.ownerId!==undefined)requireValue(member(c.ownerId),"Владелец Case не найден");requireValue(c.economy===undefined||c.economy==="free-v105","Неизвестная экономика Case");if(c.fin===undefined)continue;
-      const x=c.fin;requireValue(x&&typeof x==="object"&&x.active===true&&member(x.ownerId)&&typeof x.settled==="boolean"&&Array.isArray(x.receipts)&&Array.isArray(x.payouts),"Ошибка финансовой карточки");
+      const x=c.fin;requireValue(x&&typeof x==="object"&&x.active===true&&member(x.ownerId)&&typeof x.settled==="boolean"&&(x.settledDate===undefined||(x.settled&&cashDate(x.settledDate)))&&Array.isArray(x.receipts)&&Array.isArray(x.payouts),"Ошибка финансовой карточки");
       requireValue(f.feeCovered,"Недостаточно остатка BUILDER для комиссии Shard");if(f.policy==="free-v105"){requireValue(f.ready,"Нужен минимум один Shard, 100% бюджета и участвующие организаторы");requireValue(c.ownerId===undefined||c.ownerId===x.ownerId,"Владелец финансового плана не совпадает с создателем Case")}requireValue(x.receipts.length<=2000&&x.receipts.every(e=>e&&ident(e.id)&&validMoney(e.cents)&&e.cents>0&&cashDate(e.date)&&label(e.ref))&&unique(x.receipts.map(e=>e.id))&&unique(x.receipts.map(e=>e.ref.trim().toLowerCase()))&&f.received<=f.due,"Ошибка подтверждённых поступлений");
       requireValue(x.payouts.length<=d.crew.length&&x.payouts.every(e=>e&&member(e.memberId)&&validMoney(e.cents)&&e.cents>0&&cashDate(e.date)&&label(e.ref)&&f.people.some(p=>p.memberId===e.memberId&&p.net===e.cents))&&unique(x.payouts.map(e=>e.memberId))&&unique(x.payouts.map(e=>e.ref.trim().toLowerCase())),"Ошибка выплат");
       requireValue(!x.settled?(x.payouts.length===0):(f.fullyPaid&&f.allAccepted&&f.rows.every(r=>r.memberId&&r.net>=0)),"Нельзя закрыть неоплаченный или непринятый Case");
@@ -298,7 +333,7 @@ globalThis.NVModel = (() => {
       case "finance-convert": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy!=="free-v105","Case уже бесплатный");delete c.fin;c.economy="free-v105";break}
       case "finance-deactivate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy==="free-v105","Нет активного бесплатного плана");delete c.fin;break}
       case "finance-receipt": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(c.fin&&!c.fin.settled,"Активируйте финансовый план");const f=financialCase(d,c.id);requireValue(validMoney(p.cents)&&p.cents>0&&f.received+p.cents<=f.due&&cashDate(p.date)&&label(p.ref),"Проверьте сумму, дату и ссылку на оплату");requireValue(!c.fin.receipts.some(x=>x.id===p.id||x.ref.trim().toLowerCase()===p.ref.trim().toLowerCase()),"Платёж уже записан");requireValue(d.shards.filter(s=>s.caseId===c.id).every(s=>s.assignee),"Сначала назначьте ответственных за все Shards");c.fin.receipts.push({id:p.id,cents:p.cents,date:p.date,ref:p.ref.trim()});break}
-      case "finance-settle": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id);requireValue(f.active&&!f.settled&&f.fullyPaid&&f.allAccepted&&f.ready&&f.feeCovered&&f.rows.every(r=>r.memberId&&r.net>=0),"Нужны полная оплата, принятые Shards и покрытие комиссий");c.fin.settled=true;break}
+      case "finance-settle": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id);requireValue(f.active&&!f.settled&&f.fullyPaid&&f.allAccepted&&f.ready&&f.feeCovered&&f.rows.every(r=>r.memberId&&r.net>=0),"Нужны полная оплата, принятые Shards и покрытие комиссий");c.fin.settled=true;if(p.date!==undefined){requireValue(cashDate(p.date),"Некорректная дата расчёта");c.fin.settledDate=p.date}break}
       case "finance-payout": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id),person=f.people.find(x=>x.memberId===p.memberId);requireValue(f.settled&&person&&person.available>0&&cashDate(p.date)&&label(p.ref),"Выплата недоступна или уже подтверждена");c.fin.payouts.push({memberId:p.memberId,cents:person.available,date:p.date,ref:p.ref.trim()});break}
       case "finance-case-budget": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id&&s.status!=="draft"),"Нельзя менять бюджет после сдачи работ");requireValue(amount(p.price)&&p.price>0,"Проверьте бюджет");c.price=p.price;break}
       case "finance-shard-budget": {allowed(s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financePlanEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;delete s.organizerId;break}
@@ -419,5 +454,5 @@ globalThis.NVModel = (() => {
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase,caseRelations,normalizeNetwork};
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase,caseRelations,normalizeNetwork,meritDirections,meritPassport};
 })();
