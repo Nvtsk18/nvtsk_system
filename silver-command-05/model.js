@@ -454,5 +454,43 @@ globalThis.NVModel = (() => {
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase,caseRelations,normalizeNetwork,meritDirections,meritPassport};
+
+  // ALPHA LAB: deterministic fictional participants, using production domain operations.
+  function alphaLab(){
+    const date="2026-11-25",companies=["Alpha Solar","Bodensee Montage","Rhein Technik"],cities=["Singen","Stockach","Radolfzell","Überlingen","Konstanz"],names=["Саня","Олег","Андрей","Мирослав","Виктор","Денис","Максим","Илья","Роман","Тарас","Павел","Игорь","Виталий","Дима","Антон","Юрий","Алексей","Николай","Богдан","Сергей"];
+    let d=validate({version:2,personalProfile:true,labSeed:"alpha-v1",cases:[],shards:[],tasks:[],moves:[],garage:[],teams:[],counterparties:[],network:{posts:[],deals:[]},crew:names.map((name,i)=>({id:i===0?"lead":"lab-m"+i,name:name+" · LAB",role:i===0?roles[0]:roles[1],company:companies[Math.floor(i/7)],location:cities[i%5],headline:i%4===3?"AC / электромонтаж":"PV / DC монтаж"})),actor:"lead"});
+    let operations=0;const checks=[];
+    const run=(action,p)=>{d=apply(d,action,p);operations++},as=id=>{d={...d,actor:id}},id=i=>i===0?"lead":"lab-m"+i;
+    const check=(name,ok)=>{checks.push({name,ok:!!ok});if(!ok)throw Error("ALPHA LAB: "+name)};
+    const reject=(name,action,p)=>{let rejected=false;try{apply(d,action,p)}catch{rejected=true}check(name,rejected)};
+    for(let t=0;t<5;t++)run("team-create",{id:"lab-team"+t,title:"Бригада "+(t+1)+" · LAB",captainId:id(t*4+1),memberIds:[id(t*4),id(t*4+1),id(t*4+2),id(t*4+3)]});
+    for(const [i,title,qty] of [[0,"Монтажные шины",1200],[1,"Модули",3000],[2,"Зажимы",8000]])run("material",{id:"lab-item"+i,title,sku:"LAB-"+i,qty});
+    for(let n=0;n<20;n++){
+      as("lead");const a=n%5,b=(n+1)%5,one=id(a*4+1),two=id(b*4+1),cid="network-lab-deal"+n,budget=1000+n*125;
+      const network=JSON.parse(JSON.stringify(d.network));network.posts.push({id:"lab-post"+n,author:one,kind:"offer",title:"PV Case "+(n+1)+" · LAB",region:cities[n%5],budget,text:"Тестовое предложение монтажа",created:date,caseId:null,likes:[],comments:[]});network.deals.push({id:"lab-deal"+n,postId:"lab-post"+n,title:"PV Case "+(n+1)+" · LAB",region:cities[n%5],budget,terms:"Тестовые условия",caseId:null});run("network-save",{network});run("network-case",{dealId:"lab-deal"+n});
+      if(n===0)reject("Повторное создание Case заблокировано","network-case",{dealId:"lab-deal0"});
+      for(let k=0;k<2;k++){const sid="lab-sh"+n+"-"+k,team=k?b:a,worker=k?two:one,price=k?budget-Math.floor(budget*.6):Math.floor(budget*.6);run("shard",{id:sid,caseId:cid,title:k?"DC кабели":"Монтаж модулей",kind:"DC",price,assignee:worker});run("team-assign",{shardId:sid,teamId:"lab-team"+team});const total=cents(price),part=Math.floor(total*.6);run("finance-shares",{shardId:sid,organizerId:worker,shares:[{memberId:worker,cents:part,className:"LEAD"},{memberId:id(team*4+2),cents:total-part,className:"PRO"}]});for(let z=0;z<2;z++)run("task",{id:sid+"-t"+z,shardId:sid,title:z?"Фотоотчёт":"Работа на объекте",assignee:worker});run("move",{id:sid+"-issue",itemId:"lab-item0",shardId:sid,recipientId:worker,type:"issue",qty:12});if(n===0&&k===0)reject("Чужой получатель не может вернуть материал","move",{id:"bad-return",itemId:"lab-item0",shardId:sid,recipientId:"lead",type:"return",qty:1});run("move",{id:sid+"-return",itemId:"lab-item0",shardId:sid,recipientId:worker,type:"return",qty:2});}
+      run("finance-activate",{caseId:cid});if(n===0)reject("Неоплаченный Case нельзя закрыть","finance-settle",{caseId:cid,date});
+      if(n<5||n%3===0)run("finance-receipt",{caseId:cid,id:"lab-receipt"+n,cents:n<5?cents(budget):Math.floor(cents(budget)/2),date,ref:"LAB-RECEIPT-"+n});
+      for(let k=0;k<2;k++){const sid="lab-sh"+n+"-"+k,worker=k?two:one;as(worker);if(n<5||n%3===1){run("task-status",{taskId:sid+"-t0",status:"done"});run("task-status",{taskId:sid+"-t1",status:"done"});run("submit",{shardId:sid});as("lead");if(n<5)run("accept",{shardId:sid})}else if(n%3===0)run("task-status",{taskId:sid+"-t0",status:"doing"});}
+      as("lead");if(n<5){run("finance-settle",{caseId:cid,date});const f=financialCase(d,cid);for(const p of f.people.filter(x=>x.available>0))run("finance-payout",{caseId:cid,memberId:p.memberId,date,ref:"LAB-PAYOUT-"+n+"-"+p.memberId});if(n===0)reject("Повторный расчёт заблокирован","finance-settle",{caseId:cid,date})}
+    }
+    for(let i=0;i<5;i++){const provider=id(i*4+2),renter=id(((i+1)%5)*4+1),broker=id(((i+2)%5)*4+3);as(provider);run("rental-partner",{id:"lab-rp"+i,name:"Прокат "+(i+1)+" · LAB",region:cities[i]});run("rental-listing",{id:"lab-list"+i,partnerId:"lab-rp"+i,title:["Подъёмник","Прицеп","Инструмент","Леса","Фургон"][i],kind:["Подъёмники","Прицепы","Инструменты","Леса","Автомобили"][i],dailyCents:10000+i*1000});as(renter);run("rental-request",{id:"lab-rent"+i,listingId:"lab-list"+i,brokerId:broker,caseId:"network-lab-deal"+i,start:date,end:date});as(provider);run("rental-confirm",{id:"lab-rent"+i});run("rental-return",{id:"lab-rent"+i,date});run("rental-settle",{id:"lab-rent"+i,paidCents:10000+i*1000,costCents:100,date,ref:"LAB-RENT-"+i});}
+    as("lead");
+    const fs=d.cases.map(c=>financialCase(d,c.id)),cap=rentalCapital(d);
+    check("15 активных + 5 закрытых Case",fs.filter(f=>!f.settled).length===15&&fs.filter(f=>f.settled).length===5);
+    check("20 участников и 5 бригад",d.crew.length===20&&d.teams.length===5);
+    check("Все бюджеты распределены",fs.every(f=>f.allocated===f.budget&&f.rows.reduce((n,x)=>n+x.net,0)===f.budget));
+    check("WORK: эмиссия = выплаты Merit + фонд",fs.every(f=>f.people.reduce((n,p)=>n+p.merit+p.meritLocked,0)+f.meritPlatform+f.meritPlatformLocked+f.unassignedMerit===f.meritMinted));
+    check("RENTAL: эмиссия = участники + фонд",Object.values(cap.members).reduce((n,v)=>n+v,0)+cap.platformMerit===cap.merit);
+    check("Паспорта совпадают с расчётами",d.crew.every(c=>{const p=meritPassport(d,c.id),f=financialMember(d,c.id);return p.totals.released===f.merit+(cap.members[c.id]||0)&&p.totals.locked===f.meritLocked&&new Set(p.entries.map(e=>e.id)).size===p.entries.length}));
+    check("Склад: 1200 − 40 × 10 = 800",d.garage[0].qty===800);
+    check("Сделки и публикации связаны с Case",d.network.deals.every(x=>d.cases.some(c=>c.id===x.caseId)&&d.network.posts.some(p=>p.id===x.postId&&p.caseId===x.caseId)));
+    check("Сохранение и повторное чтение",JSON.stringify(validate(migrate(JSON.parse(JSON.stringify(d)))))===JSON.stringify(d));
+    const groups=[15,16].map(n=>{const cid="network-lab-deal"+n,rel=caseRelations(d,cid);return {caseId:cid,teamIds:[...new Set(rel.shards.map(s=>s.teamId))]}});
+    check("Две схемы совместной работы нескольких бригад",groups.every(x=>x.teamIds.length===2));
+    d.labReport={operations,checks,groups};return validate(d);
+  }
+
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf,rentalKinds,rentalQuote,rentalCapital,rentalProvider,managesRental,ownsCase,caseRelations,normalizeNetwork,meritDirections,meritPassport,alphaLab};
 })();
