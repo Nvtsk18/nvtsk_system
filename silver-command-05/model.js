@@ -282,7 +282,7 @@ globalThis.NVModel = (() => {
         break;
       }
       case "network-save": {d.network=normalizeNetwork(d,p.network);const old=source.network?.deals||[];for(const x of old.filter(x=>x.caseId)){const y=d.network.deals.find(v=>v.id===x.id);requireValue(y&&y.caseId===x.caseId&&y.budget===x.budget&&y.terms===x.terms,"Связанная сделка уже зафиксирована в Case")}break}
-      case "network-case": {const x=d.network?.deals.find(v=>v.id===p.dealId);requireValue(x&&!x.caseId,"Case уже создан или сделка не найдена");const id="network-"+x.id;requireValue(!has(d.cases,id),"Case уже существует");d.cases.push({id,economy:"free-v105",ownerId:actor.id,title:x.title,city:x.region,price:x.budget,address:"",notes:x.terms,files:[],counterpartyId:null});x.caseId=id;break}
+      case "network-case": {const x=d.network?.deals.find(v=>v.id===p.dealId);requireValue(x&&!x.caseId,"Case уже создан или сделка не найдена");const id="network-"+x.id;requireValue(!has(d.cases,id),"Case уже существует");d.cases.push({id,economy:"free-v105",ownerId:actor.id,title:x.title,city:x.region,price:x.budget,address:"",notes:x.terms,files:[],counterpartyId:null});x.caseId=id;const post=d.network.posts.find(v=>v.id===x.postId);if(post&&!post.caseId)post.caseId=id;break}
       case "case": d.cases.push({id:p.id,economy:"free-v105",ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
       case "finance-activate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(!c.fin&&c.price>0,"Финансовый план уже активен или бюджет нулевой");const f=financialCase(d,c.id);requireValue(f.ready,"Распределите весь бюджет по Shards и назначьте участвующих организаторов");requireValue(f.feeCovered,"Оставьте в Case сумму для оплаты комиссий Shards");c.economy="free-v105";c.fin={active:true,ownerId:actor.id,settled:false,receipts:[],payouts:[]};break}
       case "finance-convert": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy!=="free-v105","Case уже бесплатный");delete c.fin;c.economy="free-v105";break}
@@ -387,7 +387,7 @@ globalThis.NVModel = (() => {
         // Accepted work is closed: further stock movements require a new open Shard.
         requireValue(Number.isSafeInteger(p.qty)&&p.qty>0,"Количество должно быть положительным целым числом");
         requireValue(["issue","return","receive","writeoff"].includes(p.type),"Неизвестная складская операция");
-        if(p.type==="issue"||p.type==="return")requireValue(typeof p.recipientId==="string"&&has(d.crew,p.recipientId),"Выберите получателя из участников компании");
+        if(p.type==="issue"||p.type==="return")requireValue(typeof p.recipientId==="string"&&has(d.crew,p.recipientId),"Выберите получателя из участников компании");if(p.type==="issue")requireValue(caseRelations(d,s.caseId).memberIds.includes(p.recipientId),"Получатель должен участвовать в Case");
         if(["issue","writeoff"].includes(p.type))requireValue(item.qty>=p.qty,"Недостаточно материала на складе");
         if(p.type==="writeoff")requireValue(typeof p.reason==="string"&&p.reason.trim().length>=3&&p.reason.length<=300,"Укажите причину списания");
         if(p.type==="return"){
