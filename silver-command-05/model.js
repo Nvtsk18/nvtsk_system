@@ -80,8 +80,29 @@ globalThis.NVModel = (() => {
   const classes=["SOLO","LEAD","PILOT","BUILDER","PRO","CHIEF","ALLY"];
   const ownerOf=(d,c)=>c.fin?.ownerId||c.ownerId||d.crew.find(x=>x.id==="lead"&&x.role===roles[0])?.id||d.crew.find(x=>x.role===roles[0])?.id;
   const sharesFor=s=>s.shares??(s.assignee?[{memberId:s.assignee,cents:cents(s.price),className:"PRO"}]:[]);
+
+  // v105: euro earnings are independent from Merit; one allocation per top-level Shard.
+  // Existing activated v104 plans retain their original fee terms unless explicitly converted.
+  const freeEconomy=c=>c.economy==="free-v105"||!c.fin;
+  const organizerOf=s=>s.organizerId||s.assignee||null;
+  const memberLine=id=>({memberId:id,gross:0,commission:0,net:0,expected:0,review:0,confirmed:0,available:0,paid:0,merit:0,meritLocked:0,meritWork:0,meritOrganize:0,meritCase:0});
+  // Largest remainder allocation: exact hundredths of Merit, no floating-point drift.
+  function apportion(total,weights){const sum=weights.reduce((n,x)=>n+BigInt(x),0n);if(!sum)return weights.map(()=>0);const parts=weights.map((w,i)=>{const p=BigInt(total)*BigInt(w);return {i,n:Number(p/sum),rem:p%sum}});let rest=total-parts.reduce((n,p)=>n+p.n,0);for(const p of parts.slice().sort((a,b)=>a.rem===b.rem?a.i-b.i:a.rem>b.rem?-1:1)){if(rest--<=0)break;p.n++}return parts.map(p=>p.n)}
+  function meritShard(s){const total=cents(s.price),[work,organize,caseReward,platform]=apportion(total,[80,10,5,5]),shares=sharesFor(s),organizerId=organizerOf(s);const workParts=apportion(work,shares.map(x=>x.cents));return {total,work,organize,caseReward,platform,organizerId,workRows:shares.map((x,i)=>({memberId:x.memberId,merit:workParts[i]})),unassignedWork:shares.length?0:work,unassignedOrganize:organizerId?0:organize}}
+  function freeFinancialCase(d,c){
+    const f=c.fin||{},ownerId=ownerOf(d,c),budget=cents(c.price),shards=d.shards.filter(s=>s.caseId===c.id),allocated=shards.reduce((n,s)=>n+cents(s.price),0),remaining=budget-allocated,active=f.active===true,settled=f.settled===true,received=(f.receipts||[]).reduce((n,x)=>n+x.cents,0),fullyPaid=active&&received===budget,allAccepted=shards.length>0&&shards.every(s=>s.status==="accepted"),rows=[],byMember=new Map(),meritShards=shards.map(s=>({id:s.id,...meritShard(s)}));
+    const ready=budget>0&&shards.length>0&&remaining===0&&shards.every(s=>cents(s.price)>0&&s.assignee&&sharesFor(s).some(x=>x.memberId===organizerOf(s)&&x.cents>0));
+    const person=id=>{if(!byMember.has(id))byMember.set(id,memberLine(id));return byMember.get(id)};
+    for(const s of shards){const status=settled?"available":s.status==="accepted"?"confirmed":s.status==="submitted"?"review":"expected";const shares=sharesFor(s);for(const x of shares){const p=person(x.memberId);rows.push({memberId:x.memberId,shardId:s.id,gross:x.cents,commission:0,net:x.cents,className:x.className,status});p.gross+=x.cents;p.net+=x.cents;p[status]+=x.cents}if(!shares.length)rows.push({memberId:null,shardId:s.id,gross:cents(s.price),commission:0,net:cents(s.price),className:"PRO",status:"unassigned"})}
+    let meritPlatform=0,unassignedMerit=0;
+    for(const ms of meritShards){for(const x of ms.workRows)person(x.memberId).meritWork+=x.merit;if(ms.organizerId)person(ms.organizerId).meritOrganize+=ms.organize;person(ownerId).meritCase+=ms.caseReward;meritPlatform+=ms.platform;unassignedMerit+=ms.unassignedWork+ms.unassignedOrganize}
+    const paid=new Set((f.payouts||[]).map(x=>x.memberId));
+    for(const p of byMember.values()){const total=p.meritWork+p.meritOrganize+p.meritCase;p.merit=settled?total:0;p.meritLocked=settled?0:total;if(settled&&paid.has(p.memberId)){p.paid=p.available;p.available=0}}
+    return {id:c.id,policy:"free-v105",ownerId,budget,allocated,remaining,caseFee:0,shardFees:0,due:budget,received,fullyPaid,active,settled,allAccepted,ready,rows,people:[...byMember.values()],feeCovered:true,reserve:0,development:0,operations:0,meritMinted:allocated,meritAllocated:allocated,meritReleased:settled?allocated:0,meritLocked:settled?0:allocated,meritPlatform:settled?meritPlatform:0,meritPlatformLocked:settled?0:meritPlatform,unassignedMerit,meritShards,receipts:f.receipts||[],payouts:f.payouts||[]};
+  }
+
   function financialCase(d,id){
-    const c=d.cases.find(x=>x.id===id);if(!c)throw Error("Case не найден");
+    const c=d.cases.find(x=>x.id===id);if(!c)throw Error("Case не найден");if(freeEconomy(c))return freeFinancialCase(d,c);
     const f=c.fin||{},ownerId=ownerOf(d,c),budget=cents(c.price),shards=d.shards.filter(s=>s.caseId===id),allocated=shards.reduce((n,s)=>n+cents(s.price),0),remaining=budget-allocated,caseFee=fee(budget),shardFees=shards.reduce((n,s)=>n+fee(cents(s.price)),0),due=budget+caseFee;
     const active=f.active===true,settled=f.settled===true,received=(f.receipts||[]).reduce((n,x)=>n+x.cents,0),paidMap=new Map((f.payouts||[]).map(x=>[x.memberId,x])),fullyPaid=active&&received===due,allAccepted=shards.every(s=>s.status==="accepted"),rows=[];
     const row=(memberId,shardId,gross,className,status,commission=0)=>{if(gross===0&&commission===0)return;rows.push({memberId,shardId,gross,commission,net:gross-commission,className,status})};
@@ -90,15 +111,15 @@ globalThis.NVModel = (() => {
     const byMember=new Map();for(const r of rows){if(!r.memberId)continue;const p=byMember.get(r.memberId)||{memberId:r.memberId,gross:0,commission:0,net:0,expected:0,review:0,confirmed:0,available:0,paid:0,merit:0};p.gross+=r.gross;p.commission+=r.commission;p.net+=r.net;p[r.status]+=r.net;p.merit+=active?r.gross:0;byMember.set(r.memberId,p)}
     for(const p of byMember.values()){if(settled&&paidMap.has(p.memberId)){p.paid=p.available;p.available=0}}
     const reserveCase=Math.floor(caseFee/2),development=Math.floor(caseFee*3/10),operations=caseFee-reserveCase-development;
-    return {id,ownerId,budget,allocated,remaining,caseFee,shardFees,due,received,fullyPaid,active,settled,allAccepted,rows,people:[...byMember.values()],feeCovered:remaining>=shardFees,reserve:settled?reserveCase+shardFees:0,development:settled?development:0,operations:settled?operations:0,meritMinted:active?budget:0,meritAllocated:active?allocated:0,receipts:f.receipts||[],payouts:f.payouts||[]};
+    return {id,policy:"legacy-v104",ready:true,meritReleased:settled?budget:0,meritLocked:active&&!settled?budget:0,meritPlatform:0,meritPlatformLocked:0,unassignedMerit:0,ownerId,budget,allocated,remaining,caseFee,shardFees,due,received,fullyPaid,active,settled,allAccepted,rows,people:[...byMember.values()],feeCovered:remaining>=shardFees,reserve:settled?reserveCase+shardFees:0,development:settled?development:0,operations:settled?operations:0,meritMinted:active?budget:0,meritAllocated:active?allocated:0,receipts:f.receipts||[],payouts:f.payouts||[]};
   }
-  function financialMember(d,memberId){const totals={expected:0,review:0,confirmed:0,available:0,paid:0,merit:0,commission:0};const cases=[];for(const c of d.cases){const f=financialCase(d,c.id),p=f.people.find(x=>x.memberId===memberId);if(!p)continue;for(const k of Object.keys(totals))totals[k]+=p[k];cases.push({caseId:c.id,...p})}return {...totals,cases}}
+  function financialMember(d,memberId){const totals={expected:0,review:0,confirmed:0,available:0,paid:0,merit:0,meritLocked:0,meritWork:0,meritOrganize:0,meritCase:0,commission:0};const cases=[];for(const c of d.cases){const f=financialCase(d,c.id),p=f.people.find(x=>x.memberId===memberId);if(!p)continue;for(const k of Object.keys(totals))totals[k]+=p[k]||0;cases.push({caseId:c.id,...p})}return {...totals,cases}}
   function validateFinance(d){
     const member=id=>d.crew.some(x=>x.id===id),unique=items=>new Set(items).size===items.length;
-    for(const s of d.shards){if(s.shares!==undefined){requireValue(Array.isArray(s.shares)&&s.shares.length<=40&&s.shares.every(x=>x&&member(x.memberId)&&validMoney(x.cents)&&x.cents>0&&classes.includes(x.className))&&unique(s.shares.map(x=>x.memberId))&&s.shares.reduce((n,x)=>n+x.cents,0)===cents(s.price),"Доли Shard должны в сумме равняться бюджету");requireValue(s.assignee&&s.shares.some(x=>x.memberId===s.assignee),"Ответственный должен входить в распределение Shard")}}
-    for(const c of d.cases){const f=financialCase(d,c.id);requireValue(validMoney(f.budget)&&f.allocated<=f.budget,"Распределение превышает бюджет Case");if(c.ownerId!==undefined)requireValue(member(c.ownerId),"Владелец Case не найден");if(c.fin===undefined)continue;
+    for(const s of d.shards){const c=d.cases.find(x=>x.id===s.caseId);if(s.organizerId!==undefined)requireValue(member(s.organizerId),"Организатор Shard не найден");if(s.createdBy!==undefined)requireValue(member(s.createdBy),"Автор Shard не найден");if(freeEconomy(c)&&s.organizerId)requireValue(sharesFor(s).some(x=>x.memberId===s.organizerId&&x.cents>0),"Организатор должен участвовать в Shard");if(s.shares!==undefined){requireValue(Array.isArray(s.shares)&&s.shares.length<=40&&s.shares.every(x=>x&&member(x.memberId)&&validMoney(x.cents)&&x.cents>0&&classes.includes(x.className))&&unique(s.shares.map(x=>x.memberId))&&s.shares.reduce((n,x)=>n+x.cents,0)===cents(s.price),"Доли Shard должны в сумме равняться бюджету");requireValue(s.assignee&&s.shares.some(x=>x.memberId===s.assignee),"Ответственный должен входить в распределение Shard")}}
+    for(const c of d.cases){const f=financialCase(d,c.id);requireValue(validMoney(f.budget)&&f.allocated<=f.budget,"Распределение превышает бюджет Case");if(c.ownerId!==undefined)requireValue(member(c.ownerId),"Владелец Case не найден");requireValue(c.economy===undefined||c.economy==="free-v105","Неизвестная экономика Case");if(c.fin===undefined)continue;
       const x=c.fin;requireValue(x&&typeof x==="object"&&x.active===true&&member(x.ownerId)&&typeof x.settled==="boolean"&&Array.isArray(x.receipts)&&Array.isArray(x.payouts),"Ошибка финансовой карточки");
-      requireValue(f.feeCovered,"Недостаточно остатка BUILDER для комиссии Shard");requireValue(x.receipts.length<=2000&&x.receipts.every(e=>e&&ident(e.id)&&validMoney(e.cents)&&e.cents>0&&cashDate(e.date)&&label(e.ref))&&unique(x.receipts.map(e=>e.id))&&unique(x.receipts.map(e=>e.ref.trim().toLowerCase()))&&f.received<=f.due,"Ошибка подтверждённых поступлений");
+      requireValue(f.feeCovered,"Недостаточно остатка BUILDER для комиссии Shard");if(f.policy==="free-v105")requireValue(f.ready,"Нужен минимум один Shard, 100% бюджета и участвующие организаторы");requireValue(x.receipts.length<=2000&&x.receipts.every(e=>e&&ident(e.id)&&validMoney(e.cents)&&e.cents>0&&cashDate(e.date)&&label(e.ref))&&unique(x.receipts.map(e=>e.id))&&unique(x.receipts.map(e=>e.ref.trim().toLowerCase()))&&f.received<=f.due,"Ошибка подтверждённых поступлений");
       requireValue(x.payouts.length<=d.crew.length&&x.payouts.every(e=>e&&member(e.memberId)&&validMoney(e.cents)&&e.cents>0&&cashDate(e.date)&&label(e.ref)&&f.people.some(p=>p.memberId===e.memberId&&p.net===e.cents))&&unique(x.payouts.map(e=>e.memberId))&&unique(x.payouts.map(e=>e.ref.trim().toLowerCase())),"Ошибка выплат");
       requireValue(!x.settled?(x.payouts.length===0):(f.fullyPaid&&f.allAccepted&&f.rows.every(r=>r.memberId&&r.net>=0)),"Нельзя закрыть неоплаченный или непринятый Case");
     }
@@ -170,7 +191,7 @@ globalThis.NVModel = (() => {
         allowed(lead && s && s.status==="draft");
         const team=d.teams.find(t=>t.id===p.teamId);
         allowed(team && team.captainId!==actor.id);
-        const c=d.cases.find(x=>x.id===s.caseId);financeEditable(d,c);delete s.shares;
+        const c=d.cases.find(x=>x.id===s.caseId);financeEditable(d,c);delete s.shares;delete s.organizerId;
         s.teamId=team.id;
         s.assignee=team.captainId;
         break;
@@ -203,14 +224,16 @@ globalThis.NVModel = (() => {
         entry.voided=true;
         break;
       }
-      case "case": allowed(lead); d.cases.push({id:p.id,ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
-      case "finance-activate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(!c.fin&&c.price>0,"Финансовый план уже активен или бюджет нулевой");const f=financialCase(d,c.id);requireValue(f.feeCovered,"Оставьте в Case сумму для оплаты комиссий Shards");c.fin={active:true,ownerId:actor.id,settled:false,receipts:[],payouts:[]};break}
+      case "case": allowed(lead); d.cases.push({id:p.id,economy:"free-v105",ownerId:actor.id,title:p.title,city:p.city,price:p.price,address:p.address||"",notes:p.notes||"",files:p.files||[],counterpartyId:p.counterpartyId||null}); break;
+      case "finance-activate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(!c.fin&&c.price>0,"Финансовый план уже активен или бюджет нулевой");const f=financialCase(d,c.id);requireValue(f.ready,"Распределите весь бюджет по Shards и назначьте участвующих организаторов");requireValue(f.feeCovered,"Оставьте в Case сумму для оплаты комиссий Shards");c.economy="free-v105";c.fin={active:true,ownerId:actor.id,settled:false,receipts:[],payouts:[]};break}
+      case "finance-convert": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy!=="free-v105","Case уже бесплатный");delete c.fin;c.economy="free-v105";break}
+      case "finance-deactivate": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(c.fin&&c.economy==="free-v105","Нет активного бесплатного плана");delete c.fin;break}
       case "finance-receipt": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);requireValue(c.fin&&!c.fin.settled,"Активируйте финансовый план");const f=financialCase(d,c.id);requireValue(validMoney(p.cents)&&p.cents>0&&f.received+p.cents<=f.due&&cashDate(p.date)&&label(p.ref),"Проверьте сумму, дату и ссылку на оплату");requireValue(!c.fin.receipts.some(x=>x.id===p.id||x.ref.trim().toLowerCase()===p.ref.trim().toLowerCase()),"Платёж уже записан");requireValue(d.shards.filter(s=>s.caseId===c.id).every(s=>s.assignee),"Сначала назначьте ответственных за все Shards");c.fin.receipts.push({id:p.id,cents:p.cents,date:p.date,ref:p.ref.trim()});break}
-      case "finance-settle": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id);requireValue(f.active&&!f.settled&&f.fullyPaid&&f.allAccepted&&f.feeCovered&&f.rows.every(r=>r.memberId&&r.net>=0),"Нужны полная оплата, принятые Shards и покрытие комиссий");c.fin.settled=true;break}
+      case "finance-settle": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id);requireValue(f.active&&!f.settled&&f.fullyPaid&&f.allAccepted&&f.ready&&f.feeCovered&&f.rows.every(r=>r.memberId&&r.net>=0),"Нужны полная оплата, принятые Shards и покрытие комиссий");c.fin.settled=true;break}
       case "finance-payout": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);const f=financialCase(d,c.id),person=f.people.find(x=>x.memberId===p.memberId);requireValue(f.settled&&person&&person.available>0&&cashDate(p.date)&&label(p.ref),"Выплата недоступна или уже подтверждена");c.fin.payouts.push({memberId:p.memberId,cents:person.available,date:p.date,ref:p.ref.trim()});break}
       case "finance-case-budget": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id&&s.status!=="draft"),"Нельзя менять бюджет после сдачи работ");requireValue(amount(p.price)&&p.price>0,"Проверьте бюджет");c.price=p.price;break}
-      case "finance-shard-budget": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;break}
-      case "finance-shares": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(s.assignee&&Array.isArray(p.shares),"Назначьте ответственного");s.shares=p.shares;break}
+      case "finance-shard-budget": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(amount(p.price)&&p.price>=0,"Проверьте бюджет");s.price=p.price;delete s.shares;delete s.organizerId;break}
+      case "finance-shares": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(s.assignee&&Array.isArray(p.shares),"Назначьте ответственного");s.shares=p.shares;if(freeEconomy(c))s.organizerId=p.organizerId||s.assignee;break}
       case "finance-shard-cancel": {allowed(lead&&s&&s.status==="draft");const c=d.cases.find(x=>x.id===s.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(!d.moves.some(m=>m.shardId===s.id),"Сначала урегулируйте складские операции");requireValue(!d.tasks.some(t=>t.shardId===s.id&&t.status!=="todo"),"Нельзя отменить начатые задачи");d.tasks=d.tasks.filter(t=>t.shardId!==s.id);d.shards=d.shards.filter(x=>x.id!==s.id);break}
       case "finance-case-cancel": {const c=d.cases.find(x=>x.id===p.caseId);financeOwner(d,c,actor);financeEditable(d,c);requireValue(!d.shards.some(s=>s.caseId===c.id)&&!(d.cashLedger||[]).some(e=>e.caseId===c.id),"Сначала урегулируйте Shards и денежный журнал");d.cases=d.cases.filter(x=>x.id!==c.id);break}
       case "case-media": {
@@ -273,8 +296,8 @@ globalThis.NVModel = (() => {
         break;
       }
       case "shard": allowed(lead); {const c=d.cases.find(x=>x.id===p.caseId);financeEditable(d,c);financeOwner(d,c,actor);}
-        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
-      case "assign": allowed(lead && s && s.status==="draft"); financeEditable(d,d.cases.find(x=>x.id===s.caseId)); s.assignee=p.assignee; s.teamId=null; delete s.shares; break;
+        requireValue(Math.round(100*p.price)+d.shards.filter(s=>s.caseId===p.caseId).reduce((n,s)=>n+Math.round(100*s.price),0)<=Math.round(100*(d.cases.find(c=>c.id===p.caseId)?.price||0)),"Shard превышает доступный бюджет Project"); d.shards.push({id:p.id,title:p.title,kind:p.kind,price:p.price,caseId:p.caseId,assignee:p.assignee||null,createdBy:actor.id,status:"draft",notes:p.notes||"",files:p.files||[]}); break;
+      case "assign": allowed(lead && s && s.status==="draft"); financeEditable(d,d.cases.find(x=>x.id===s.caseId)); s.assignee=p.assignee; s.teamId=null; delete s.shares; delete s.organizerId; break;
       case "task": {
         allowed(s && s.status==="draft" && (lead || s.assignee===actor.id));
         requireValue(label(p.title)&&optional(p.notes,2000),"Укажите название и описание задачи");
@@ -320,5 +343,5 @@ globalThis.NVModel = (() => {
     }
     return validate(d);
   }
-  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents};
+  return {roles,migrate,validate,apply,financialCase,financialMember,sharesFor,classes,cents,meritShard,organizerOf};
 })();
