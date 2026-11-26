@@ -35,7 +35,7 @@ function googleScript(){if(window.google?.accounts?.id)return Promise.resolve();
 function googleBytes(s){return Uint8Array.from(atob(s.replace(/-/g,"+").replace(/_/g,"/").padEnd(Math.ceil(s.length/4)*4,"=")),c=>c.charCodeAt(0))}
 async function verifyGoogleCredential(token,nonce){const p=String(token||"").split(".");if(p.length!==3)throw Error("Некорректный ответ Google");const decode=s=>JSON.parse(new TextDecoder().decode(googleBytes(s))),h=decode(p[0]),v=decode(p[1]),now=Math.floor(Date.now()/1000);if(h.alg!=="RS256"||!h.kid||!["accounts.google.com","https://accounts.google.com"].includes(v.iss)||v.aud!==GOOGLE_CLIENT_ID||(v.azp&&v.azp!==GOOGLE_CLIENT_ID)||!Number.isFinite(v.exp)||v.exp<=now||!Number.isFinite(v.iat)||v.iat>now+60||v.nonce!==nonce||typeof v.sub!=="string"||!v.sub||v.email_verified!==true||typeof v.email!=="string"||!v.email)throw Error("Google не подтвердил аккаунт");const res=await fetch("https://www.googleapis.com/oauth2/v3/certs",{cache:"no-store",credentials:"omit"});if(!res.ok)throw Error("Не удалось проверить подпись Google");const jwks=await res.json(),jwk=jwks.keys?.find(k=>k.kid===h.kid&&k.kty==="RSA"&&(!k.alg||k.alg==="RS256"));if(!jwk)throw Error("Ключ Google не найден");const key=await crypto.subtle.importKey("jwk",jwk,{name:"RSASSA-PKCS1-v1_5",hash:"SHA-256"},false,["verify"]);if(!await crypto.subtle.verify("RSASSA-PKCS1-v1_5",key,googleBytes(p[2]),new TextEncoder().encode(p[0]+"."+p[1])))throw Error("Подпись Google недействительна");return {sub:v.sub,email:v.email.trim().toLowerCase(),name:typeof v.name==="string"?v.name.slice(0,100):"",exp:v.exp}}
 function createPersonalAccount({email,nickname,provider="password",salt,hash,googleSub}){const name=String(nickname||"").trim();if(!name||name.length>100)throw Error("Укажите никнейм (до 100 символов)");const list=accounts();if(list.some(x=>x.email===email||(googleSub&&x.googleSub===googleSub)))throw Error("Аккаунт уже существует");const r=workspaceRegistry(),id="account-"+crypto.randomUUID(),a={id:crypto.randomUUID(),email,nickname:name,kind:"individual",workspaceId:id,actorId:"lead",provider,...(provider==="google"?{googleSub}:{salt,hash})},item={id,name,symbol:Array.from(name)[0].toUpperCase(),kind:"individual"};const data=validate({version:2,personalProfile:true,cases:[],shards:[],tasks:[],garage:[],crew:[{id:"lead",name,role:roles[0],company:""}],actor:"lead",moves:[],teams:[],counterparties:[]});localStorage.setItem(workspaceKey(id),JSON.stringify({format:1,data,history:[]}));localStorage.setItem(WORKSPACES_KEY,JSON.stringify({...r,items:[...r.items,item]}));localStorage.setItem(ACCOUNT_KEY,JSON.stringify([...list,a]));return a}
-function googleOnboarding(identity){stopGoogleResize();googlePending=identity;const glass=$(".nv94-glass");if(!glass)return;$(".nv94-brand h2").textContent="Добро пожаловать!";glass.innerHTML='<div class="nv95-onboarding"><p class="nv95-confirmed">Google · '+esc(identity.email)+'</p><form id="nv95-google-onboarding"><label for="nv95-name">Никнейм</label><div class="nv94-field"><span class="nv95-name-icon">'+authIcon("user")+'</span><input id="nv95-name" name="nickname" maxlength="100" autocomplete="nickname" placeholder="Как тебя называть?" required></div><button class="nv94-submit" type="submit">Продолжить</button><p id="nv95-google-status" role="status"></p></form><button type="button" class="nv94-switch" data-auth-toggle="true">Назад</button></div>'}
+function googleOnboarding(identity){stopGoogleResize();googlePending=identity;const glass=$(".nv94-glass");if(!glass)return;$(".nv94-brand h2").textContent="Профиль специалиста";glass.innerHTML='<div class="nv95-onboarding"><p class="nv95-confirmed">Google · '+esc(identity.email)+'</p><form id="nv95-google-onboarding"><label for="nv95-name">Никнейм</label><div class="nv94-field"><span class="nv95-name-icon">'+authIcon("user")+'</span><input id="nv95-name" name="nickname" maxlength="100" autocomplete="nickname" placeholder="Имя в рабочем пространстве" required></div><button class="nv94-submit" type="submit">Продолжить</button><p id="nv95-google-status" role="status"></p></form><button type="button" class="nv94-switch" data-auth-toggle="true">Назад</button></div>'}
 async function googleResult(response,nonce,attempt){try{if(attempt!==googleAttempt)return;googleError("Проверяем аккаунт Google…");const identity=await verifyGoogleCredential(response.credential,nonce);if(attempt!==googleAttempt)return;const list=accounts(),a=list.find(x=>x.googleSub===identity.sub&&x.provider==="google");if(a){enterAccount(a);return}if(list.some(x=>x.email===identity.email))throw Error("Этот email уже используется. Войдите прежним способом. Автоматическое объединение отключено.");googleOnboarding(identity)}catch(e){if(attempt===googleAttempt)googleError(e.message||"Не удалось войти через Google")}}
 let googleResizeObserver=null,googleResizeFrame=0;
 function stopGoogleResize(){if(googleResizeObserver){googleResizeObserver.disconnect();googleResizeObserver=null}if(googleResizeFrame){cancelAnimationFrame(googleResizeFrame);googleResizeFrame=0}}
@@ -44,7 +44,7 @@ async function mountGoogle(){stopGoogleResize();const attempt=++googleAttempt,ho
 document.addEventListener("click",e=>{if(e.target.closest("[data-google-retry]"))mountGoogle()});
 
 document.addEventListener("submit",e=>{if(e.target.id!=="nv95-google-onboarding")return;e.preventDefault();const form=e.target,btn=form.querySelector('button[type="submit"]');btn.disabled=true;try{const i=googlePending,p=Object.fromEntries(new FormData(form));if(!i||i.exp<=Date.now()/1000)throw Error("Сессия Google истекла. Повторите вход.");const a=createPersonalAccount({email:i.email,nickname:p.nickname,provider:"google",googleSub:i.sub});googlePending=null;enterAccount(a)}catch(err){googleError(err.message);btn.disabled=false}});
-function loginScreen(register=false){document.body.classList.remove("nv108-more");stopGoogleResize();document.body.classList.add("nv90-auth");$("#nav").hidden=true;$(".top").hidden=true;$("#app").innerHTML='<div class="nv94-scenery" aria-hidden="true"><i></i><i></i><i></i><i></i></div><section class="nv90-login nv94-login"><div class="nv94-brand"><img class="nv92-auth-logo" src="art/nvtsk-approved.webp" alt="NVTSK SYSTEM" width="160" height="144"><h1>NVTSK SYSTEM</h1><div class="nv94-divider" aria-hidden="true"></div><h2>'+(register?"Добро пожаловать!":"С возвращением!")+'</h2></div><div class="nv94-glass"><form id="nv90-auth-form" data-register="'+register+'"><div class="nv97-auth-fields" id="nv97-credentials"><label for="nv94-email">Email</label><div class="nv94-field">'+authIcon("email")+'<input id="nv94-email" name="email" type="email" autocomplete="email" required></div><label for="nv94-password">Пароль</label><div class="nv94-field nv94-password">'+authIcon("lock")+'<input id="nv94-password" name="password" type="password" minlength="8" autocomplete="'+(register?"new-password":"current-password")+'" required><button type="button" class="nv94-eye" data-auth-password aria-label="Показать пароль" aria-pressed="false">'+authIcon("eye")+'</button></div></div>'+(register?'<div class="nv97-auth-fields" id="nv97-profile"><label for="nv94-name">Никнейм</label><div class="nv94-field"><span class="nv94-name-icon">'+authIcon("user")+'</span><input id="nv94-name" name="nickname" maxlength="100" autocomplete="nickname" placeholder="Как тебя называть?" required></div></div>':'')+'<button class="nv94-submit" type="submit">'+(register?"Создать аккаунт":"Войти")+'</button><p id="nv90-auth-error" role="alert"></p></form><div id="nv97-alternatives"><div class="nv95-or"><span>или</span></div><div id="nv95-google-button" aria-label="Вход через Google"><span class="nv100-google-loading">Загрузка Google…</span></div><p id="nv95-google-status" role="status"></p><button id="nv100-google-retry" type="button" class="nv100-google-retry" data-google-retry hidden>Повторить подключение Google</button><button class="nv94-switch" type="button" data-auth-toggle="'+(!register)+'">'+(register?'Уже есть аккаунт? <strong>Войти</strong>':'<strong>Создать аккаунт</strong>')+'</button></div></div><small class="nv94-local">LOCAL FIRST <span>·</span> Данные хранятся на этом устройстве.<br>Вход по email без подтверждения почты.</small></section>';mountGoogle()}
+function loginScreen(register=false){document.body.classList.remove("nv108-more");stopGoogleResize();document.body.classList.add("nv90-auth");$("#nav").hidden=true;$(".top").hidden=true;$("#app").innerHTML='<div class="nv94-scenery" aria-hidden="true"><i></i><i></i><i></i><i></i></div><section class="nv90-login nv94-login"><div class="nv94-brand"><img class="nv92-auth-logo" src="art/nvtsk-approved.webp" alt="NVTSK SYSTEM" width="160" height="144"><h1>NVTSK SYSTEM</h1><div class="nv94-divider" aria-hidden="true"></div><h2>'+(register?"Создать аккаунт":"Войти в систему")+'</h2></div><div class="nv94-glass"><form id="nv90-auth-form" data-register="'+register+'"><div class="nv97-auth-fields" id="nv97-credentials"><label for="nv94-email">Email</label><div class="nv94-field">'+authIcon("email")+'<input id="nv94-email" name="email" type="email" autocomplete="email" required></div><label for="nv94-password">Пароль</label><div class="nv94-field nv94-password">'+authIcon("lock")+'<input id="nv94-password" name="password" type="password" minlength="8" autocomplete="'+(register?"new-password":"current-password")+'" required><button type="button" class="nv94-eye" data-auth-password aria-label="Показать пароль" aria-pressed="false">'+authIcon("eye")+'</button></div></div>'+(register?'<div class="nv97-auth-fields" id="nv97-profile"><label for="nv94-name">Никнейм</label><div class="nv94-field"><span class="nv94-name-icon">'+authIcon("user")+'</span><input id="nv94-name" name="nickname" maxlength="100" autocomplete="nickname" placeholder="Имя в рабочем пространстве" required></div></div>':'')+'<button class="nv94-submit" type="submit">'+(register?"Создать аккаунт":"Войти")+'</button><p id="nv90-auth-error" role="alert"></p></form><div id="nv97-alternatives"><div class="nv95-or"><span>или</span></div><div id="nv95-google-button" aria-label="Вход через Google"><span class="nv100-google-loading">Загрузка Google…</span></div><p id="nv95-google-status" role="status"></p><button id="nv100-google-retry" type="button" class="nv100-google-retry" data-google-retry hidden>Повторить подключение Google</button><button class="nv94-switch" type="button" data-auth-toggle="'+(!register)+'">'+(register?'Уже есть аккаунт? <strong>Войти</strong>':'<strong>Создать аккаунт</strong>')+'</button></div></div><small class="nv94-local">LOCAL FIRST <span>·</span> Данные хранятся на этом устройстве.<br>Вход по email без подтверждения почты.</small></section>';mountGoogle()}
 document.addEventListener("click",e=>{const t=e.target.closest("[data-auth-password]");if(!t)return;const p=$("#nv94-password");if(!p)return;const show=p.type==="password";p.type=show?"text":"password";t.setAttribute("aria-label",show?"Скрыть пароль":"Показать пароль");t.setAttribute("aria-pressed",String(show));t.innerHTML=authIcon(show?"eyeOff":"eye")});
 document.addEventListener("click",e=>{const t=e.target.closest("[data-auth-toggle]");if(t)loginScreen(t.dataset.authToggle==="true");if(e.target.closest("[data-auth-logout]")){try{forgetAccount();location.reload()}catch(error){alert("Не удалось завершить сеанс: "+error.message)}}});
 
@@ -100,6 +100,12 @@ const stat=(symbol,label,value,detail)=>'<div class="stat"><span class="symbol">
 const row=c=>'<button class="case" data-route="case/'+esc(c.id)+'"><span class="thumb"><img src="art/roof.webp" alt="" loading="lazy"></span><span class="casebody"><strong>'+esc(c.title)+'</strong><small>⌖ '+esc(c.city)+'</small><span class="progress"><i style="width:'+pct(c.id)+'%"></i></span></span><span class="casemeta"><b>'+pct(c.id)+'%</b><small>'+money(c.price)+' €</small></span></button>';
 const shard=s=>'<button class="shard" data-route="case/'+esc(s.caseId)+'"><span class="ring" style="--p:'+(s.status==="accepted"?100:0)+'%"><b>'+(s.status==="accepted"?"100%":"0%")+'</b></span><span><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(statusName[s.status])+'</small></span><b>›</b></button>';
 const iconPaths={
+ open:"M5 19 19 5M7 5h12v12",
+ camera:"M3 7h4l2-3h6l2 3h4v13H3z M15.5 13a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0",
+ folder:"M3 6h6l2 3h10v11H3z", shard:"m12 2 8 6-3 10-5 4-8-6 3-10z M12 2l-1 10 9-4 M11 12l1 10",
+ lab:"M8 3h8 M10 3v7L4 19c-.5 1 0 2 1 2h14c1 0 1.5-1 1-2l-6-9V3 M7 15h10",
+ passport:"M5 3h13a1 1 0 0 1 1 1v16H6a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2z M5 17h14 M9 10l3-3 3 3-3 3z",
+ bell:"M5 17h14l-2-3V9a5 5 0 0 0-10 0v5z M10 21h4",
  search:"M21 21l-4.4-4.4 M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0",
  home:"M2 10 12 2l10 8 M5 9v12h5v-7h4v7h5V9",
  layers:"m2 8 10-5 10 5-10 5z M2 12l10 5 10-5 M2 16l10 5 10-5",
@@ -114,39 +120,56 @@ const iconPaths={
  field:"M3 16h18 M5 16v-3c0-5 3-8 7-8s7 3 7 8v3 M10 4v8 M14 4v8 M2 17v3h20v-3",
  clock:"M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0 M12 6v7l4 2"};
 const icon=name=>'<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'+iconPaths[name]+'"/></svg>';
-const demoCaseLocations={Stockach:[47.851,9.012],Singen:[47.760,8.841],"Überlingen":[47.769,9.171],Konstanz:[47.660,9.175]};
-function caseMiniMap(){
-  // Schematic Bodensee region; project pins use grounded demo city coordinates.
-  // Unknown real-world addresses are never silently geocoded.
-  const bounds={west:8.68,east:9.37,south:47.52,north:47.98};
-  const placed=state.cases.map(c=>({c,coord:c.id.startsWith("demo-")?demoCaseLocations[c.city]:null})).filter(x=>x.coord);
-  const pins=placed.map(({c,coord})=>{
-    const x=100*(coord[1]-bounds.west)/(bounds.east-bounds.west);
-    const y=100*(bounds.north-coord[0])/(bounds.north-bounds.south);
-    return '<button class="mapcasepin" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%" data-route="case/'+esc(c.id)+'" title="'+esc(c.title+' · '+c.city)+'" aria-label="Open Project '+esc(c.title)+'"><span></span></button>';
+const mapTowns = [
+  ["Singen",47.760,8.841], ["Stockach",47.851,9.012], ["Radolfzell",47.737,8.969],
+  ["Überlingen",47.769,9.171], ["Konstanz",47.660,9.175]
+];
+function caseMiniMap() {
+  const projects = state.cases;
+  const cityGroup = c => lab || c.id.startsWith("demo-") ? mapTowns.find(([name]) => c.city === name)?.[0] || "" : "";
+  const markers = mapTowns.map(([name, lat, lon]) => {
+    const items = projects.filter(c => cityGroup(c) === name);
+    const pos = 'style="left:'+((lon-8.57)/.88*100).toFixed(2)+'%;top:'+((47.913-lat)/.315*100).toFixed(2)+'%"';
+    return items.length
+      ? '<button type="button" class="map-town" '+pos+' data-map-city="'+name+'" aria-pressed="false" aria-label="'+name+' · объектов '+items.length+'"><b>'+items.length+'</b><span>'+name+'</span></button>'
+      : '<span class="map-town town-reference" '+pos+'><b></b><span>'+name+'</span></span>';
   }).join("");
-  const schematic=[
-    '<div class="casemap-schematic" role="img" aria-label="Схематическая карта Боденского озера: Stockach, Singen, Überlingen, Konstanz">',
-    '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">',
-    '<defs><linearGradient id="lake-gradient" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#205a77"/><stop offset="1" stop-color="#157b93"/></linearGradient>',
-    '<linearGradient id="map-ground" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#2b5260"/><stop offset="1" stop-color="#183a4d"/></linearGradient></defs>',
-    '<rect width="100" height="100" fill="url(#map-ground)"/>',
-    '<g stroke="#5b8a89" stroke-width=".35" opacity=".31" fill="none">',
-    '<path d="M-6 14 Q25 8 44 17 T109 13"/><path d="M-10 35 Q25 26 51 35 T108 27"/><path d="M-9 55 Q22 46 47 56 T109 49"/><path d="M-7 82 Q22 75 41 86 T105 78"/>',
-    '<path d="M10 -8 Q2 32 14 61 T12 112"/><path d="M41 -8 Q30 24 39 57 T30 109"/><path d="M76 -8 Q69 23 78 56 T69 112"/></g>',
-    '<g stroke="#9baaa3" stroke-width=".86" stroke-linecap="round" opacity=".51" fill="none">',
-    '<path d="M-5 32 C15 26 22 43 34 38 S55 28 71 44 S91 35 106 42"/>',
-    '<path d="M2 63 C21 48 29 50 47 33 S71 26 103 19"/>',
-    '<path d="M12 101 Q23 76 43 68 T72 70 Q87 84 112 68"/>',
-    '<path d="M39 -5 Q50 20 46 32 T71 72"/></g>',
-    '<path d="M61 41 C68 40 70 43 76 43 C83 42 86 45 103 43 L105 73 C93 77 86 69 80 64 C74 60 68 60 64 64 C62 61 58 56 58 50 Z" fill="url(#lake-gradient)" stroke="#75bbc7" stroke-width=".48"/>',
-    '<path d="M67 64 C59 64 56 72 50 71 C43 68 39 75 38 82 C47 83 52 79 56 78 C61 78 67 77 72 72 Z" fill="#246f86" stroke="#75bbc7" stroke-width=".4"/>',
-
-    '<g transform="translate(6 8)" stroke="#c9eaed" fill="none" stroke-width=".6"><path d="M0 7 L0 0 M-2.3 4 L0 0 L2.3 4"/></g>',
-    '</svg><div class="casemap-places" aria-hidden="true"><span class="place-stockach">Stockach</span><span class="place-singen">Singen</span><span class="place-ueberlingen">Überlingen</span><span class="place-konstanz">Konstanz</span><span class="place-bodensee">Bodensee</span><span class="place-north">N</span></div></div>'
-  ].join("");
-  return '<section class="panel casemap"><div class="panelhead"><h2>На карте</h2><small>'+placed.length+' с отметками · '+state.cases.length+' всего</small></div><div class="casemapviewport">'+schematic+'<div class="casemappins">'+pins+'</div><span class="casemapcredit">СХЕМА РЕГИОНА</span></div><div class="casemaplegend"><span><i></i> Демо-объекты</span><button data-route="projects">Все →</button></div><p class="casemapnote">Карта схематическая. Отмечены только объекты с известными координатами.</p></section>';
+  const choices = projects.map(c => '<option value="'+esc(c.id)+'" data-town="'+esc(cityGroup(c))+'">'+esc(c.title)+' · '+esc(c.address||c.city)+'</option>').join("");
+  const pinned = projects.filter(c => cityGroup(c)).length;
+  return '<section class="dna-atlas surface"><header class="module-head"><h2>Карта объектов</h2><span class="meta">'+projects.length+' '+projectWord(projects.length)+'</span></header>'+
+    '<div class="map-viewport"><div class="map-sheet"><img src="art/bodensee-west.svg" alt="" width="1000" height="500">'+markers+'<i class="lake-name" aria-hidden="true">Bodensee</i></div><span class="map-north" aria-label="Север">↑ N</span></div>'+
+    '<div class="map-foot"><span class="map-caption">'+(pinned?'Отметки по городам · '+pinned:'Бодензее · региональная схема')+'</span>'+
+    (choices?'<div class="map-picker"><label class="sr" for="dna-map-case">Объект на карте</label><select id="dna-map-case"><option value="">Выбрать объект</option>'+choices+'</select><button class="icon-button" id="dna-open-case" disabled aria-label="Открыть выбранный Case" title="Открыть Case">'+icon("open")+'</button></div>':'<span class="hint">Объектов пока нет</span>')+'</div></section>';
 }
+function projectWord(count) {
+  const units=count%10, tens=count%100;
+  return units===1&&tens!==11?"объект":units>=2&&units<=4&&(tens<12||tens>14)?"объекта":"объектов";
+}
+function setMapCase(picker) {
+  const open = document.getElementById("dna-open-case");
+  if (!open) return;
+  open.disabled = !picker.value;
+  if (picker.value) open.dataset.route = "case/"+picker.value;
+  else delete open.dataset.route;
+}
+document.addEventListener("click", e => {
+  const pin = e.target.closest("[data-map-city]");
+  if (!pin) return;
+  const reset = pin.getAttribute("aria-pressed") === "true";
+  const picker = document.getElementById("dna-map-case");
+  if (!picker) return;
+  for (const other of pin.closest(".dna-atlas").querySelectorAll("[data-map-city]")) {
+    other.setAttribute("aria-pressed", String(!reset && pin === other));
+  }
+  for (const opt of picker.options) {
+    opt.hidden = !reset && !!opt.value && opt.dataset.town !== pin.dataset.mapCity;
+    opt.disabled = opt.hidden;
+  }
+  picker.value = reset ? "" : Array.from(picker.options).find(opt => opt.value && !opt.hidden)?.value || "";
+  setMapCase(picker);
+});
+document.addEventListener("change", e => { if (e.target.id === "dna-map-case") setMapCase(e.target); });
+
 function myProjects(){
  const who=state.actor,manager=lead(),ids=new Set(),taskIds=new Set(),stockIds=new Set();
  const projectId=shardId=>state.shards.find(sh=>sh.id===shardId)?.caseId;
@@ -352,7 +375,7 @@ function projects(){
    '<div class="sc75-case-top"><div class="sc75-cover"><img src="'+photo(c)+'" alt="Фото объекта"></div><div class="sc75-passport"><div class="sc75-section-head"><h3>Паспорт объекта</h3><button data-route="case/'+esc(c.id)+'">Открыть Case ↗</button></div><div class="sc75-facts">'+facts.map(([label,value])=>'<div><small>'+label+'</small><strong>'+value+'</strong></div>').join("")+'</div></div></div>'+
    '<div class="sc75-actions"><button data-route="case/'+esc(c.id)+'/work">Работы и Shards</button><button data-route="case/'+esc(c.id)+'/work">Задачи</button><button data-route="case/'+esc(c.id)+'/docs">Документы</button><button data-route="case/'+esc(c.id)+'/people">Команда</button></div>'+
    '<div class="sc75-progress"><div><strong>Прогресс проекта</strong><b>'+x.percent+'%</b></div><span class="sc75-track"><i style="width:'+x.percent+'%"></i></span><div class="sc75-stages">'+stages.map(([label,done])=>'<span class="'+(done?'done':'')+'">'+(done?'●':'○')+' '+label+'</span>').join("")+'</div></div>'+
-   '<div class="sc75-media"><div class="sc75-section-head"><h3>Медиа объекта <small>('+(c.files||[]).length+')</small></h3>'+(ownsCase(c.id)?'<button data-action="case-media" data-id="'+esc(c.id)+'">＋ Фото / PDF</button>':'')+'</div><div class="sc75-media-items">'+(files||'<p>Пока нет медиа. Добавьте фото крыши, монтажных работ или проектные PDF.</p>')+'</div></div>'+
+   '<div class="sc75-media"><div class="sc75-section-head"><h3>Медиа объекта <small>('+(c.files||[]).length+')</small></h3>'+(ownsCase(c.id)?'<button data-action="new-case-media" data-id="'+esc(c.id)+'">＋ Фото / PDF</button>':'')+'</div><div class="sc75-media-items">'+(files||'<p>Пока нет медиа. Добавьте фото крыши, монтажных работ или проектные PDF.</p>')+'</div></div>'+
    '<div class="sc75-footer"><button data-route="case/'+esc(c.id)+'">Открыть полный паспорт и работы →</button></div></section>';
  }
  return '<div class="sc75-shell"><header class="sc75-header"><div><h1>Проекты</h1><p>Объекты, Case и задачи рабочего пространства</p></div>'+'<button data-action="new-case">＋ Новый Case</button>'+'</header><div class="sc75-layout"><aside class="sc75-list"><label class="sc75-search">⌕ <input id="project-hub-search" type="search" placeholder="Название, адрес, клиент…" aria-label="Поиск проектов" value="'+esc(projectHubQuery)+'"></label><div class="sc75-cards">'+(cards||'<p>Проектов пока нет</p>')+'</div><p id="ph-no-match" hidden>Нет совпадений</p></aside>'+pane+'</div></div>';
@@ -417,7 +440,7 @@ function detail(id,tab="overview"){
   const partnerInfo='<section class="panel cp-case-link"><div class="panelhead"><h2>Заказчик / Auftraggeber</h2>'+(ownsCase(id)?button("Связать контрагента","link-counterparty",id):"")+'</div>'+
     (partner?'<button data-route="partner/'+esc(partner.id)+'" class="cp-case-partner"><strong>'+esc(partner.name)+'</strong><span>DC-монтаж · SolAn Plus · AC — электрики заказчика</span><small>Открыть профиль →</small></button>':'<p>Контрагент не назначен. Исторические проекты сохраняются без автоматически установленного заказчика.</p>')+'</section>';
   const mediaItems=(c.files||[]).map(a=>'<a class="case-media-item" href="'+a.data+'" download="'+esc(a.name)+'" target="_blank" rel="noopener noreferrer">'+(a.data.startsWith("data:image/")?'<img src="'+a.data+'" alt="'+esc(a.name)+'">':'<span class="case-media-pdf">PDF</span>')+'<small>'+esc(a.name)+'</small></a>').join("");
-  const mediaPanel='<section class="panel case-media-panel"><div class="panelhead"><h2>Медиа объекта · '+(c.files||[]).length+'/8</h2>'+(ownsCase(id)?'<button data-action="case-media" data-id="'+esc(id)+'">＋ Фото / PDF</button>':'')+'</div><div class="case-media-grid">'+(mediaItems||'<p class="hint">Фото крыши, чертежи, Stringplan и документы объекта.</p>')+'</div></section>';
+  const mediaPanel='<section class="panel case-media-panel"><div class="panelhead"><h2>Медиа объекта · '+(c.files||[]).length+'/8</h2>'+(ownsCase(id)?'<button data-action="new-case-media" data-id="'+esc(id)+'">＋ Фото / PDF</button>':'')+'</div><div class="case-media-grid">'+(mediaItems||'<p class="hint">Фото крыши, чертежи, Stringplan и документы объекта.</p>')+'</div></section>';
   const cover=(c.files||[]).find(f=>f.data.startsWith("data:image/"))?.data||"art/roof.webp",head='<button class="back" data-route="projects">← Projects</button><section class="panel casehead nv109-casehead"><img src="'+cover+'" alt=""><div><small>CASE · '+esc(c.id.slice(0,12))+'</small><h1>'+esc(c.title)+'</h1><p>'+esc(c.address||c.city)+'</p><span class="progress"><i style="width:'+pct(id)+'%"></i></span><small>Готовность '+pct(id)+'%</small></div></section>';
   if(!rel)return head+mediaPanel+PVProjectCard.render(c,state,false);
   const f=rel.finance,works='<section class="panel"><div class="panelhead"><h2>Shards · рабочие участки</h2>'+(finPlanEditable(f)?button("＋ Shard","new-shard",id):"")+'</div>'+(shards.map(shardRow).join("")||'<p>Добавьте первый рабочий участок.</p>')+'</section>';
@@ -702,7 +725,10 @@ function cashTiles(t){return '<div class="nv103-cash-grid"><div><small>Пост�
 function cashActions(id=""){return '<div class="nv103-actions"><button data-action="new-cash-income" data-id="'+esc(id)+'">＋ Поступление</button><button data-action="new-cash-expense" data-id="'+esc(id)+'">− Расход</button></div>'}
 function cashRows(entries){return entries.slice().reverse().sort((a,b)=>b.date.localeCompare(a.date)).map(e=>{const p=state.cases.find(c=>c.id===e.caseId);return '<article class="nv103-entry'+(e.voided?' is-void':'')+'"><div><small>'+esc(e.date)+' · '+esc(cashLabels[e.direction][e.category])+'</small><strong>'+(p?esc(p.title):"Без объекта")+'</strong>'+(e.note?'<span>'+esc(e.note)+'</span>':'')+(p?'<button data-route="case/'+esc(p.id)+'">Открыть Case →</button>':'')+'</div><div class="nv103-entry-value"><b class="'+(e.direction==="income"?"nv103-in":"nv103-out")+'">'+(e.direction==="income"?"+":"−")+euroCents(e.cents)+'</b>'+(e.voided?'<small>Аннулирована</small>':'<button data-action="cash-void" data-id="'+esc(e.id)+'">Аннулировать</button>')+'</div></article>'}).join("")||'<p class="nv103-empty">Пока нет денежных операций.</p>'}
 function lobbySection(title,link,body){return '<section class="panel nv103-panel"><div class="nv103-section-head"><h2>'+title+'</h2>'+link+'</div>'+body+'</section>'}
-function lobbyLink(route,label){return '<button data-route="'+esc(route)+'">'+esc(label)+'</button>'}
+function lobbyLink(route,label){
+  const outward=label.endsWith(" ↗");
+  return '<button data-route="'+esc(route)+'">'+(outward?esc(label.slice(0,-2))+' <svg class="direction-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="'+iconPaths.open+'"/></svg>':esc(label))+'</button>';
+}
 function lobbyRow(route,title,sub,value,progress){return '<button class="nv103-project-row" data-route="'+esc(route)+'"><span><strong>'+esc(title)+'</strong><small>'+esc(sub)+'</small>'+(progress===undefined?"":'<span class="nv103-track"><i style="width:'+progress+'%"></i></span>')+'</span><b>'+esc(value)+'</b></button>'}
 
 function finLine(label,value){return '<div class="nv104-line"><span>'+esc(label)+'</span><strong>'+esc(value)+'</strong></div>'}
@@ -749,11 +775,47 @@ if(kind==="finance-shares"){if(!sh?.assignee)throw Error("Сначала наз�
 
 function cashPanel(id){return lobbySection("Личные деньги по объекту",lobbyLink("finance/"+id,"Журнал →"),cashTiles(cashTotals(ownCash(id)))+cashActions(id))}
 function personalFinance(id=null){const c=id&&state.cases.find(x=>x.id===id);if(id&&!c)return heading("Объект не найден");const entries=ownCash(id),t=cashTotals(entries);return '<div class="nv103-lobby">'+heading(c?"Деньги · "+c.title:"Мой денежный журнал")+(c?finCasePanel(c.id):finMemberPanel())+'<div class="nv103-actions">'+lobbyLink(c?"case/"+c.id+"/finance":"dashboard",c?"← Case":"← Лобби")+lobbyLink(c?"finance":"merit",c?"Все операции":"Merit отдельно →")+'</div>'+lobbySection("Движение денег","",cashTiles(t)+cashActions(id||"")+'<p class="nv103-muted">Чистый поток — поступления минус расходы, не остаток банковского счёта.</p>')+(!c?lobbySection("По объектам","",state.cases.map(p=>lobbyRow("finance/"+p.id,p.title,"Бюджет "+money(p.price)+" €",euroCents(cashTotals(ownCash(p.id)).balance))).join("")+'<p class="nv103-muted">Общие расходы можно записать без объекта.</p>'):'<p class="nv103-muted">Бюджет Case: '+money(c.price)+' €. Запись не подтверждает оплату заказчиком и не разрешает выплату.</p>')+lobbySection("История операций","",cashRows(entries))+'<p class="nv103-muted">Личный локальный журнал. Не банковская выписка, не бухгалтерский документ и не автоматическая выплата.</p></div>'}
-function personalLobby(){const c=actor(),st=communityStats(c),w=lab?{name:c.company||"ALPHA LAB"}:activeWorkspace(),groups=state.teams.filter(t=>t.memberIds.includes(c.id)),ownShards=state.shards.filter(s=>NVModel.sharesFor(s).some(x=>x.memberId===c.id)||s.assignee===c.id||groups.some(t=>t.id===s.teamId)),myCases=state.cases.filter(p=>ownsCase(p.id)||ownShards.some(s=>s.caseId===p.id)||state.tasks.some(t=>t.assignee===c.id&&state.shards.some(s=>s.id===t.shardId&&s.caseId===p.id))),active=myCases.filter(p=>pct(p.id)!==100),openTasks=state.tasks.filter(t=>t.status!=="done"&&(t.assignee===c.id||(t.assignee===null&&ownShards.some(s=>s.id===t.shardId)))),merit=NVModel.meritPassport(state,c.id).totals.released/100,t=cashTotals(ownCash()),edit=button("Изменить","edit-profile",c.id);
-const hero='<section class="nv103-hero"><div class="nv103-kicker">ЛИЧНОЕ ЛОББИ <span>LOCAL FIRST</span></div><div class="nv103-identity">'+memberAvatar(c,true)+'<div><small>'+esc(st.level)+'</small>'+alphaLabel(c)+'<h1>'+esc(c.name)+'</h1><p>'+esc(c.headline||"Мультипрофиль")+' · '+esc(w.name)+'</p></div>'+edit+'</div><div class="nv103-xp"><div><span>Опыт · '+st.xp+' XP</span><span>'+st.percent+'%</span></div><div class="nv103-track"><i style="width:'+st.percent+'%"></i></div><small>XP за принятые работы · не денежный баланс</small></div><div class="nv103-badges">'+(st.badges.map(x=>'<span>'+esc(x[1])+'</span>').join("")||'<span>Начало пути</span>')+'</div><div class="nv103-stats">'+[["projects",active.length,"Активные Case"],["tasks",openTasks.length,"Мои задачи"],["merit",money(merit),"Merit · подтверждено"]].map(([route,v,label])=>'<button data-route="'+route+'"><b>'+v+'</b><small>'+label+'</small></button>').join("")+'</div></section>';
-const quick='<div class="nv103-quick">'+button("＋ Новый Case","new-case")+button("＋ Новый Shard","new-shard")+lobbyLink("projects","Мои проекты")+rentalProfileAction()+lobbyLink("network/rental","Аренда")+'</div>';
-const hr='<div class="nv103-hr">'+[["Специализация",c.headline],["Команда",groups.map(t=>t.name).join(", ")],["Навыки",(c.skills||[]).join(" · ")],["Регион",c.location]].map(([k,v])=>'<small>'+k+'</small><strong>'+esc(v||"Не указано")+'</strong>').join("")+'</div><p>'+esc(c.bio||"Расскажите о своём опыте.")+'</p>'+lobbyLink("member/"+c.id,"Полный профиль →");
-return '<div class="nv103-lobby nv108-dashboard">'+hero+'<section class="nv108-actionbar" aria-label="Быстрые действия">'+quick+'</section><div class="nv108-monitor-grid">'+meritPassportPanel()+lobbySection("Мои деньги · "+euroCents(t.balance),lobbyLink("finance","Журнал →"),cashTiles(t)+cashActions()+'<p class="nv103-muted">Чистый денежный поток · за всё время</p>')+'</div>'+lobbySection("Карта объектов",lobbyLink("projects","Проекты →"),caseMiniMap())+'<div class="nv103-columns">'+lobbySection("Мои объекты",lobbyLink("projects","Все →"),active.slice(0,5).map(p=>lobbyRow("case/"+p.id,p.title,p.city+" · "+pct(p.id)+"% готово",money(p.price)+" €",pct(p.id))).join("")||'<p class="nv103-empty">Нет активных объектов.</p>')+lobbySection("Рабочие задачи",lobbyLink("tasks","Все →"),openTasks.slice(0,5).map(task=>{const sh=state.shards.find(s=>s.id===task.shardId);return lobbyRow("shard/"+sh.id,task.title,sh.title,task.status==="doing"?"В работе":"Ожидает")}).join("")||'<p class="nv103-empty">Нет открытых личных задач.</p>')+'</div>'+finMemberPanel()+'<div class="nv103-columns">'+lobbySection("Карточка сотрудника",edit,hr)+lobbySection("Моя активность",lobbyLink("network","Network →"),communityWorkFeed(acceptedWorkEvents(c.id).slice(0,3))||'<p class="nv103-empty">Принятые работы появятся здесь.</p>')+'</div></div>'}
+function pulseSummary() {
+  const counts = {accepted:0, submitted:0, draft:0};
+  state.shards.forEach(s => { if (Object.hasOwn(counts,s.status)) counts[s.status]++; });
+  const total = state.shards.length;
+  const accepted = total ? counts.accepted*100/total : 0;
+  const review = total ? counts.submitted*100/total : 0;
+  const rows = [["accepted","Принято"],["submitted","На приёмке"],["draft","В работе"]];
+  return '<section class="dna-pulse surface"><header class="module-head"><h2>Project Pulse</h2>'+lobbyLink("pulse","Открыть ↗")+'</header>'+
+    '<div class="pulse-body"><div class="pulse-ring" aria-hidden="true" style="--accepted:'+accepted+'%;--review:'+(accepted+review)+'%"><div><b>'+total+'</b><small>Shard</small></div></div>'+
+    '<dl>'+rows.map(([key,label])=>'<div><dt><i class="'+key+'"></i>'+label+'</dt><dd>'+counts[key]+'</dd></div>').join("")+'</dl></div></section>';
+}
+function personalLobby() {
+  const c=actor(), st=communityStats(c), groups=state.teams.filter(t=>t.memberIds.includes(c.id));
+  const ownShards=state.shards.filter(s=>NVModel.sharesFor(s).some(x=>x.memberId===c.id)||s.assignee===c.id||groups.some(t=>t.id===s.teamId));
+  const myCases=state.cases.filter(p=>ownsCase(p.id)||ownShards.some(s=>s.caseId===p.id)||state.tasks.some(t=>t.assignee===c.id&&state.shards.some(s=>s.id===t.shardId&&s.caseId===p.id)));
+  const active=myCases.filter(p=>pct(p.id)!==100);
+  const openTasks=state.tasks.filter(t=>t.status!=="done"&&(t.assignee===c.id||(t.assignee===null&&ownShards.some(s=>s.id===t.shardId))));
+  const merit=NVModel.meritPassport(state,c.id).totals.released/100, t=cashTotals(ownCash());
+  const hero='<section class="command-hero"><div class="command-photo"></div><div class="command-surface"><div class="command-signals">'+
+    '<button class="coin-link" data-route="merit"><span class="merit-coin" aria-hidden="true"><img src="art/nvtsk-approved.webp" alt=""></span><span><small>Merit Passport</small><b>'+money(merit)+' M</b></span></button>'+
+    '<div class="reputation"><div><span>Репутация</span><b>'+st.xp+' XP</b></div><progress max="100" value="'+st.percent+'" aria-label="Прогресс репутации"></progress><small>'+esc(st.level)+'</small></div></div>'+
+    '<div class="command-title"><h1>Command Center</h1><p>'+esc(c.name)+(c.headline?' <i>·</i> '+esc(c.headline):'')+'</p></div></div></section>';
+  const quick=(attributes,symbol,label,primary=false)=>'<button class="quick-action'+(primary?' primary':'')+'" '+attributes+'>'+icon(symbol)+'<span>'+label+'</span></button>';
+  const photoCase=active.find(p=>ownsCase(p.id))||myCases.find(p=>ownsCase(p.id));
+  const actions='<div class="command-actions" aria-label="Быстрые действия">'+quick('data-action="new-case"',"layers","Новый Case",true)+
+    quick('data-action="new-shard"',"shard","Создать Shard")+
+    (photoCase?quick('data-action="new-case-media" data-id="'+esc(photoCase.id)+'" title="'+esc(photoCase.title)+'"',"camera","Фото объекта"):quick('data-route="projects"',"folder","Мои проекты"))+
+    quick('data-route="tasks"',"check","Приёмка")+'</div>';
+  const projectRows=active.slice(0,4).map(p=>lobbyRow("case/"+p.id,p.title,p.address||p.city,money(p.price)+" €",pct(p.id))).join("");
+  const taskRows=openTasks.slice(0,4).map(task=>{const sh=state.shards.find(s=>s.id===task.shardId);return lobbyRow("shard/"+sh.id,task.title,sh.title,task.status==="doing"?"В работе":"Ожидает")}).join("");
+  const personal='<dl class="profile-facts">'+[["Специализация",c.headline],["Команда",groups.map(g=>g.name).join(", ")],["Навыки",(c.skills||[]).join(" · ")],["Регион",c.location]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v||"Не указано")+'</dd></div>').join("")+'</dl>'+
+    (c.bio?'<p>'+esc(c.bio)+'</p>':'')+'<div class="command-badges">'+alphaLabel(c)+st.badges.map(x=>'<span>'+esc(x[1])+'</span>').join("")+'</div>'+lobbyLink("member/"+c.id,"Полный профиль ↗");
+  return '<div class="command">'+hero+actions+'<div class="command-board">'+caseMiniMap()+pulseSummary()+
+    '<div class="command-projects">'+lobbySection("Активные проекты <span>"+active.length+"</span>",lobbyLink("projects","Все проекты ↗"),projectRows||'<p class="empty">У вас пока нет активных объектов.</p>')+'</div>'+
+    '<div class="command-tasks">'+lobbySection("Мои задачи <span>"+openTasks.length+"</span>",lobbyLink("tasks","Все задачи ↗"),taskRows||'<p class="empty">Открытых личных задач сейчас нет.</p>')+'</div></div>'+
+    '<div class="command-details">'+lobbySection("Профессиональная активность",lobbyLink("network","Network ↗"),communityWorkFeed(acceptedWorkEvents(c.id).slice(0,3))||'<p class="empty">Здесь появятся принятые работы.</p>')+
+    lobbySection("Ресурсы",lobbyLink("lager","Склад ↗"),'<div class="resource-links">'+lobbyLink("fuhrpark","Автопарк")+lobbyLink("network/rental","Каталог аренды")+rentalProfileAction()+'</div>')+
+    meritPassportPanel()+lobbySection("Мои деньги · "+euroCents(t.balance),lobbyLink("finance","Журнал ↗"),cashTiles(t)+cashActions())+
+    finMemberPanel()+lobbySection("Профиль специалиста",button("Изменить","edit-profile",c.id),personal)+'</div></div>';
+}
+
 function financeWorkspace(){
  const sum=state.cases.reduce((n,c)=>n+Number(c.price||0),0);
  const rows=state.cases.map(c=>'<button class="ref66-finance-row" data-route="case/'+esc(c.id)+'"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city||"")+'</small></span><strong>'+money(c.price)+' €</strong><span class="ref66-finance-unknown">Оплата не подтверждена</span></button>').join("");
@@ -819,13 +881,20 @@ function render(){
  networkRelease();
  if(!account()){loginScreen(accounts().length===0);return;} stopGoogleResize();document.body.classList.remove("nv90-auth");$("#nav").hidden=false;$(".top").hidden=false;
  let r=location.hash.slice(1)||"dashboard";if(r==="field"){r="projects";location.hash="projects"}
- $(".local").textContent=lab?"● ТЕСТОВАЯ КОПИЯ":"● LOCAL FIRST";
+ $(".local").textContent="Local First";
  const sectionName=r.startsWith("partner/")?"Контрагент":r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Сообщество":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({company:"Профиль фирмы",finance:"Финансы",merit:"Merit",analytics:"Аналитика",projects:"Projects",tasks:"Приёмка",team:"Сообщество",network:"Network",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки","alpha-lab":"ALPHA LAB"})[r]||"Рабочее пространство";
- const sectionTitle=r==="dashboard"?"Command Center":r.startsWith("network/")?"Network":r.startsWith("rental/")?"Сделка · Rental":r.startsWith("rental-partner/")?"Партнёр · Rental":sectionName;const context=$("#nv108-context");if(context)context.textContent=lab?"ALPHA LAB":activeWorkspace().name;
- const workbar='<header class="nv108-workbar"><div><small>NVTSK / WORKSPACE</small><h1>'+esc(sectionTitle)+'</h1></div><div class="nv108-workspace-name">'+workspaceBadge()+'<small>LOCAL FIRST</small></div></header>';
- $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · все данные вымышлены</strong><button data-route="alpha-lab">Лаборатория</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("network/")?networkRoute(r.slice(8)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("team/")?team():r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
- document.querySelectorAll("#nav button,.mode button").forEach(b=>b.classList.toggle(b.closest("#nav")?"active":"selected",(b.dataset.route===r||(b.dataset.route==="projects"&&r==="tasks")||(b.dataset.route==="lager"&&(["garage","fuhrpark"].includes(r)||r.startsWith("lager/")))||(b.dataset.route==="finance"&&r.startsWith("finance/")))||(b.closest("#nav")&&(r.startsWith("case/")||r.startsWith("shard/")||r.startsWith("partner/"))&&b.dataset.route==="projects")||(b.closest("#nav")&&(r.startsWith("network/")||r.startsWith("rental/")||r.startsWith("rental-partner/")||r.startsWith("member/")||r.startsWith("team/")||r==="team")&&b.dataset.route==="network")));
-
+ const sectionTitle=r==="dashboard"?"Command Center":r.startsWith("network/")?"Network":r.startsWith("rental/")?"Сделка · Rental":r.startsWith("rental-partner/")?"Партнёр · Rental":sectionName;const company=lab?actor().company||"ALPHA LAB":activeWorkspace().name;
+ const context=$("#nv108-context");if(context)context.textContent=company;
+ document.body.dataset.section=r.split("/")[0];
+ const workbar='<header class="nv108-workbar"><div class="workspace-ident"><span class="company-mark" aria-hidden="true">'+icon("layers")+'</span><div><b>'+esc(company)+'</b><small>Nvtsk_System</small></div></div><span class="section-location">'+esc(sectionTitle)+'</span></header>';
+ $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · тестовые данные</strong><button data-route="alpha-lab">Участники</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("network/")?networkRoute(r.slice(8)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("team/")?team():r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
+ document.querySelectorAll("#nav button[data-route]").forEach(b=>{
+   const base=r.split("/")[0];
+   const parent={case:"projects",shard:"projects",partner:"projects",garage:"lager",fuhrpark:"lager",member:"network",team:"network",rental:"network","rental-partner":"network"};
+   const current=b.dataset.route===(parent[base]||base);
+   b.classList.toggle("active",current);
+   if(current)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
+ });
  const more=$("#nv108-more");if(more)more.setAttribute("aria-expanded",String(document.body.classList.contains?.("nv108-more")||false));
  if(r==="projects")filterProjectHub();if(r==="network"||r.startsWith("network/")||r.startsWith("case/"))networkHydrate();
 }
@@ -900,8 +969,14 @@ function edit(kind,id,memberId){
  if(kind==="material"||kind==="move")fields+=input("qty","Количество, шт.","number").replace('step=".01"','step="1"').replace('min="0"','min="1"');
  if(["case","electrical","shard"].includes(kind))fields+='<label>Описание и инструкции<textarea name="notes" maxlength="4000" rows="3" placeholder="Объём работ, доступ, особенности объекта"></textarea></label><label>Фото / PDF (до 8 файлов, изображения до 5 МБ с автоматическим сжатием, PDF до 650 КБ)<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple></label><p class="hint">Файлы сохраняются локально вместе с Project и Shard и входят в JSON-экспорт. Не загружайте конфиденциальные документы на чужом устройстве.</p>';
  if(kind==="case-media")fields+='<label>Выбрать фото / PDF<input name="media" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" multiple required></label>';
- pending={kind,id};$("#dialogTitle").textContent=titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
+ pending={kind,id};$("#dialogTitle").textContent=kind==="case-media"?titles[kind]+" · "+state.cases.find(c=>c.id===id).title:titles[kind];$("#fields").innerHTML=fields;if(kind==="move")syncMoveFields();$("#dialog").showModal();
 }
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"&&document.body.classList.contains("nv108-more")){
+   document.body.classList.remove("nv108-more");
+   const more=$("#nv108-more");more.setAttribute("aria-expanded","false");more.focus();
+ }
+});
 document.addEventListener("click",e=>{const more=e.target.closest("[data-shell-more]");if(more){const opened=document.body.classList.toggle("nv108-more");more.setAttribute("aria-expanded",String(opened));return}if(e.target.closest("[data-route]")||!e.target.closest("#nav")){document.body.classList.remove("nv108-more");$("#nv108-more")?.setAttribute("aria-expanded","false")}});
 document.addEventListener("click",async e=>{
  const accept=e.target.closest('[data-action="case-accept"]');if(accept){acceptCase(accept.dataset.id);return}
@@ -1090,7 +1165,7 @@ $("#editor").onsubmit=async e=>{
  finally{submit.disabled=false}
 };
 // v109: navigation is authored in the shell; no obsolete Field controls.
-const navIconNames={network:"team",dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"coins",analytics:"layers",pulse:"coins",field:"field",social:"team",settings:"settings"};
+const navIconNames={"alpha-lab":"lab",tasks:"check",network:"team",dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"passport",analytics:"pulse",pulse:"pulse",field:"field",social:"bell",settings:"settings"};
 document.querySelectorAll("#nav button[data-route]").forEach(b=>{const holder=b.querySelector(".nav-glyph");if(holder&&!holder.querySelector("svg"))holder.innerHTML=icon(navIconNames[b.dataset.route]||"box")});
 addEventListener("hashchange",()=>{if(projectReady){render();scrollTo(0,0)}});
 async function refreshProjectRecords(key){if(!projectReady||!projectKeys().includes(key))return;try{await projectLoad(key);if(key===KEY){if((projectRecords.get(KEY)??null)===raw)return;readProjectState();if($("#dialog").open){$("#dialog").close();alert("Проект изменён в другой вкладке. Откройте форму снова.")}}render()}catch(error){console.warn("NVTSK storage refresh",error)}}
