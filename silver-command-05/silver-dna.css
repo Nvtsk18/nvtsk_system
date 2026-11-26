@@ -50,7 +50,7 @@ label{color:var(--muted);font-size:13px}label>input,label>select,label>textarea{
 @keyframes coin-reflection{0%,70%{background-position:-120px 0}92%,100%{background-position:55px 0}}
 .reputation{width:clamp(145px,20%,240px);padding:8px 12px;background:#13191cde;border:1px solid #7b878853;border-radius:var(--fold);line-height:1.15}
 .reputation>div{display:flex;justify-content:space-between;gap:9px;font-size:11px}.reputation progress{appearance:none;width:100%;height:4px;display:block;margin:6px 0 3px;border:0;background:#454f52;border-radius:1px}.reputation progress::-webkit-progress-bar{background:#454f52}.reputation progress::-webkit-progress-value{background:var(--metal)}.reputation progress::-moz-progress-bar{background:#ccd5d3}.reputation small{font-size:10px;color:#c1c9c9}
-.command-title h1{font-size:clamp(28px,3vw,43px);font-weight:550;line-height:1.08;letter-spacing:-.055em}.command-title p{font-size:13px;color:#d6dddd;margin-top:7px}.command-title i{font-style:normal;margin:0 3px;color:#9ca8a9}
+.command-title h1{font-size:clamp(22px,2vw,30px);font-weight:550;line-height:1.08;letter-spacing:-.055em}.command-title p{font-size:13px;color:#d6dddd;margin-top:7px}.command-title i{font-style:normal;margin:0 3px;color:#9ca8a9}
 .command-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
 .quick-action{position:relative;isolation:isolate;display:flex;justify-content:center;align-items:center;gap:10px;min-height:47px;font-size:13px;border-radius:var(--fold);overflow:hidden}
 .quick-action{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 9px,100% 100%,10px 100%,0 calc(100% - 8px))}.quick-action:focus-visible{box-shadow:inset 0 0 0 3px var(--focus)}.quick-action:after{content:"";position:absolute;right:-12px;bottom:7px;width:44px;height:4px;background:linear-gradient(#ffffff2a,#ffffff05);transform:rotate(36deg);pointer-events:none}.quick-action.primary:after{background:linear-gradient(#1c2c3366,#56636a22)}
@@ -112,7 +112,7 @@ label{color:var(--muted);font-size:13px}label>input,label>select,label>textarea{
 @media(max-width:650px){
  .command{gap:10px}.command-board,.command-details{grid-template-columns:minmax(0,1fr);gap:10px}.dna-atlas{order:0}.command-projects{order:1}.command-tasks{order:2}.dna-pulse{order:3}
  .command-hero{min-height:156px}.command-surface{padding:13px 14px 17px;gap:24px}.command-photo{background-position:center,center,60% 30%}
- .command-title h1{font-size:29px}.command-title p{font-size:12px;margin-top:5px}.coin-link small{font-size:10px}.coin-link b{font-size:17px}.merit-coin{width:35px}.reputation{width:124px;padding:6px 9px}.reputation>div,.reputation small{font-size:10px}
+ .command-title h1{font-size:22px}.command-title p{font-size:12px;margin-top:5px}.coin-link small{font-size:10px}.coin-link b{font-size:17px}.merit-coin{width:35px}.reputation{width:124px;padding:6px 9px}.reputation>div,.reputation small{font-size:10px}
  .command-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.quick-action{justify-content:flex-start;min-height:44px;padding:8px 12px;font-size:12px;gap:8px}.quick-action svg{width:18px;height:18px}
  .module-head{min-height:49px;padding:8px 13px}.module-head h2,.nv103-section-head h2{font-size:16px}.module-head>.meta{font-size:10px}
  .map-viewport{height:191px}.map-town span{font-size:10px}.map-town[data-map-city=Radolfzell]>span,.map-town:nth-of-type(3)>span{left:auto;right:calc(50% + 11px);top:72%}.lake-name{font-size:12px;left:70%;top:73%}
