@@ -139,39 +139,57 @@ function caseMiniMap() {
       ? '<button type="button" class="map-town" '+pos+' data-map-city="'+name+'" aria-pressed="false" aria-label="'+name+' · объектов '+items.length+'"><b>'+items.length+'</b><span>'+name+'</span></button>'
       : '<span class="map-town town-reference" '+pos+'><b></b><span>'+name+'</span></span>';
   }).join("");
-  const choices = projects.map(c => '<option value="'+esc(c.id)+'" data-town="'+esc(cityGroup(c))+'">'+esc(c.title)+' · '+esc(c.address||c.city)+'</option>').join("");
-  const pinned = projects.filter(c => cityGroup(c)).length;
+  const choices = projects.map(c => '<option value="'+esc(c.id)+'" data-town="'+esc(cityGroup(c))+'">'+esc(c.title)+'</option>').join("");
   return '<section class="dna-atlas surface"><header class="module-head"><h2>Карта объектов</h2><span class="meta">'+projects.length+' '+projectWord(projects.length)+'</span></header>'+
     '<div class="map-viewport"><div class="map-sheet"><img src="art/bodensee-west.svg" alt="" width="1000" height="500">'+markers+'<i class="lake-name" aria-hidden="true">Bodensee</i></div><span class="map-north" aria-label="Север">↑ N</span></div>'+
-    '<div class="map-foot"><span class="map-caption">'+(pinned?'Отметки по городам · '+pinned:'Бодензее · региональная схема')+'</span>'+
-    (choices?'<div class="map-picker"><label class="sr" for="dna-map-case">Объект на карте</label><select id="dna-map-case"><option value="">Выбрать объект</option>'+choices+'</select><button class="icon-button" id="dna-open-case" disabled aria-label="Открыть выбранный Case" title="Открыть Case">'+icon("open")+'</button></div>':'<span class="hint">Объектов пока нет</span>')+'</div></section>';
+    '<div class="map-foot">'+(choices?
+      '<div class="atlas-picker-head"><label for="dna-map-case">Объект</label><button type="button" id="dna-map-clear" hidden>Все города</button></div>'+
+      '<select id="dna-map-case"><option value="">Выбрать объект</option>'+choices+'</select>'+
+      '<div id="dna-map-details" hidden aria-live="polite"></div>':
+      '<p class="hint">Объектов пока нет</p>')+'</div></section>';
 }
 function projectWord(count) {
   const units=count%10, tens=count%100;
   return units===1&&tens!==11?"объект":units>=2&&units<=4&&(tens<12||tens>14)?"объекта":"объектов";
 }
 function setMapCase(picker) {
-  const open = document.getElementById("dna-open-case");
-  if (!open) return;
-  open.disabled = !picker.value;
-  if (picker.value) open.dataset.route = "case/"+picker.value;
-  else delete open.dataset.route;
+  const details = document.getElementById("dna-map-details");
+  const project = state.cases.find(c => c.id === picker.value);
+  details.hidden = !project;
+  if (!project) { details.replaceChildren(); return; }
+  const progress = pct(project.id);
+  const route = "case/"+esc(project.id);
+  details.innerHTML = '<div class="atlas-address"><div><small>Адрес объекта</small><strong>'+esc(project.address || project.city || "Адрес не указан")+'</strong></div><div class="atlas-completion"><small>Готовность</small><b>'+progress+'%</b></div></div>'+
+    '<progress max="100" value="'+progress+'" aria-label="Готовность объекта"></progress>'+
+    '<div class="atlas-actions"><button id="dna-open-case" data-route="'+route+'">'+icon("folder")+'Открыть Case</button><button data-route="'+route+'/work">'+icon("check")+'Работы и задачи</button></div>';
 }
 document.addEventListener("click", e => {
   const pin = e.target.closest("[data-map-city]");
-  if (!pin) return;
-  const reset = pin.getAttribute("aria-pressed") === "true";
-  const picker = document.getElementById("dna-map-case");
+  const clear = e.target.closest("#dna-map-clear");
+  if (!pin && !clear) return;
+  const atlas = (pin || clear).closest(".dna-atlas");
+  const picker = atlas.querySelector("#dna-map-case");
   if (!picker) return;
-  for (const other of pin.closest(".dna-atlas").querySelectorAll("[data-map-city]")) {
-    other.setAttribute("aria-pressed", String(!reset && pin === other));
+  const city = pin && pin.getAttribute("aria-pressed") !== "true" ? pin.dataset.mapCity : "";
+  for (const other of atlas.querySelectorAll("[data-map-city]")) {
+    other.setAttribute("aria-pressed", String(other.dataset.mapCity === city));
   }
+  let first = "";
   for (const opt of picker.options) {
-    opt.hidden = !reset && !!opt.value && opt.dataset.town !== pin.dataset.mapCity;
+    opt.hidden = Boolean(city && opt.value && opt.dataset.town !== city);
     opt.disabled = opt.hidden;
+    if (!first && opt.value && !opt.hidden) first = opt.value;
   }
-  picker.value = reset ? "" : Array.from(picker.options).find(opt => opt.value && !opt.hidden)?.value || "";
+  atlas.querySelector('label[for="dna-map-case"]').textContent = city ? "Объекты · "+city : "Объект";
+  atlas.querySelector("#dna-map-clear").hidden = !city;
+  picker.value = city ? first : "";
   setMapCase(picker);
+  if (clear) picker.focus();
+  if (city && matchMedia("(max-width:650px)").matches) {
+    const bottom = atlas.getBoundingClientRect().bottom;
+    const limit = document.getElementById("nav").getBoundingClientRect().top - 8;
+    if (bottom > limit) window.scrollBy(0, bottom - limit);
+  }
 });
 document.addEventListener("change", e => { if (e.target.id === "dna-map-case") setMapCase(e.target); });
 
