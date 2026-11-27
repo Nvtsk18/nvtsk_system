@@ -399,7 +399,9 @@ function projects(){
    '<div class="sc75-media"><div class="sc75-section-head"><h3>Медиа объекта <small>('+(c.files||[]).length+')</small></h3>'+(ownsCase(c.id)?'<button data-action="new-case-media" data-id="'+esc(c.id)+'">＋ Фото / PDF</button>':'')+'</div><div class="sc75-media-items">'+(files||'<p>Пока нет медиа. Добавьте фото крыши, монтажных работ или проектные PDF.</p>')+'</div></div>'+
    '</section>';
  }
- return '<div class="sc75-shell"><header class="sc75-header"><div><h1>Проекты</h1><p>Объекты, Case и задачи рабочего пространства</p></div>'+'<button data-action="new-case">＋ Новый Case</button>'+'</header><div class="sc75-layout"><aside class="sc75-list"><label class="sc75-search">⌕ <input id="project-hub-search" type="search" placeholder="Название, адрес, клиент…" aria-label="Поиск проектов" value="'+esc(projectHubQuery)+'"></label><div class="sc75-cards">'+(cards||'<p>Проектов пока нет</p>')+'</div><p id="ph-no-match" hidden>Нет совпадений</p></aside>'+pane+'</div></div>';
+ const mobilePlans=matchMedia("(max-width:959px)").matches
+   ? '<p class="pv-mobile-plans"><a href="pv-cases.html">Открыть монтажные планы PV →</a></p>' : "";
+ return '<div class="sc75-shell"><header class="sc75-header"><div><h1>Проекты</h1><p>Объекты, Case и задачи рабочего пространства</p></div>'+'<button data-action="new-case">＋ Новый Case</button>'+'</header>'+mobilePlans+'<div class="sc75-layout"><aside class="sc75-list"><label class="sc75-search">⌕ <input id="project-hub-search" type="search" placeholder="Название, адрес, клиент…" aria-label="Поиск проектов" value="'+esc(projectHubQuery)+'"></label><div class="sc75-cards">'+(cards||'<p>Проектов пока нет</p>')+'</div><p id="ph-no-match" hidden>Нет совпадений</p></aside>'+pane+'</div></div>';
 }
 const statusName={draft:"В работе",submitted:"На проверке",accepted:"Принято"};
 const taskStatusName={todo:"К выполнению",doing:"В работе",done:"Готово"};

@@ -1,6 +1,7 @@
-const CACHE="nvtsk-05-command-113";
+const CACHE="nvtsk-05-command-114";
 const CORE=[
- "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=113",
+ "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=114",
+ "./pv-cases.html","./pv-cases/viewer.js?v=1","./pv-cases/viewer.css?v=1",
  "./workspace-layout.css?v=113","./silver-dna.css?v=113","./art/command-office.webp","./art/bodensee-west.svg",
  "./art/fonts/inter-latin-wght-normal.woff2","./art/fonts/inter-cyrillic-wght-normal.woff2",
  "./art/nvtsk-approved.webp","./art/roof.webp","./art/store.webp","./art/hero.webp","./art/logo.webp",
@@ -16,7 +17,9 @@ self.addEventListener("fetch",event=>{
  event.respondWith((async()=>{
  const cache=await caches.open(CACHE);
  const url=new URL(req.url);
- const target=req.mode==="navigate"?new Request(new URL("index.html",self.registration.scope),{cache:"no-store"}):req;
+ const base=new URL(self.registration.scope);
+ const isAppShell=req.mode==="navigate" && (url.pathname===base.pathname || url.pathname===new URL("index.html",base).pathname);
+ const target=isAppShell?new Request(new URL("index.html",base),{cache:"no-store"}):req;
  try{
   const response=await fetch(target,{cache:"no-store"});
   if(response.ok){await cache.put(target,response.clone());return response}
@@ -24,7 +27,7 @@ self.addEventListener("fetch",event=>{
  }catch(error){
   const cached=await cache.match(target,{ignoreSearch:true});
   if(cached)return cached;
-  if(req.mode==="navigate"){const shell=await cache.match(new URL("index.html",self.registration.scope));if(shell)return shell}
+  if(isAppShell){const shell=await cache.match(new URL("index.html",self.registration.scope));if(shell)return shell}
   return Response.error();
  }
  })());
