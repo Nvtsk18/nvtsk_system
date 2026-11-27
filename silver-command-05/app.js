@@ -919,7 +919,7 @@ function gridRoute(hash = location.hash.slice(1)) {
   if (!section.tabs.some(([key]) => key === view)) view = section.home;
   const caseId = params.get("case") || legacyId;
   return {
-    view, section,
+    view, section, demo:root === "grid" && tab === "demo",
     caseId:caseId && state.cases.some(c => c.id === caseId) ? caseId : "",
     postId:params.get("post"), dealId:params.get("deal"),
     compose:tab === "case" || params.get("compose") === "1"
@@ -958,7 +958,7 @@ function gridMasthead(route, counts) {
   return `<header class="grid-mast">
     <div class="grid-mast-body"><span class="grid-signature">МУЛЬТИВСЕЛЕННАЯ NVTSK</span><h1>Grid</h1>
     <p>Здесь встречаются люди,<br>объекты и сделки.</p></div>
-    <div class="grid-metrics" aria-label="Связи рабочего пространства">${stats}</div>
+    <div class="grid-metrics" aria-label="Связи рабочего пространства">${stats}${lab?'<a class="grid-demo-entry" href="#grid/demo" aria-label="Демо: история одной сделки"><span>Демо ↗</span></a>':""}</div>
   </header>`;
 }
 
@@ -1072,7 +1072,31 @@ function gridView(route, data, projects, projectMap) {
     route.postId?"":view==="video"?"Прикрепите видео к публикации с объекта.":"Поделитесь работой с объекта или опубликуйте предложение для бригады.");
 }
 
+function gridDemoPage() {
+  const heading = '<header class="grid-story-head"><a href="#grid">← Grid</a><h1>История одной сделки</h1></header>';
+  if (!lab) return '<div class="grid-world grid-story">'+heading+
+    '<p>Откройте учебный объект и проследите, кто предложил работу, какая бригада её выполнила и какой участок прошёл приёмку.</p><button class="nt99-primary" data-action="sandbox" data-grid-demo>Открыть в ALPHA LAB</button></div>';
+  const data = state.network || {posts:[],deals:[]};
+  const projects = new Set(visibleProjectHub().map(({c})=>c.id));
+  const posts = new Map(data.posts.map(post=>[post.id,post]));
+  const accepted = acceptedWorkEvents();
+  const deal = data.deals.find(d=>projects.has(d.caseId) && posts.has(d.postId) && accepted.some(({sh})=>sh.caseId===d.caseId));
+  if (!deal) return '<div class="grid-world grid-story">'+heading+gridEmpty("У этого участника пока нет полной цепочки","Для показа нужны связанные предложение, Case и принятый Shard.")+gridLink("alpha-lab","Выбрать участника →")+'</div>';
+  const offer=posts.get(deal.postId), work=accepted.find(({sh})=>sh.caseId===deal.caseId);
+  const team=state.teams.find(t=>t.id===work.sh.teamId);
+  const source=state.crew.find(c=>c.id===offer.author);
+  const steps=[
+    ["Предложение",offer.title||offer.text,source?displayMemberName(source):"Автор публикации",gridPath("all",{post:offer.id}),"layers"],
+    ["Условия сделки",money(deal.budget)+" €",deal.region||deal.title,gridPath("deals",{deal:deal.id}),"shard"],
+    ["Работа бригады",team?.name||work.project.title,work.project.title,"case/"+deal.caseId+"/work","team"],
+    ["Приёмка",work.sh.title,"Принято"+(work.owner?" · "+displayMemberName(work.owner):""),"shard/"+work.sh.id,"check"]
+  ];
+  return '<div class="grid-world grid-story">'+heading+'<p>От предложения до принятого участка на одном объекте. Каждый этап открывает запись в ALPHA LAB.</p><ol class="grid-story-path">'+steps.map(([label,title,detail,path,glyph])=>
+    `<li><a href="#${esc(path)}"><i>${icon(glyph)}</i><span><small>${label}</small><strong>${esc(title)}</strong><em>${esc(detail)}</em></span>${icon("open")}</a></li>`).join("")+'</ol></div>';
+}
+
 function gridPage(route) {
+  if (route.demo) return gridDemoPage();
   const data = state.network || {posts:[],deals:[]};
   const projects = visibleProjectHub();
   const projectMap = new Map(projects.map(({c})=>[c.id,c]));
@@ -1112,7 +1136,7 @@ function alphaLabPage(){
  if(!lab)return heading("Nvtsk System")+lobbySection("ALPHA LAB · Изолированная среда","",'<p>Тестовые участники, проекты и финансы хранятся отдельно от рабочего аккаунта.</p>'+button("Запустить лабораторию","sandbox"));
  const report=state.labReport||{operations:0,checks:[],groups:[]},fs=state.cases.map(c=>NVModel.financialCase(state,c.id));
  const metrics=[["Участники",state.crew.length],["Бригады",state.teams.length],["Активные Case",fs.filter(f=>!f.settled).length],["Закрытые Case",fs.filter(f=>f.settled).length],["Shards",state.shards.length],["Аренды",(state.rentals||[]).length]];
- return '<div class="nv103-lobby"><section class="panel nv112-labhero"><small>ALPHA LAB · Тестовая среда</small><h1>Nvtsk System</h1><p>Без реальных денег, пользователей и начислений. Меняйте тестового участника, проверяйте его задания и расчёты.</p><div class="nv104-grid">'+metrics.map(([k,v])=>'<div><small>'+k+'</small><b>'+v+'</b></div>').join("")+'</div><label>Смотреть от имени участника<select id="nv112-lab-actor">'+state.crew.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.actor?"selected":"")+'>'+esc(c.name+" · "+(c.company||""))+'</option>').join("")+'</select></label><div class="nv104-actions">'+lobbyLink("dashboard","Главная")+lobbyLink("projects","Проекты")+lobbyLink("merit","Паспорт Merit")+lobbyLink("member/"+state.actor,"Профиль")+lobbyLink("grid","Grid")+lobbyLink("lager","Склад")+'</div></section>'+lobbySection("Автоматический прогон · "+report.operations+" операций",button("Сбросить и прогнать снова","lab-reset"),'<p class="hint">Отчёт первоначального сценария, не непрерывный мониторинг. После ручных изменений нажмите сброс для повторного прогона.</p>'+report.checks.map(x=>'<div class="taskrow"><strong>'+esc(x.name)+'</strong><span class="nv112-ok">'+(x.ok?"✓":"Ошибка")+'</span></div>').join(""))+lobbySection("Совместные проекты · прототип Alliance","",report.groups.map(g=>{const c=state.cases.find(x=>x.id===g.caseId);return c?lobbyRow("case/"+c.id,c.title,g.teamIds.map(id=>state.teams.find(t=>t.id===id)?.name||id).join(" + "),"Открыть"):""}).join("")+'<p class="hint">Схема нескольких бригад внутри Case. Самостоятельные компании и межфирменные соглашения пока не реализованы.</p>')+meritPassportPanel(state.actor)+'</div>';
+ return '<div class="nv103-lobby"><section class="panel nv112-labhero"><small>ALPHA LAB · Тестовая среда</small><h1>Nvtsk System</h1><p>Без реальных денег, пользователей и начислений. Меняйте тестового участника, проверяйте его задания и расчёты.</p><div class="nv104-grid">'+metrics.map(([k,v])=>'<div><small>'+k+'</small><b>'+v+'</b></div>').join("")+'</div><label>Смотреть от имени участника<select id="nv112-lab-actor">'+state.crew.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.actor?"selected":"")+'>'+esc(c.name+" · "+(c.company||""))+'</option>').join("")+'</select></label><div class="nv104-actions">'+lobbyLink("dashboard","Главная")+lobbyLink("projects","Проекты")+lobbyLink("merit","Паспорт Merit")+lobbyLink("member/"+state.actor,"Профиль")+lobbyLink("grid/demo","История сделки в Grid")+lobbyLink("grid","Grid")+lobbyLink("lager","Склад")+'</div></section>'+lobbySection("Автоматический прогон · "+report.operations+" операций",button("Сбросить и прогнать снова","lab-reset"),'<p class="hint">Отчёт первоначального сценария, не непрерывный мониторинг. После ручных изменений нажмите сброс для повторного прогона.</p>'+report.checks.map(x=>'<div class="taskrow"><strong>'+esc(x.name)+'</strong><span class="nv112-ok">'+(x.ok?"✓":"Ошибка")+'</span></div>').join(""))+lobbySection("Совместные проекты · прототип Alliance","",report.groups.map(g=>{const c=state.cases.find(x=>x.id===g.caseId);return c?lobbyRow("case/"+c.id,c.title,g.teamIds.map(id=>state.teams.find(t=>t.id===id)?.name||id).join(" + "),"Открыть"):""}).join("")+'<p class="hint">Схема нескольких бригад внутри Case. Самостоятельные компании и межфирменные соглашения пока не реализованы.</p>')+meritPassportPanel(state.actor)+'</div>';
 }
 function render(){
  networkRelease();
@@ -1264,7 +1288,7 @@ document.addEventListener("click",async e=>{
  if(a==="lab-reset"){if(!lab||!confirm("Сбросить только тестовые данные ALPHA LAB?"))return;try{const data=NVModel.alphaLab();const record=JSON.stringify({format:1,data,history:[]});await projectWrite(KEY,raw,record);raw=record;state=data;history=[];damaged=false;render()}catch(err){alert(err.message)}return}
  if(a==="sandbox"){
    try{
-     if(!lab){const key=workspaceKey(activeWorkspace().id)+"_alpha_lab_v1";const prior=await projectLoad(key);if(prior===null){const data=NVModel.alphaLab();await projectWrite(key,null,JSON.stringify({format:1,data,history:[]}))}sessionStorage.setItem(BASE+"_mode","alpha");location.hash="alpha-lab"}
+     if(!lab){const key=workspaceKey(activeWorkspace().id)+"_alpha_lab_v1";const prior=await projectLoad(key);if(prior===null){const data=NVModel.alphaLab();await projectWrite(key,null,JSON.stringify({format:1,data,history:[]}))}sessionStorage.setItem(BASE+"_mode","alpha");location.hash=b.hasAttribute("data-grid-demo")?"grid/demo":"alpha-lab"}
      else {sessionStorage.removeItem(BASE+"_mode");location.hash="dashboard"}
      location.reload();
    }catch(error){alert(error.message)}

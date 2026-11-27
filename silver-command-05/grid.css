@@ -163,3 +163,24 @@
 .grid-main>a:first-child {display:inline-flex;align-items:center;min-height:44px;color:var(--info)}
 .grid-save-status:empty {display:none}
 .grid-save-status {padding:9px 12px;border-left:2px solid var(--ok);margin-bottom:9px;color:var(--ok);background:var(--inset)}
+
+.grid-metrics .grid-demo-entry {margin-left:auto;align-items:center;align-content:center;white-space:nowrap}
+.grid-demo-entry span {color:var(--ink);font-weight:620}
+.grid-story {max-width:900px}
+.grid-story-head {border:1px solid var(--edge);border-radius:var(--round);padding:16px clamp(17px,3vw,34px) 25px;background:linear-gradient(90deg,#101518f5,#12181d85),url("art/grid-weave.webp") center 40% / cover}
+.grid-story-head a {display:inline-flex;min-height:44px;align-items:center;color:var(--grid-soft)}
+.grid-story-head h1 {font-size:clamp(23px,3vw,39px);letter-spacing:-.055em}
+.grid-story>p {margin:14px 0;color:var(--muted);max-width:66ch;line-height:1.5}
+.grid-story-path {list-style:none;margin:0;padding:0}
+.grid-story-path li {position:relative}
+.grid-story-path li:not(:last-child)::before {content:"";position:absolute;left:21px;top:50%;bottom:-50%;width:1px;background:#748386}
+.grid-story-path a {display:grid;position:relative;grid-template-columns:43px minmax(0,1fr) 18px;align-items:center;gap:14px;min-height:76px;border-bottom:1px solid var(--edge);padding:9px 4px 9px 0}
+.grid-story-path i {display:grid;place-items:center;width:43px;height:43px;border:1px solid #68777a;border-radius:var(--fold);background:var(--ridge)}
+.grid-story-path i svg {width:20px;height:20px}
+.grid-story-path a>svg {width:15px;height:15px}
+.grid-story-path a>span {display:grid;gap:2px;overflow-wrap:anywhere}
+.grid-story-path small,.grid-story-path em {font-size:12px;color:var(--muted);font-style:normal}
+.grid-story-path strong {font-size:17px;color:var(--ink);font-weight:650}
+.grid-story-path li:last-child i {color:var(--good,#b2d7c4)}
+.grid-story-path a:hover strong {text-decoration:underline;text-underline-offset:3px}
+@media(max-width:600px){.grid-metrics:has(.grid-demo-entry){grid-template-columns:repeat(3,minmax(0,1fr)) auto}.grid-metrics .grid-demo-entry{padding-inline:8px}}
