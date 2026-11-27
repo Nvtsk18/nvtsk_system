@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#101316">
   <meta name="nvtsk-google-client-id" content="451719459330-r6l56lqrooehtm276f6rspgr8r6eip5c.apps.googleusercontent.com">
-  <meta name="application-version" content="114">
+  <meta name="application-version" content="115">
   <title>NVTSK SYSTEM · Silver Command</title>
   <meta name="description" content="Рабочее пространство монтажных бригад NVTSK SYSTEM.">
   <link rel="icon" href="art/nvtsk-approved.webp">
   <link rel="stylesheet" href="workspace-layout.css?v=113">
   <link rel="stylesheet" href="silver-dna.css?v=113">
+  <link rel="stylesheet" href="grid.css?v=115">
   <script src="model.js?v=97" defer></script>
   <script src="pv-project-card-v62.js?v=74" defer></script>
-  <script src="app.js?v=114" defer></script>
+  <script src="app.js?v=115" defer></script>
 </head>
 <body>
   <a class="skip" href="#app" onclick="event.preventDefault();document.getElementById('app').focus()">К содержимому</a>
@@ -27,8 +28,8 @@
     <div class="nav-primary">
       <span class="nav-label">Рабочее пространство</span>
       <button type="button" data-route="dashboard"><span class="nav-glyph"></span><span>Главная</span></button>
+      <button type="button" data-route="grid"><span class="nav-glyph"></span><span>Grid</span></button>
       <button type="button" data-route="projects"><span class="nav-glyph"></span><span>Проекты</span></button>
-      <button type="button" data-route="network"><span class="nav-glyph"></span><span>Network</span></button>
       <button type="button" data-route="lager"><span class="nav-glyph"></span><span>Склад</span></button>
     </div>
     <div class="nav-secondary" id="nv108-secondary">
@@ -39,12 +40,11 @@
       <button type="button" data-route="merit"><span class="nav-glyph"></span><span>Merit Passport</span></button>
       <button type="button" data-route="analytics"><span class="nav-glyph"></span><span>Аналитика</span></button>
       <span class="nav-label">Управление</span>
-      <button type="button" data-route="social"><span class="nav-glyph"></span><span>Активность</span></button>
       <button type="button" data-route="settings"><span class="nav-glyph"></span><span>Настройки</span></button>
       <button type="button" data-route="alpha-lab"><span class="nav-glyph"></span><span>ALPHA LAB</span></button>
     </div>
     <button class="nav-more" id="nv108-more" type="button" aria-controls="nv108-secondary" aria-expanded="false" data-shell-more><span aria-hidden="true">•••</span><span>Ещё</span></button>
-    <div class="nav-foot"><i></i><div>Local First<small>Silver Command · v114</small></div></div>
+    <div class="nav-foot"><i></i><div>Local First<small>Silver Command · v115</small></div></div>
   </nav>
   <dialog id="dialog" aria-labelledby="dialogTitle"><form id="editor">
     <h2 id="dialogTitle"></h2><div id="fields"></div>

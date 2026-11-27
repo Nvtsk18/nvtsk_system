@@ -17,7 +17,7 @@ function transferCase(caseId,targetId){if(!lead()||lab)return;const owner=active
 function acceptCase(id){if(lab)return;const reg=caseAccessRegistry(),entry=reg[id];if(!entry||entry.executorId!==activeWorkspace().id||entry.status!=="offered")return;reg[id]={...entry,status:"accepted",acceptedAt:new Date().toISOString()};localStorage.setItem(SHARED_CASES_KEY,JSON.stringify(reg));render()}
 function offeredCases(){return Object.entries(caseAccessRegistry()).filter(([id,e])=>e.executorId===activeWorkspace().id&&e.status==="offered").map(([id,e])=>{try{const record=JSON.parse(projectRecords.get(workspaceKey(e.ownerId))||"null");if(!record)return null;const data=validate(migrate(record.format===1?record.data:record));return {id,case:data.cases.find(c=>c.id===id),ownerId:e.ownerId}}catch{return null}}).filter(x=>x&&x.case)}
 function sharedCaseReadOnly(id){return !state.cases.some(c=>c.id===id)&&!!sharedCase(id)}
-function companyProfile(){if(lab)return heading("Компании · ALPHA LAB")+lobbySection("Условные организации","",Array.from(new Set(state.crew.map(c=>c.company).filter(Boolean))).map(name=>finLine(name,String(state.crew.filter(c=>c.company===name).length)+" участников")).join("")+'<p class="hint">Вымышленные компании пока представлены принадлежностью участников; отдельных счетов и прав компаний нет.</p>');const w=activeWorkspace(),sun=w.id==="sunpaur";const emblem=w.logoData?'<img class="cp78-custom-logo" src="'+w.logoData+'" alt="Логотип компании">':sun?'<div class="cp78-sun-logo"><div class="cp78-sun">☀</div><div class="cp78-mountain">⌁</div><div class="cp78-panels">▱▱▱▱▱</div></div>':'<div class="cp78-monogram">'+esc(w.symbol||w.name[0])+'</div>';const rows=sun?state.cases.map(c=>'<div class="cp78-handoff-row"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city||c.address||"Объект")+'</small></span><button data-action="case-transfer" data-id="'+esc(c.id)+'" data-target="solan-plus">Открыть доступ SolAn Plus →</button></div>').join(""):"";return '<div class="cp78-company"><div class="cp78-hero"><div class="cp78-art">'+emblem+'</div><div class="cp78-title"><small>ПРОФИЛЬ КОМПАНИИ · '+(sun?"ЗАКАЗЧИК / AUFTRAGGEBER":"ИСПОЛНИТЕЛЬ / AUFTRAGNEHMER")+'</small><h1>'+esc(w.name)+'</h1><p>'+(sun?"Создание проектов и передача исполнителю":"Монтаж PV и управление работами")+'</p></div></div><div class="cp78-logo-tools"><label>Логотип компании <input id="company-logo-upload" type="file" accept="image/png,image/jpeg,image/webp"></label><small>Загрузите изображение с визитки · хранение на этом устройстве.</small></div><div class="cp78-stats"><div><strong>'+state.cases.length+'</strong><small>Case</small></div><div><strong>'+state.crew.length+'</strong><small>Участники</small></div><div><strong>'+state.shards.length+'</strong><small>Shards</small></div></div><section class="panel"><h2>Рабочее пространство</h2><div class="cp78-buttons"><button data-route="projects">Проекты</button><button data-route="team">Участники</button>'+'<button data-action="new-case">＋ Создать Case</button>'+'</div></section>'+'<section class="panel"><h2>Приглашения к Case</h2>'+((offeredCases().map(x=>'<div class="cp78-handoff-row"><strong>'+esc(x.case.title)+'</strong><button data-action="case-accept" data-id="'+esc(x.id)+'">Принять Case</button></div>').join(""))||'<p>Новых приглашений нет.</p>')+'</section>'+(sun?'<section class="panel"><h2>Передача Case → SolAn Plus</h2><p>Создайте и заполните Case, затем передайте его исполнителю. Открывается доступ к единой карточке, включая паспорт и медиа. Исполнитель должен принять Case.</p>'+(rows||'<p>Пока нет Case для передачи.</p>')+'</section>':'<section class="panel"><h2>Полученные Case</h2><p>Принятые Case отображаются в разделе Projects.</p></section>')+'</div>'}
+function companyProfile(){if(lab)return heading("Компании · ALPHA LAB")+lobbySection("Условные организации","",Array.from(new Set(state.crew.map(c=>c.company).filter(Boolean))).map(name=>finLine(name,String(state.crew.filter(c=>c.company===name).length)+" участников")).join("")+'<p class="hint">Вымышленные компании пока представлены принадлежностью участников; отдельных счетов и прав компаний нет.</p>');const w=activeWorkspace(),sun=w.id==="sunpaur";const emblem=w.logoData?'<img class="cp78-custom-logo" src="'+w.logoData+'" alt="Логотип компании">':sun?'<div class="cp78-sun-logo"><div class="cp78-sun">☀</div><div class="cp78-mountain">⌁</div><div class="cp78-panels">▱▱▱▱▱</div></div>':'<div class="cp78-monogram">'+esc(w.symbol||w.name[0])+'</div>';const rows=sun?state.cases.map(c=>'<div class="cp78-handoff-row"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city||c.address||"Объект")+'</small></span><button data-action="case-transfer" data-id="'+esc(c.id)+'" data-target="solan-plus">Открыть доступ SolAn Plus →</button></div>').join(""):"";return '<div class="cp78-company"><div class="cp78-hero"><div class="cp78-art">'+emblem+'</div><div class="cp78-title"><small>ПРОФИЛЬ КОМПАНИИ · '+(sun?"ЗАКАЗЧИК / AUFTRAGGEBER":"ИСПОЛНИТЕЛЬ / AUFTRAGNEHMER")+'</small><h1>'+esc(w.name)+'</h1><p>'+(sun?"Создание проектов и передача исполнителю":"Монтаж PV и управление работами")+'</p></div></div><div class="cp78-logo-tools"><label>Логотип компании <input id="company-logo-upload" type="file" accept="image/png,image/jpeg,image/webp"></label><small>Загрузите изображение с визитки · хранение на этом устройстве.</small></div><div class="cp78-stats"><div><strong>'+state.cases.length+'</strong><small>Case</small></div><div><strong>'+state.crew.length+'</strong><small>Участники</small></div><div><strong>'+state.shards.length+'</strong><small>Shards</small></div></div><section class="panel"><h2>Рабочее пространство</h2><div class="cp78-buttons"><button data-route="projects">Проекты</button><button data-route="grid/people">Участники</button>'+'<button data-action="new-case">＋ Создать Case</button>'+'</div></section>'+'<section class="panel"><h2>Приглашения к Case</h2>'+((offeredCases().map(x=>'<div class="cp78-handoff-row"><strong>'+esc(x.case.title)+'</strong><button data-action="case-accept" data-id="'+esc(x.id)+'">Принять Case</button></div>').join(""))||'<p>Новых приглашений нет.</p>')+'</section>'+(sun?'<section class="panel"><h2>Передача Case → SolAn Plus</h2><p>Создайте и заполните Case, затем передайте его исполнителю. Открывается доступ к единой карточке, включая паспорт и медиа. Исполнитель должен принять Case.</p>'+(rows||'<p>Пока нет Case для передачи.</p>')+'</section>':'<section class="panel"><h2>Полученные Case</h2><p>Принятые Case отображаются в разделе Projects.</p></section>')+'</div>'}
 const ACCOUNT_KEY=BASE+"_accounts_v1", SESSION_KEY=BASE+"_session_v1";
 function accounts(){try{const list=JSON.parse(localStorage.getItem(ACCOUNT_KEY)||"[]");return Array.isArray(list)?list:[]}catch{return []}}
 // Local-first remembered session: no passwords or Google tokens stored here.
@@ -105,6 +105,7 @@ function projectCover(project, caption = false) {
 const row=c=>'<button class="case" data-route="case/'+esc(c.id)+'"><span class="thumb">'+projectCover(c)+'</span><span class="casebody"><strong>'+esc(c.title)+'</strong><small>⌖ '+esc(c.city)+'</small><span class="progress"><i style="width:'+pct(c.id)+'%"></i></span></span><span class="casemeta"><b>'+pct(c.id)+'%</b><small>'+money(c.price)+' €</small></span></button>';
 const shard=s=>'<button class="shard" data-route="case/'+esc(s.caseId)+'"><span class="ring" style="--p:'+(s.status==="accepted"?100:0)+'%"><b>'+(s.status==="accepted"?"100%":"0%")+'</b></span><span><strong>'+esc(s.title)+'</strong><small>'+esc(s.kind)+' · '+esc(statusName[s.status])+'</small></span><b>›</b></button>';
 const iconPaths={
+ grid:"M3 5h6v6H3z M15 13h6v6h-6z M9 8h4l3 5 M6 11v5h9 M15 5h4v4",
  open:"M5 19 19 5M7 5h12v12",
  camera:"M3 7h4l2-3h6l2 3h4v13H3z M15.5 13a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0",
  folder:"M3 6h6l2 3h10v11H3z", shard:"m12 2 8 6-3 10-5 4-8-6 3-10z M12 2l-1 10 9-4 M11 12l1 10",
@@ -232,7 +233,7 @@ function dashboard(){
   ?'<section class="command-mission" aria-label="Следующий шаг"><img src="art/roof.webp" alt="" loading="lazy"><div class="command-mission-copy"><small>СЛЕДУЮЩИЙ ШАГ · '+esc(nextShard.status==="submitted"?"НА ПРИЁМКЕ":"В РАБОТЕ")+'</small><strong>'+esc(nextShard.title)+'</strong><span>'+esc(nextCase?.title||"Project")+' · '+esc(nextCase?.city||"")+'</span></div><button data-route="case/'+esc(nextShard.caseId)+'">Продолжить '+icon("layers")+'</button></section>'
   :'<section class="command-mission" aria-label="Следующий шаг"><img src="art/roof.webp" alt="" loading="lazy"><div class="command-mission-copy"><small>НАЧАЛО РАБОТЫ</small><strong>Создайте первый Project</strong><span>Новый объект, команда и рабочие этапы</span></div><button data-route="projects">Projects '+icon("layers")+'</button></section>';
  const dock=[["Projects","Объекты","projects","layers"],["Shards","Рабочие блоки","tasks","box"],["Garage","Техника и склад","garage","van"],["Сообщество","Люди, профили и достижения","team","team"],["Финансы","Расчёты","finance","coins"]];
- return '<div class="command-center"><header class="command-top"><div class="command-brand"><img class="command-brand-logo" src="art/nvtsk-approved.webp" alt="NVTSK" width="56" height="56"><span class="nvtsk-brand-caption"><strong>NVTSK SYSTEM</strong><small>ПЛАТФОРМА УПРАВЛЕНИЯ</small></span>'+workspaceBadge()+'</div><div class="command-status"><span>● Локальный режим</span><span>▤ Данные на устройстве</span><span>↻ Синхронизация: выкл.</span></div><div class="command-topbuttons"><button data-route="social" aria-label="Уведомления">♧</button><button data-route="projects" aria-label="Открыть Projects">⌕</button><button data-route="settings" aria-label="Настройки">⚙</button></div></header><section class="command-stage"><div class="command-stage-head"><div class="command-home-hero"><div class="command-home-actions" aria-label="Основные действия"><button class="command-home-action is-create" data-action="new-case"><span class="command-home-action-icon">'+icon("box")+'</span><span>+ Project</span></button></div><div class="command-home-map">'+caseMiniMap()+'</div></div><div class="command-stage-meta"><div class="command-health"><small>PV · ГОТОВНОСТЬ</small><strong>'+completion+'%</strong><span>'+state.cases.length+' объектов · '+accepted+' принято</span><svg class="command-trend" viewBox="0 0 200 36" aria-hidden="true"><path d="M0 29Q28 34 52 22T100 19T154 8T200 3"/></svg></div><div class="command-clock"><strong>'+new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})+'</strong><span>'+state.moves.length+' движений · Local First</span></div></div></div><div class="command-metrics">'+metrics.map(([label,value,route,glyph])=>'<button data-route="'+route+'" class="command-metric"><span class="command-metric-glyph">'+icon(glyph)+'</span><span>'+label+'</span><strong>'+esc(value)+'</strong></button>').join("")+'</div><div class="command-globe-scene" aria-hidden="true"><div class="command-globe"><span>N</span></div><div class="command-globe-base"></div></div>'+myProjects()+nextAction+'<div class="command-panels"><section class="command-panel command-panel-resources"><h2>'+icon("van")+' Ресурсы и техника <button data-route="garage" aria-label="Открыть Garage">›</button></h2><img class="command-panel-banner" src="art/store.webp" alt="" loading="lazy">'+resources+'</section><section class="command-panel command-panel-team"><h2>'+icon("team")+' Сообщество <button data-route="team" aria-label="Открыть сообщество">›</button></h2><img class="command-panel-banner" src="art/hero.webp" alt="" loading="lazy">'+team+'</section></div></section><nav class="command-dock" aria-label="Основные разделы">'+dock.map(([name,subtitle,route,glyph],i)=>'<button class="'+(i===0?"is-primary":"")+'" data-route="'+route+'"><span>'+icon(glyph)+'</span><strong>'+name+'</strong><small>'+subtitle+'</small></button>').join("")+'</nav></div>';
+ return '<div class="command-center"><header class="command-top"><div class="command-brand"><img class="command-brand-logo" src="art/nvtsk-approved.webp" alt="NVTSK" width="56" height="56"><span class="nvtsk-brand-caption"><strong>NVTSK SYSTEM</strong><small>ПЛАТФОРМА УПРАВЛЕНИЯ</small></span>'+workspaceBadge()+'</div><div class="command-status"><span>● Локальный режим</span><span>▤ Данные на устройстве</span><span>↻ Синхронизация: выкл.</span></div><div class="command-topbuttons"><button data-route="social" aria-label="Уведомления">♧</button><button data-route="projects" aria-label="Открыть Projects">⌕</button><button data-route="settings" aria-label="Настройки">⚙</button></div></header><section class="command-stage"><div class="command-stage-head"><div class="command-home-hero"><div class="command-home-actions" aria-label="Основные действия"><button class="command-home-action is-create" data-action="new-case"><span class="command-home-action-icon">'+icon("box")+'</span><span>+ Project</span></button></div><div class="command-home-map">'+caseMiniMap()+'</div></div><div class="command-stage-meta"><div class="command-health"><small>PV · ГОТОВНОСТЬ</small><strong>'+completion+'%</strong><span>'+state.cases.length+' объектов · '+accepted+' принято</span><svg class="command-trend" viewBox="0 0 200 36" aria-hidden="true"><path d="M0 29Q28 34 52 22T100 19T154 8T200 3"/></svg></div><div class="command-clock"><strong>'+new Date().toLocaleDateString("ru-RU",{day:"numeric",month:"short",year:"numeric"})+'</strong><span>'+state.moves.length+' движений · Local First</span></div></div></div><div class="command-metrics">'+metrics.map(([label,value,route,glyph])=>'<button data-route="'+route+'" class="command-metric"><span class="command-metric-glyph">'+icon(glyph)+'</span><span>'+label+'</span><strong>'+esc(value)+'</strong></button>').join("")+'</div><div class="command-globe-scene" aria-hidden="true"><div class="command-globe"><span>N</span></div><div class="command-globe-base"></div></div>'+myProjects()+nextAction+'<div class="command-panels"><section class="command-panel command-panel-resources"><h2>'+icon("van")+' Ресурсы и техника <button data-route="garage" aria-label="Открыть Garage">›</button></h2><img class="command-panel-banner" src="art/store.webp" alt="" loading="lazy">'+resources+'</section><section class="command-panel command-panel-team"><h2>'+icon("team")+' Сообщество <button data-route="grid/people" aria-label="Открыть сообщество">›</button></h2><img class="command-panel-banner" src="art/hero.webp" alt="" loading="lazy">'+team+'</section></div></section><nav class="command-dock" aria-label="Основные разделы">'+dock.map(([name,subtitle,route,glyph],i)=>'<button class="'+(i===0?"is-primary":"")+'" data-route="'+route+'"><span>'+icon(glyph)+'</span><strong>'+name+'</strong><small>'+subtitle+'</small></button>').join("")+'</nav></div>';
 }
 const heading=(name,action="")=>'<div class="screenhead"><h1>'+name+'</h1>'+action+'</div>';
 function visualTiles(items){return '<div class="visualtiles">'+items.map(([img,title,subtitle,route])=>'<button class="visualtile" data-route="'+route+'"><img src="art/'+img+'.webp" alt="" loading="lazy"><span><strong>'+esc(title)+'</strong><small>'+esc(subtitle)+'</small></span></button>').join("")+'</div>'}
@@ -378,10 +379,13 @@ function projectHubAccounting(){
  '<div class="ph-account-title"><h3>По объектам</h3><button data-route="pulse">Обзор Merit и бюджетов →</button></div>'+
  '<div class="ph-account-list">'+(rows||'<p class="ph-empty">Создайте первый Project, чтобы начать учёт.</p>')+'</div></div>';
 }
-function projects(){
+function visibleProjectHub(){
  const all=[...state.cases,...incomingCases().filter(c=>!state.cases.some(x=>x.id===c.id))].map(projectHubMembership);
  const own=lead()?all:all.filter(x=>x.managed||x.joined||sharedCaseReadOnly(x.c.id));
- const list=own.slice().sort((a,b)=>(projectHubStatusOrder[a.status]??9)-(projectHubStatusOrder[b.status]??9));
+ return own.sort((a,b)=>(projectHubStatusOrder[a.status]??9)-(projectHubStatusOrder[b.status]??9));
+}
+function projects(){
+ const list=visibleProjectHub();
  const current=list.find(x=>x.c.id===projectHubSelectedCase)||list[0];
  const status=x=>projectHubStatusLabel[x.status]||"Планирование";
  const originLabel=c=>c.origin?'<small class="cp78-origin">Получено от '+esc(c.origin.workspaceName)+'</small>':"";
@@ -450,11 +454,11 @@ function caseMaterialHistory(caseId){
 function caseTeam(id){
  const rel=NVModel.caseRelations(state,id),linked=rel?.shards||[],ids=new Set(rel?.memberIds||[]),owner=rel?.finance.ownerId;
  const rows=state.crew.filter(c=>ids.has(c.id)).map(c=>{const roles=[...(c.id===owner?["Создатель Case"]:[]),...linked.filter(s=>NVModel.organizerOf(s)===c.id).map(s=>"Организатор · "+s.title),...linked.filter(s=>NVModel.sharesFor(s).some(x=>x.memberId===c.id)).map(s=>"Исполнитель · "+s.title)];return '<article class="taskrow"><div><strong>'+esc(displayMemberName(c))+'</strong><small>'+esc(roles.join(" · ")||"Участник команды / задачи")+'</small></div><button data-route="member/'+esc(c.id)+'">Профиль →</button></article>'}).join("");
- return '<section class="panel"><div class="panelhead"><h2>Команда Case</h2><button data-route="team">Network · участники →</button></div>'+(rows||'<p>Участники пока не назначены</p>')+'<p class="hint">Назначения и доли берутся из Shards, Teams и Tasks. Роли зависят от участия в этом Case.</p></section>';
+ return '<section class="panel"><div class="panelhead"><h2>Команда Case</h2><button data-route="grid/people">Grid · участники →</button></div>'+(rows||'<p>Участники пока не назначены</p>')+'<p class="hint">Назначения и доли берутся из Shards, Teams и Tasks. Роли зависят от участия в этом Case.</p></section>';
 }
-function caseTabs(id,tab){return '<nav class="nv109-tabs" aria-label="Разделы Case">'+[["overview","Обзор"],["work","Работы"],["people","Команда"],["stock","Материалы"],["finance","Финансы"],["network","Network"],["docs","Документы"]].map(([k,t])=>'<button data-route="case/'+esc(id)+'/'+k+'" class="'+(tab===k?"active":"")+'" aria-current="'+(tab===k?"page":"false")+'">'+t+'</button>').join("")+'</nav>'}
+function caseTabs(id,tab){return '<nav class="nv109-tabs" aria-label="Разделы Case">'+[["overview","Обзор"],["work","Работы"],["people","Команда"],["stock","Материалы"],["finance","Финансы"],["network","Grid"],["docs","Документы"]].map(([k,t])=>'<button data-route="case/'+esc(id)+'/'+k+'" class="'+(tab===k?"active":"")+'" aria-current="'+(tab===k?"page":"false")+'">'+t+'</button>').join("")+'</nav>'}
 function caseStockPanel(id){const rel=NVModel.caseRelations(state,id);return lobbySection("На объекте · по получателям",lobbyLink("lager/"+id,"Lager →"),(rel.stock.map(x=>{const m=state.garage.find(i=>i.id===x.itemId),s=state.shards.find(i=>i.id===x.shardId);return '<div class="nv104-line"><span>'+esc(m?.title||"Материал")+'<small>'+esc(s?.title||"Shard")+' · '+esc(x.recipientId?member(x.recipientId):"Получатель не указан · старая запись")+'</small></span><strong>'+esc(x.qty)+' '+esc(m?.unit||"шт.")+'</strong></div>'}).join("")||'<p class="hint">Выдач пока нет.</p>')+'<h3>Журнал движений</h3>'+caseMaterialHistory(id))}
-function caseNetworkPanel(id){const rel=NVModel.caseRelations(state,id);return lobbySection("Источники и сотрудничество",lobbyLink("network","Network →"),(rel.deals.map(d=>finLine("Сделка · "+d.title,euroCents(NVModel.cents(d.budget)))).join("")||'<p class="hint">Case создан вручную или не связан с предложением Network.</p>')+'<h3>Публикации об объекте</h3>'+(rel.posts.map(networkPost).join("")||'<p class="hint">Публикаций пока нет.</p>')+'<button data-route="network/case/'+esc(id)+'">＋ Публикация об объекте</button>')+caseRentalPanel(id)}
+function caseNetworkPanel(id){const rel=NVModel.caseRelations(state,id);return lobbySection("Источники и сотрудничество",lobbyLink("grid","Grid →"),(rel.deals.map(d=>finLine("Сделка · "+d.title,euroCents(NVModel.cents(d.budget)))).join("")||'<p class="hint">Case создан вручную или не связан с предложением Grid.</p>')+'<h3>Публикации об объекте</h3>'+(rel.posts.map(p=>networkPost(p,state.network?.deals?.find(d=>d.postId===p.id),rel.case)).join("")||'<p class="hint">Публикаций пока нет.</p>')+'<button data-route="network/case/'+esc(id)+'">＋ Публикация об объекте</button>')+caseRentalPanel(id)}
 function detail(id,tab="overview"){
   const c=state.cases.find(x=>x.id===id)||sharedCase(id);
   if(!c)return heading("Project не найден");
@@ -539,51 +543,52 @@ function memberAvatar(c,large=false){
   return '<span class="community-avatar'+(large?" is-large":"")+'">'+(c.avatar?'<img src="'+esc(c.avatar)+'" alt="">':'<span>'+esc(displayMemberName(c).trim().slice(0,1).toUpperCase())+'</span>')+'</span>';
 }
 
-function teamsWorkspace(){
- const list=state.teams.map(t=>{
-  const memberCards=t.memberIds.map(id=>{const c=state.crew.find(x=>x.id===id);return c?'<button data-route="member/'+esc(c.id)+'" class="company-team-member">'+memberAvatar(c)+'<span><strong>'+esc(displayMemberName(c))+'</strong><small>'+(id===t.captainId?"Капитан Team":esc(c.headline||displayRole(c)))+'</small></span></button>':""}).join("");
-  const linked=state.shards.filter(sh=>sh.teamId===t.id);
-  const projectCount=new Set(linked.map(sh=>sh.caseId)).size;
-  return '<article class="company-team-card"><div class="company-team-heading"><div><small>NVTSK · TEAM</small><h3>'+esc(t.name)+'</h3><p>'+esc(t.description||"Рабочая бригада компании")+'</p></div>'+(lead()?button("Настроить","team-edit",t.id):"")+'</div>'+
-   '<div class="company-team-facts"><span>'+t.memberIds.length+' участников</span><span>'+linked.length+' Shards</span><span>'+projectCount+' Projects</span></div>'+
-   '<div class="company-team-members">'+memberCards+'</div>'+
-   (linked.length?'<div class="company-team-work"><h4>Назначенные Shards</h4>'+linked.map(sh=>'<button data-route="shard/'+esc(sh.id)+'">'+esc(sh.title)+' <span>'+esc(statusName[sh.status])+' ›</span></button>').join("")+'</div>':"")+'</article>';
- }).join("");
- return '<section class="community-section company-teams"><div class="community-section-head"><div><h2>Teams SolAn Plus GmbH</h2><small>Сформируйте бригады, назначьте капитанов и участников</small></div>'+(lead()?button("＋ Team","new-team"):"")+'</div>'+
- '<p class="community-muted">Teams — внутренние рабочие бригады. Капитан компании может назначить Team на Shard; капитан Team отвечает за передачу выполненных работ на приёмку.</p><button class="company-team-owner-link" data-route="member/lead">Профиль капитана SolAn Plus GmbH →</button>'+
- '<div class="company-teams-list">'+(list||'<div class="company-teams-empty"><strong>Пока нет сформированных Teams</strong><p>Создайте первую бригаду, выберите капитана и участников.</p>'+(lead()?button("＋ Создать Team","new-team"):"")+'</div>')+'</div>'+
- '<p class="community-disclaimer">Данные Teams хранятся локально. Общее управление бригадами с разных телефонов требует авторизации и синхронизации.</p></section>';
+function teamsWorkspace() {
+  const people = new Map(state.crew.map(person=>[person.id,person]));
+  const cards = state.teams.map(team => {
+    const members = team.memberIds.map(id=>people.get(id)).filter(Boolean);
+    const captain = people.get(team.captainId);
+    const shards = state.shards.filter(sh=>sh.teamId===team.id);
+    const tags = [team.name,team.description,...members.flatMap(c=>[displayMemberName(c),c.location,c.headline,...(c.skills||[])])].filter(Boolean);
+    const facts = [[members.length,"Участники"],[shards.length,"Рабочие участки"],[new Set(shards.map(sh=>sh.caseId)).size,"Объекты"]];
+    return `<article class="grid-team" data-grid-entry="${esc(tags.join(" ").toLocaleLowerCase())}">
+      <div class="grid-team-head"><i>${icon("team")}</i><h2>${esc(team.name)}</h2>${lead()?button("Настроить","team-edit",team.id):""}</div>
+      ${team.description?`<p>${esc(team.description)}</p>`:""}
+      ${captain?`<a class="grid-captain" href="#member/${esc(captain.id)}">${memberAvatar(captain)}<span><small>Капитан бригады</small><strong>${esc(displayMemberName(captain))}</strong></span></a>`:""}
+      <dl class="grid-team-facts">${facts.map(([n,label])=>`<div><dt>${label}</dt><dd>${n}</dd></div>`).join("")}</dl>
+      <details><summary>Состав бригады</summary><div class="grid-team-members">${members.map(c=>`<a href="#member/${esc(c.id)}">${memberAvatar(c)}<span>${esc(displayMemberName(c))}<small>${esc(c.headline||displayRole(c))}</small></span></a>`).join("")}</div></details>
+      ${shards.length?`<details><summary>Назначенные работы</summary>${shards.map(sh=>`<a class="grid-assignment" href="#shard/${esc(sh.id)}"><span>${esc(sh.title)}</span><small>${esc(statusName[sh.status])}</small></a>`).join("")}</details>`:""}
+    </article>`;
+  }).join("");
+  const control = lead() ? button("＋ Создать бригаду","new-team") : "";
+  const manager = people.get("lead");
+  const managerLink = manager ? gridLink("member/"+manager.id,"Профиль руководителя →") : "";
+  return `<div class="grid-directory-tools">${control}${managerLink}</div>`+
+    (cards?gridSearchList("teams",`<div class="grid-team-list">${cards}</div>`):gridEmpty("Пока нет бригад","Бригада объединяет участников, капитана и назначенные Shard."));
 }
-function communityTabs(active){
-  const tabs=[["people","Люди","team"],["teams","Teams","team/teams"],["feed","Лента","team/feed"],["achievements","Награды","team/achievements"]];
-  return '<nav class="community-tabs" aria-label="Разделы сообщества">'+tabs.map(([id,label,route])=>'<button class="'+(active===id?"is-active":"")+'" data-route="'+route+'">'+esc(label)+'</button>').join("")+'</nav>';
-}
-function communityShell(active,body){
-  const c=actor(),stats=communityStats(c);
-  return '<div class="community">'+
-    '<section class="community-hero"><img src="art/hero.webp" alt="Фотография солнечных панелей" loading="eager"><div class="community-hero-inner"><span class="community-kicker">'+esc(lab ? c.company || "ALPHA LAB" : activeWorkspace().name)+' · PEOPLE & TEAMS</span><h1>Сообщество</h1><p>Люди, опыт, результаты и достижения.</p><div class="community-hero-stats"><span><b>'+state.crew.length+'</b> участников</span><span><b>'+state.shards.filter(sh=>sh.status==="accepted").length+'</b> принятых Shards</span><span><b>'+state.tasks.filter(t=>t.status==="done").length+'</b> выполнено Tasks</span></div></div></section>'+
-    companyMainCaptain()+'<div class="community-identity">'+memberAvatar(c)+'<div class="community-identity-copy"><small>Ваш профиль · LOCAL FIRST</small><strong>'+esc(displayMemberName(c))+'</strong><span>'+esc(stats.level)+' · '+stats.xp+' XP</span></div><button data-route="member/'+esc(c.id)+'">Мой профиль</button>'+(lead()?button("＋ Участник","new-crew"):"")+'</div>'+
-    '<div class="community-profile-switch">'+profile()+'</div>'+
-    communityTabs(active)+body+
-    '<p class="community-disclaimer">Пилот социальной системы: профили, публикации и достижения хранятся локально на этом устройстве. Это не общая сеть между телефонами; XP не является Merit и не влияет на оплату.</p></div>';
-}
-function team(){
-  const route=location.hash.slice(1),view=route==="team/feed"?"feed":route==="team/teams"?"teams":route==="team/achievements"?"achievements":"people";
-  if(view==="teams")return communityShell(view,teamsWorkspace());
-  if(view==="feed")return communityShell(view,social());
+
+function gridPeopleContent(view){
+  if(view==="teams")return teamsWorkspace();
   if(view==="achievements"){
     const members=state.crew.map(c=>({c,stats:communityStats(c)})).sort((a,b)=>b.stats.xp-a.stats.xp);
     const body='<section class="community-section"><div class="community-section-head"><h2>Путь мастерства</h2><small>Проверяемые результаты работ</small></div><p class="community-muted">XP — отдельная пилотная оценка прогресса. 60 XP за принятый Shard и 15 XP за выполненную Task внутри принятого Shard. Финансовые Merit не затрагиваются.</p><div class="community-levels"><span>Новичок</span><span>Практик</span><span>Специалист</span><span>Эксперт</span></div><div class="community-rank-list">'+members.map((entry,i)=>'<button data-route="member/'+esc(entry.c.id)+'" class="community-rank-row"><b>#'+(i+1)+'</b>'+memberAvatar(entry.c)+'<span><strong>'+esc(displayMemberName(entry.c))+'</strong><small>'+esc(entry.stats.level)+' · '+entry.stats.accepted+' Shards принято</small></span><strong>'+entry.stats.xp+' XP</strong></button>').join("")+'</div></section>';
-    return communityShell(view,body);
+    return body;
   }
-  const roster=state.crew.map(c=>{
-    const st=communityStats(c),skills=(c.skills||[]).slice(0,3);
-    return '<button class="community-person" data-route="member/'+esc(c.id)+'" data-membersearch="'+esc((displayMemberName(c)+" "+displayRole(c)+" "+skills.join(" ")+" "+(c.location||"")).toLowerCase())+'"><span class="community-person-cover"></span><span class="community-person-main">'+memberAvatar(c,true)+'<span class="community-person-info"><strong>'+esc(displayMemberName(c))+'</strong><small>'+esc(c.headline||displayRole(c))+'</small><small>'+esc(c.location||"NVTSK Crew")+'</small></span></span><span class="community-person-skills">'+(skills.length?skills.map(k=>'<em>'+esc(k)+'</em>').join(""):'<em>'+esc(displayRole(c))+'</em>')+'</span><span class="community-person-footer"><span><b>'+st.accepted+'</b> Shards принято</span><span><b>'+st.done+'</b> Tasks</span><span class="community-person-level">'+esc(st.level)+'</span></span></button>';
+  const roster = state.crew.map(c => {
+    const stats = communityStats(c), skills=c.skills||[];
+    const words = [displayMemberName(c),displayRole(c),c.company,c.location,c.headline,...skills].filter(Boolean);
+    return `<a class="grid-person community-person" href="#member/${esc(c.id)}" data-grid-entry="${esc(words.join(" ").toLocaleLowerCase())}">
+      ${memberAvatar(c)}<div><strong>${esc(displayMemberName(c))}</strong><span>${esc(c.headline||displayRole(c))}</span>
+      ${c.location?`<small>${esc(c.location)}</small>`:""}</div>
+      ${skills.length?`<p>${esc(skills.slice(0,3).join(" · "))}</p>`:""}
+      <footer><span>${esc(stats.level)}</span><small>Принято Shard · ${stats.accepted}</small></footer></a>`;
   }).join("");
-  const posts=socialData().posts.slice(-3).reverse();
-  const preview=posts.map(p=>{const c=state.crew.find(x=>x.id===p.author);return '<div class="community-update">'+memberAvatar(c||{name:"?"})+'<div><strong>'+esc(c?displayMemberName(c):"Участник")+'</strong><small>'+esc(new Date(p.created).toLocaleDateString("ru-RU"))+'</small><p>'+esc(p.text)+'</p></div></div>'}).join("")||'<div class="community-empty-feed">Пока нет публикаций. Начните общение с командой.</div>';
-  const content='<div class="community-grid"><section class="community-section"><div class="community-section-head"><div><h2>Участники</h2><small>Профили и специализации</small></div><span>'+state.crew.length+' человек</span></div><label class="community-search">Поиск участников<input id="member-search" type="search" placeholder="Имя, специализация, город…" autocomplete="off"></label><div class="community-people">'+roster+'</div></section><aside class="community-aside"><section class="community-section"><div class="community-section-head"><h2>Мой прогресс</h2><button data-route="team/achievements">Подробнее →</button></div><div class="community-progress"><strong>'+communityStats(actor()).xp+' XP</strong><span>'+esc(communityStats(actor()).level)+'</span><div class="community-progress-rail"><i style="width:'+communityStats(actor()).percent+'%"></i></div><small>Следующий уровень · '+communityStats(actor()).next+' XP</small></div><div class="community-badges">'+(communityStats(actor()).badges.map(([iconName,b])=>'<span>'+esc(b)+'</span>').join("")||'<p>Достижения появятся после выполненных и принятых работ.</p>')+'</div></section><section class="community-section"><div class="community-section-head"><h2>Лента сообщества</h2><button data-route="team/feed">Открыть →</button></div>'+preview+'<button class="community-write-link" data-route="team/feed">＋ Новая публикация</button></section></aside></div>';
-  return communityShell(view,content);
+  const self=actor(), stats=communityStats(self);
+  const manage=`<details class="grid-account"><summary>Мой профиль и управление</summary>
+    ${companyMainCaptain()}<p>${esc(stats.level)} · ${stats.xp} XP · выполнено задач ${stats.done}</p>
+    <div class="grid-person-tools"><button data-route="member/${esc(self.id)}">Мой профиль</button><button data-route="grid/achievements">Достижения</button></div>${profile()}</details>`;
+  return (lead()?`<div class="grid-directory-tools">${button("＋ Участник","new-crew")}</div>`:"")+
+    gridSearchList("people",`<div class="grid-roster">${roster}</div>`)+manage;
 }
 
 function companyMainCaptain(){
@@ -619,7 +624,7 @@ function captainRelations(c){
  const title=managing?"Структура управления":"Рабочие связи";
  const manager=state.crew.find(t=>t.id==="lead"&&t.role===roles[0]);
  const allTeams=managing?state.teams:memberTeams;
- const membership=allTeams.map(t=>'<button class="company-network-link" data-route="team/teams"><span>TEAM</span><strong>'+esc(t.name)+'</strong><small>'+t.memberIds.length+' участников</small></button>').join("");
+ const membership=allTeams.map(t=>'<button class="company-network-link" data-route="grid/teams"><span>TEAM</span><strong>'+esc(t.name)+'</strong><small>'+t.memberIds.length+' участников</small></button>').join("");
  const ownShards=state.shards.filter(sh=>sh.assignee===c.id||sh.teamId&&memberTeams.some(t=>t.id===sh.teamId)||state.tasks.some(t=>t.shardId===sh.id&&t.assignee===c.id));
  const relatedProjectIds=managing?state.cases.map(p=>p.id):[...new Set(ownShards.map(sh=>sh.caseId))];
  const people=managing?state.crew.filter(person=>person.id!==c.id):state.crew.filter(person=>person.id!==c.id&&memberTeams.some(t=>t.memberIds.includes(person.id)));
@@ -633,7 +638,7 @@ function captainRelations(c){
   }).join("")+(relatedProjectIds.length>5?'<button class="company-network-more" data-route="projects">Все Projects →</button>':"")+'</div></div>'+
   '<div class="cp-network-partners"><div class="company-network-people-header"><small>КОНТРАГЕНТЫ · '+state.counterparties.length+'</small><button data-route="projects">Projects / Партнёры →</button></div>'+
   state.counterparties.map(p=>'<button class="cp-network-partner" data-route="partner/'+esc(p.id)+'"><span>AUFTRAGGEBER</span><strong>'+esc(p.name)+'</strong><small>Заказы на DC · AC выполняет партнёр</small></button>').join("")+'</div>'+
-  '<div class="company-network-people"><div class="company-network-people-header"><small>УЧАСТНИКИ · '+people.length+'</small><button data-route="team">Все профили →</button></div>'+
+  '<div class="company-network-people"><div class="company-network-people-header"><small>УЧАСТНИКИ · '+people.length+'</small><button data-route="grid/people">Все профили →</button></div>'+
   '<div class="company-network-people-list">'+(people.map(person=>'<button data-route="member/'+esc(person.id)+'" class="company-network-person">'+memberAvatar(person)+'<span><strong>'+esc(displayMemberName(person))+'</strong><small>'+esc(displayRole(person))+'</small></span></button>').join("")||'<span class="company-network-empty">Участники появятся здесь после добавления профилей</span>')+'</div></div></div>';
  return '<section class="community-section company-network-section"><div class="community-section-head"><h2>'+title+'</h2><small>Связи формируются из Teams, Projects и назначений</small></div>'+relations+'</section>';
 }
@@ -653,7 +658,7 @@ function memberProfile(id){
  const badges=st.badges.map(([kind,name])=>'<span class="community-earned-badge">'+esc(name)+'</span>').join("")||'<p class="community-muted">Достижения появятся после приёмки Shards и выполненных Tasks.</p>';
  const leadLabel="";
  const captainNote="";
- return '<div class="community community-profile"><button class="back" data-route="team">← Сообщество</button>'+
+ return '<div class="community community-profile"><button class="back" data-route="grid/people">← Сообщество</button>'+
  '<section class="community-profile-hero"><div class="community-profile-cover"><img src="art/hero.webp" alt="PV-панели" loading="lazy"></div>'+
  '<div class="community-profile-summary">'+memberAvatar(c,true)+
  '<div><small>'+(captain?esc(activeWorkspace().name)+' · COMPANY PROFILE':'NVTSK MEMBER · '+esc(st.level))+'</small>'+alphaLabel(c)+'<h1>'+esc(displayMemberName(c))+'</h1><p>'+esc(c.headline||displayRole(c))+'</p><span>'+esc(c.location||"Город не указан")+'</span>'+leadLabel+'</div>'+
@@ -693,10 +698,9 @@ function pulse(){
  panel("Готовность Projects","projects",state.cases.map(row).join("")||"<p>Projects пока нет</p>")+
  '<p class="pulsehint">В бесплатной модели Merit генерируются через Shards и разблокируются после приёмки и оплаты. Исторические Case v104 рассчитываются отдельно.</p>';
 }
-function settings(){if(lab)return alphaLabPage();return heading("Настройки")+'<section class="panel workspace-admin"><h2>Рабочее пространство</h2><p>Активное пространство: <strong>'+esc(activeWorkspace().name)+'</strong>. Case, участники и склад хранятся отдельно для каждой компании.</p>'+workspaceBadge()+'<div class="workspace-admin-actions"><button data-route="company">Открыть профиль компании →</button>'+(lead()?'<button data-action="new-crew">＋ Профиль участника</button>':'')+'</div><p class="hint">Участник создаётся внутри активной фирмы и относится только к ней. Приглашения по email требуют подключения сервера.</p></section>'+'<section class="panel company-identity-settings"><div><small>КОМПАНИЯ · ВНУТРЕННЕЕ ПРОСТРАНСТВО</small><strong>'+esc(activeWorkspace().name)+'</strong><p>Проекты, учёт и Teams этой компании · данные пока хранятся локально.</p></div><div><small>РАЗРАБОТЧИК И ПЛАТФОРМА</small><strong>'+esc(APP_BRAND.developer)+'</strong><p>Программное обеспечение NVTSK SYSTEM. Отдельная система учётных записей и синхронизации пока не подключена.</p></div></section>'+profile()+'<div class="panel tools"><button data-route="team">Сообщество и роли</button>'+button(lab?"Вернуться к рабочим данным":"Открыть ALPHA LAB","sandbox")+button("Экспорт JSON","export")+(lead()?'<label>Импорт JSON<input id="import" type="file" accept=".json,application/json"></label>'+ (history.length?button("Time Machine · отменить последнюю операцию","undo"):""):"")+'</div><p>Профили действуют на этом устройстве. История хранит последние 10 операций.</p>'}
+function settings(){if(lab)return alphaLabPage();return heading("Настройки")+'<section class="panel workspace-admin"><h2>Рабочее пространство</h2><p>Активное пространство: <strong>'+esc(activeWorkspace().name)+'</strong>. Case, участники и склад хранятся отдельно для каждой компании.</p>'+workspaceBadge()+'<div class="workspace-admin-actions"><button data-route="company">Открыть профиль компании →</button>'+(lead()?'<button data-action="new-crew">＋ Профиль участника</button>':'')+'</div><p class="hint">Участник создаётся внутри активной фирмы и относится только к ней. Приглашения по email требуют подключения сервера.</p></section>'+'<section class="panel company-identity-settings"><div><small>КОМПАНИЯ · ВНУТРЕННЕЕ ПРОСТРАНСТВО</small><strong>'+esc(activeWorkspace().name)+'</strong><p>Проекты, учёт и Teams этой компании · данные пока хранятся локально.</p></div><div><small>РАЗРАБОТЧИК И ПЛАТФОРМА</small><strong>'+esc(APP_BRAND.developer)+'</strong><p>Программное обеспечение NVTSK SYSTEM. Отдельная система учётных записей и синхронизации пока не подключена.</p></div></section>'+profile()+'<div class="panel tools"><button data-route="grid/people">Сообщество и роли</button>'+button(lab?"Вернуться к рабочим данным":"Открыть ALPHA LAB","sandbox")+button("Экспорт JSON","export")+(lead()?'<label>Импорт JSON<input id="import" type="file" accept=".json,application/json"></label>'+ (history.length?button("Time Machine · отменить последнюю операцию","undo"):""):"")+'</div><p>Профили действуют на этом устройстве. История хранит последние 10 операций.</p>'}
 
 const SOCIAL_KEY=KEY===BASE?BASE+"_social":KEY+"_social";
-let communityFeedView="all";
 function acceptedWorkEvents(memberId=null){
  return state.shards.filter(sh=>sh.status==="accepted"&&sh.assignee&&(memberId===null||sh.assignee===memberId)).slice().reverse().map(sh=>({
   sh,owner:state.crew.find(c=>c.id===sh.assignee),project:state.cases.find(c=>c.id===sh.caseId),
@@ -705,16 +709,6 @@ function acceptedWorkEvents(memberId=null){
 }
 function communityWorkFeed(events){
  return events.map(({sh,owner,project,completed})=>'<article class="community-work-event" data-workevent="'+esc(sh.id)+'"><div class="community-work-symbol">'+icon("check")+'</div><div class="community-work-copy"><span class="community-work-label">ПОДТВЕРЖДЁННЫЙ РЕЗУЛЬТАТ</span><strong>'+esc(owner?displayMemberName(owner):"Участник")+' · принят Shard</strong><p>'+esc(sh.title)+(completed?' · '+completed+' Tasks':"")+'</p><small>'+esc(project?.city||"")+' · приёмка завершена</small><div class="community-work-links"><button data-route="member/'+esc(sh.assignee)+'">Профиль</button><button data-route="shard/'+esc(sh.id)+'">Открыть Shard →</button></div></div></article>').join("");
-}
-
-function socialData(){return networkData()}
-function social(){
- const d=socialData(),people=Object.fromEntries(state.crew.map(c=>[c.id,displayMemberName(c)]));
- const posts=d.posts.slice().reverse().map(p=>{
- const c=state.cases.find(c=>c.id===p.caseId),likes=p.likes||[],comments=p.comments||[];
- return '<article class="socialpost"><div class="socialauthor"><button class="socialavatar" data-route="member/'+esc(p.author)+'" aria-label="Профиль автора">'+esc((people[p.author]||"?").slice(0,1))+'</button><div><strong>'+esc(people[p.author]||"Участник")+'</strong><small>'+esc(new Date(p.created).toLocaleString("ru-RU"))+'</small></div></div><p>'+esc(p.text)+'</p>'+(c?'<button data-route="case/'+esc(c.id)+'">Project: '+esc(c.title)+' →</button>':'')+(p.author===state.actor?'<button class="community-remove-post" data-action="social-delete" data-id="'+esc(p.id)+'">Удалить публикацию</button>':"")+'<div class="socialactions"><button data-action="social-like" data-id="'+esc(p.id)+'">'+(likes.includes(state.actor)?"♥":"♡")+' '+likes.length+'</button><span>Комментарии '+comments.length+'</span></div><div class="socialcomments">'+comments.map(x=>'<p><strong>'+esc(people[x.author]||"Участник")+':</strong> '+esc(x.text)+'</p>').join("")+'</div><form class="socialcommentform" data-post="'+esc(p.id)+'"><input required maxlength="500" name="comment" placeholder="Комментарий"><button type="submit">Отправить</button></form></article>';
- }).join("");
- return '<section class="community-section-head community-feed-heading"><div><h2>Лента сообщества</h2><small>Обновления, вопросы и результаты работ</small></div></section><section class="panel socialcomposer"><h2>Новая публикация</h2><form id="social-compose"><textarea name="text" required maxlength="1200" rows="3" placeholder="Что нового на объекте?"></textarea><div class="socialcomposeactions"><select name="caseId"><option value="">Без Project</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'">'+esc(c.title)+'</option>').join("")+'</select><button type="submit">Опубликовать</button></div></form></section><div class="community-feed-filters" role="group" aria-label="Фильтр ленты">'+[["all","Всё"],["posts","Публикации"],["work","Результаты"]].map(([id,label])=>'<button data-action="feed-view" data-view="'+id+'" class="'+(communityFeedView===id?"is-active":"")+'">'+label+'</button>').join("")+'</div><div class="socialfeed">'+((communityFeedView!=="posts"?communityWorkFeed(acceptedWorkEvents()):"")+(communityFeedView!=="work"?posts:"")||'<div class="community-empty-feed">Пока нет публикаций или принятых Shards.</div>')+'</div><p class="socialnotice">Публикации сохраняются только на этом устройстве. Это не общий онлайн-чат. Не публикуйте персональные данные клиентов.</p>';
 }
 
 /* NVTSK 0.6: approved visual reference, live Case/Shard/Lager data, one active workspace. */
@@ -836,8 +830,8 @@ function personalLobby() {
   return '<div class="command">'+hero+actions+'<div class="command-board">'+caseMiniMap()+pulseSummary()+
     '<div class="command-projects">'+lobbySection("Активные проекты <span>"+active.length+"</span>",lobbyLink("projects","Все проекты ↗"),projectRows||'<p class="empty">У вас пока нет активных объектов.</p>')+'</div>'+
     '<div class="command-tasks">'+lobbySection("Мои задачи <span>"+openTasks.length+"</span>",lobbyLink("tasks","Все задачи ↗"),taskRows||'<p class="empty">Открытых личных задач сейчас нет.</p>')+'</div></div>'+
-    '<div class="command-details">'+lobbySection("Профессиональная активность",lobbyLink("network","Network ↗"),communityWorkFeed(acceptedWorkEvents(c.id).slice(0,3))||'<p class="empty">Здесь появятся принятые работы.</p>')+
-    lobbySection("Ресурсы",lobbyLink("lager","Склад ↗"),'<div class="resource-links">'+lobbyLink("fuhrpark","Автопарк")+lobbyLink("network/rental","Каталог аренды")+rentalProfileAction()+'</div>')+
+    '<div class="command-details">'+lobbySection("Активность в Grid",lobbyLink("grid","Открыть Grid ↗"),communityWorkFeed(acceptedWorkEvents(c.id).slice(0,3))||'<p class="empty">Здесь появятся принятые работы.</p>')+
+    lobbySection("Ресурсы",lobbyLink("lager","Склад ↗"),'<div class="resource-links">'+lobbyLink("fuhrpark","Автопарк")+lobbyLink("grid/rental","Каталог аренды")+rentalProfileAction()+'</div>')+
     meritPassportPanel()+lobbySection("Мои деньги · "+euroCents(t.balance),lobbyLink("finance","Журнал ↗"),cashTiles(t)+cashActions())+
     finMemberPanel()+lobbySection("Профиль специалиста",button("Изменить","edit-profile",c.id),personal)+'</div></div>';
 }
@@ -847,33 +841,48 @@ function financeWorkspace(){
  const rows=state.cases.map(c=>'<button class="ref66-finance-row" data-route="case/'+esc(c.id)+'"><span><strong>'+esc(c.title)+'</strong><small>'+esc(c.city||"")+'</small></span><strong>'+money(c.price)+' €</strong><span class="ref66-finance-unknown">Оплата не подтверждена</span></button>').join("");
  return '<div class="ref66-section">'+heading("Финансы · "+APP_BRAND.workspace)+'<div class="ref66-section-tabs"><button data-route="finance">Обзор</button><button data-route="merit">Merit</button><button data-route="analytics">Аналитика</button></div><div class="ref66-finance-cards"><article class="panel"><small>Стоимость Case</small><h2>'+money(sum)+' €</h2></article><article class="panel"><small>Подтверждённые поступления</small><h2>Нет данных</h2></article><article class="panel"><small>Доступно к выплате</small><h2>Не определено</h2></article></div><section class="panel"><h2>Case и расчёты</h2><p class="ref66-finance-warning">Это бюджеты проектов, а не оплаченные счета. Реестр Rechnung, фактические Zahlungseingang и выплаты пока не реализованы. Выплата исполнителю допускается только после полной оплаты Case заказчиком.</p>'+rows+'</section></div>';
 }
-function meritWorkspace(){const cap=NVModel.rentalCapital(state),work=state.cases.map(c=>NVModel.financialCase(state,c.id)).filter(f=>f.policy==="free-v105"),released=work.reduce((n,f)=>n+f.meritReleased,0)+cap.merit;return '<div class="nv103-lobby">'+heading("Merit · "+(lab?"ALPHA LAB":activeWorkspace().name))+meritPassportPanel(state.actor,true)+finReservePanel()+lobbySection("Merit Capital · RENTAL",lobbyLink("network","Network →"),finLine("Эмиссия RENTAL",meritFmt(cap.merit))+finLine("Единая разблокированная эмиссия WORK + RENTAL",meritFmt(released))+finLine("Фонд из аренд · расчёт",euroCents(cap.fund))+finLine("Доход платформы",euroCents(cap.platformIncome))+finLine("Платформа · RENTAL",meritFmt(cap.platformMerit))+finLine("Условное обеспечение на M",released?(cap.fund/released).toFixed(5)+" €":"—")+'<p class="hint">Отношение расчётного фонда к разблокированным единицам нового формата, без замороженных и исторических Merit. Не рыночная цена.</p>')+'</div>'}
+function meritWorkspace(){const cap=NVModel.rentalCapital(state),work=state.cases.map(c=>NVModel.financialCase(state,c.id)).filter(f=>f.policy==="free-v105"),released=work.reduce((n,f)=>n+f.meritReleased,0)+cap.merit;return '<div class="nv103-lobby">'+heading("Merit · "+(lab?"ALPHA LAB":activeWorkspace().name))+meritPassportPanel(state.actor,true)+finReservePanel()+lobbySection("Merit Capital · RENTAL",lobbyLink("grid","Grid →"),finLine("Эмиссия RENTAL",meritFmt(cap.merit))+finLine("Единая разблокированная эмиссия WORK + RENTAL",meritFmt(released))+finLine("Фонд из аренд · расчёт",euroCents(cap.fund))+finLine("Доход платформы",euroCents(cap.platformIncome))+finLine("Платформа · RENTAL",meritFmt(cap.platformMerit))+finLine("Условное обеспечение на M",released?(cap.fund/released).toFixed(5)+" €":"—")+'<p class="hint">Отношение расчётного фонда к разблокированным единицам нового формата, без замороженных и исторических Merit. Не рыночная цена.</p>')+'</div>'}
 function analyticsWorkspace(){
  const done=state.shards.filter(x=>x.status==="accepted").length,waiting=state.shards.filter(x=>x.status==="submitted").length;
  return '<div class="ref66-section">'+heading("Аналитика · "+(lab ? actor().company || "ALPHA LAB" : activeWorkspace().name))+'<div class="ref66-finance-cards"><article class="panel"><small>Case</small><h2>'+state.cases.length+'</h2></article><article class="panel"><small>Shard принято</small><h2>'+done+'</h2></article><article class="panel"><small>Ожидают приёмки</small><h2>'+waiting+'</h2></article></div><section class="panel"><h2>Проекты и прогресс</h2>'+state.cases.map(c=>'<button class="ref66-finance-row" data-route="case/'+esc(c.id)+'"><span>'+esc(c.title)+'</span><strong>'+pct(c.id)+'%</strong></button>').join("")+'</section></div>';
 }
 
 /* Network — local-first professional feed, media and deal drafts. */
-let networkTab="all",networkUrls=[],networkEpoch=0;
+let networkUrls=[],networkEpoch=0;
 const networkKey=()=>KEY+"_network_v1";
 function legacyNetworkData(){const d=JSON.parse(localStorage.getItem(networkKey())||"null"),old=JSON.parse(localStorage.getItem(SOCIAL_KEY)||'{"posts":[]}');const posts=new Map((old.posts||[]).map(p=>[p.id,{...p,kind:"post"}]));for(const p of d?.posts||[])posts.set(p.id,p);return NVModel.normalizeNetwork(state,{posts:[...posts.values()],deals:d?.deals||[]})}
 function networkData(){return JSON.parse(JSON.stringify(state.network||{posts:[],deals:[]}))}
-async function networkSave(d){if(!await change(()=>apply(state,"network-save",{network:d})))throw Error("Не удалось сохранить Network")}
+async function networkSave(d){if(!await change(()=>apply(state,"network-save",{network:d})))throw Error("Не удалось сохранить запись Grid")}
 async function migrateNetwork(){if(state.network!==undefined||damaged||!account())return;const n=legacyNetworkData();if(!await change(()=>apply(state,"network-save",{network:n})))throw Error("Не удалось перенести Network. Старые записи сохранены.")}
 function networkDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open("nvtsk-network-media",1);req.onupgradeneeded=()=>req.result.createObjectStore("media");req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(Error("Хранилище медиа недоступно"))})}
 async function networkMedia(op,id,blob){const db=await networkDB();try{return await new Promise((resolve,reject)=>{const tx=db.transaction("media",op==="get"?"readonly":"readwrite"),store=tx.objectStore("media"),key=KEY+"/"+id,req=op==="get"?store.get(key):op==="put"?store.put(blob,key):store.delete(key);tx.oncomplete=()=>resolve(req.result);tx.onerror=tx.onabort=()=>reject(Error("Не удалось сохранить или прочитать медиа"))})}finally{db.close()}}
 function networkRelease(){networkEpoch++;networkUrls.forEach(u=>URL.revokeObjectURL(u));networkUrls=[]}
 async function networkHydrate(){const epoch=networkEpoch;for(const el of document.querySelectorAll("[data-network-media]")){try{const blob=await networkMedia("get",el.dataset.networkMedia);if(epoch!==networkEpoch||!el.isConnected)continue;if(!blob){el.replaceWith(document.createTextNode("Медиа недоступно на этом устройстве"));continue}const u=URL.createObjectURL(blob);networkUrls.push(u);el.src=u;el.hidden=false;const placeholder=el.parentElement.querySelector(".nt99-media-note");if(placeholder)placeholder.hidden=true}catch{if(el.isConnected){const p=el.parentElement.querySelector(".nt99-media-note");if(p)p.textContent="Медиа недоступно"}}}}
 const networkKinds={post:"Публикация",video:"Видео",offer:"Предложение работы",available:"Бригада свободна"};
-function networkPost(p){const person=state.crew.find(c=>c.id===p.author),name=person?displayMemberName(person):"Участник",likes=p.likes||[],comments=p.comments||[],kind=p.kind||"post",offer=["offer","available"].includes(kind),d=networkData().deals.find(x=>x.postId===p.id);
+function networkPost(p,d,project){const person=state.crew.find(c=>c.id===p.author),name=person?displayMemberName(person):"Участник",likes=p.likes||[],comments=p.comments||[],kind=p.kind||"post",offer=["offer","available"].includes(kind);
 const media=p.mediaKind?'<div class="nt99-media"><span class="nt99-media-note">Загрузка медиа…</span>'+(p.mediaKind==="video"?'<video hidden controls playsinline preload="metadata" data-network-media="'+esc(p.id)+'"></video>':'<img hidden alt="Фото публикации" data-network-media="'+esc(p.id)+'">')+'</div>':"";
-return '<article class="nt99-post"><header class="nt99-author">'+(person?memberAvatar(person):'<span class="nt99-avatar">?</span>')+'<div><strong>'+esc(name)+'</strong><small>'+esc(networkKinds[kind]||"Публикация")+' · '+esc(new Date(p.created).toLocaleDateString("ru-RU"))+'</small></div>'+(p.author===state.actor?'<button type="button" data-network="delete" data-id="'+esc(p.id)+'" aria-label="Удалить публикацию">×</button>':'')+'</header>'+(offer?'<div class="nt99-offer"><small>'+esc(p.region||"Регион не указан")+'</small><h3>'+esc(p.title||"Предложение")+'</h3><strong>'+money(p.budget)+' €</strong></div>':'')+'<p class="nt99-copy">'+esc(p.text)+'</p>'+media+(p.caseId&&state.cases.some(c=>c.id===p.caseId)?'<button class="nt99-link" data-route="case/'+esc(p.caseId)+'">Связанный Case →</button>':'')+'<div class="nt99-reactions"><button data-network="like" data-id="'+esc(p.id)+'" aria-pressed="'+likes.includes(state.actor)+'">'+(likes.includes(state.actor)?"♥":"♡")+' '+likes.length+'</button><span>'+comments.length+' комментариев</span>'+(offer?'<button class="nt99-primary" data-network="draft" data-id="'+esc(p.id)+'">'+(d?"Открыть черновик":"Подготовить условия")+'</button>':'')+'</div><div class="nt99-comments">'+comments.map(c=>'<p><strong>'+esc(state.crew.find(x=>x.id===c.author)?.name||"Участник")+'</strong> '+esc(c.text)+'</p>').join("")+'</div><form class="nt99-comment" data-id="'+esc(p.id)+'"><input name="text" maxlength="500" required placeholder="Комментарий…"><button type="submit" aria-label="Отправить комментарий">→</button></form></article>'}
-function networkDeal(d){const c=state.cases.find(x=>x.id===d.caseId);return '<article class="nt99-post nt99-deal"><small>ЧЕРНОВИК · НЕ ДОГОВОР</small><h3>'+esc(d.title)+'</h3><p>'+esc(d.region)+' · '+money(d.budget)+' €</p><form class="nt99-dealform" data-id="'+esc(d.id)+'"><label>Предмет и условия<textarea name="terms" maxlength="4000" required rows="3" '+(c?"readonly":"")+'>'+esc(d.terms)+'</textarea></label><label>Бюджет, €<input name="budget" type="number" min="0" max="1000000000000" step=".01" value="'+esc(d.budget)+'" required '+(c?"readonly":"")+'></label>'+(c?"":'<button type="submit">Сохранить условия</button>')+'</form>'+(c?'<button class="nt99-primary" data-route="case/'+esc(c.id)+'">Открыть созданный Case →</button>':'<button class="nt99-primary" data-network="case" data-id="'+esc(d.id)+'">Создать Case из черновика</button>')+'<small>Без отправки другой стороне, подписи или оплаты.</small></article>'}
+return '<article class="nt99-post"><header class="nt99-author">'+(person?'<a class="grid-author" href="#member/'+esc(person.id)+'" aria-label="Профиль · '+esc(name)+'">'+memberAvatar(person)+'</a>':'<span class="nt99-avatar">?</span>')+'<div><strong>'+(person?'<a href="#member/'+esc(person.id)+'">'+esc(name)+'</a>':esc(name))+'</strong><small>'+esc(networkKinds[kind]||"Публикация")+' · '+esc(new Date(p.created).toLocaleDateString("ru-RU"))+'</small></div>'+(p.author===state.actor?'<button type="button" data-network="delete" data-id="'+esc(p.id)+'" aria-label="Удалить публикацию">×</button>':'')+'</header>'+(offer?'<div class="nt99-offer"><small>'+esc(p.region||"Регион не указан")+'</small><h3>'+esc(p.title||"Предложение")+'</h3><strong>'+money(p.budget)+' €</strong></div>':'')+'<p class="nt99-copy">'+esc(p.text)+'</p>'+media+(project?'<a class="nt99-link" href="#case/'+esc(project.id)+'">'+icon("layers")+'<span>Case · '+esc(project.title)+'</span></a>' :'')+'<div class="nt99-reactions"><button data-network="like" data-id="'+esc(p.id)+'" aria-pressed="'+likes.includes(state.actor)+'">'+(likes.includes(state.actor)?"♥":"♡")+' '+likes.length+'</button><span>'+comments.length+' комментариев</span>'+(offer?'<button class="grid-deal-link" data-network="draft" data-id="'+esc(p.id)+'">'+(d?(d.caseId?"Открыть сделку":"Открыть черновик"):"Подготовить условия")+'</button>':'')+'</div><div class="nt99-comments">'+comments.map(c=>'<p><strong>'+esc(state.crew.find(x=>x.id===c.author)?.name||"Участник")+'</strong> '+esc(c.text)+'</p>').join("")+'</div><form class="nt99-comment" data-id="'+esc(p.id)+'"><input name="text" maxlength="500" required aria-label="Комментарий к публикации" placeholder="Комментарий…"><button type="submit" aria-label="Отправить комментарий">→</button></form></article>'}
+function networkDeal(d) {
+  const project = state.cases.find(c=>c.id===d.caseId);
+  const source = state.network?.posts.some(p=>p.id===d.postId)
+    ? gridLink(gridPath("all",{post:d.postId}),icon("layers")+" Исходное предложение") : "";
+  const content = project
+    ? `<p class="grid-terms">${esc(d.terms)}</p><button class="nt99-primary" data-route="case/${esc(project.id)}">Открыть созданный Case →</button>`
+    : `<form class="nt99-dealform" data-id="${esc(d.id)}">
+        <label>Предмет и условия<textarea name="terms" maxlength="4000" required rows="3">${esc(d.terms)}</textarea></label>
+        <label>Бюджет, €<input name="budget" type="number" min="0" max="1000000000000" step=".01" value="${esc(d.budget)}" required></label>
+        <button type="submit">Сохранить условия</button></form>
+        <button class="nt99-primary" data-network="case" data-id="${esc(d.id)}">Создать Case из черновика</button>`;
+  return `<article class="nt99-post nt99-deal"><small>${project?"СДЕЛКА · CASE СОЗДАН":"ЧЕРНОВИК УСЛОВИЙ"}</small>
+    <div class="grid-deal-head"><div><h3>${esc(d.title)}</h3><p>${esc(d.region)}</p></div><strong>${money(d.budget)} €</strong></div>
+    ${content}<div class="grid-return-source">${source}</div></article>`;
+}
+
 
 const rentalStatuses={requested:"Заявка",confirmed:"Подтверждена",returned:"Возвращено",settled:"Расчёт закрыт",cancelled:"Отменена"};
 function rentalPartnerCard(p){const cap=NVModel.rentalCapital(state),list=(state.rentalListings||[]).filter(l=>l.partnerId===p.id);return '<article class="nt99-post nr106-card"><small>PARTNER · VERMIETUNG</small><h3>'+esc(p.name)+'</h3><p>'+esc(p.region)+' · '+list.length+' предложений</p><p>'+meritFmt(cap.partners[p.id]||0)+' · RENTAL</p><button data-route="rental-partner/'+esc(p.id)+'">Профиль партнёра →</button></article>'}
 function rentalListing(l){const p=(state.rentalPartners||[]).find(x=>x.id===l.partnerId);return '<article class="nt99-post nr106-card"><small>'+esc(l.kind)+'</small><h3>'+esc(l.title)+'</h3><strong class="nr106-price">'+euroCents(l.dailyCents)+' / сутки</strong><p>'+esc(p.name)+' · '+esc(p.region)+'</p><p>'+esc(l.notes||"")+'</p><div class="nv104-actions"><button data-route="rental-partner/'+esc(p.id)+'">Профиль</button>'+(p.memberId===state.actor?'<span class="hint">Моё оборудование</span>':button("Создать заявку","new-rental-request",l.id))+'</div></article>'}
-function rentalPartnerProfile(id){const p=(state.rentalPartners||[]).find(x=>x.id===id);if(!p)return heading("Партнёр не найден");const list=(state.rentalListings||[]).filter(l=>l.partnerId===id);return '<div class="nt99-network"><button data-route="network">← Network</button><section class="nt99-hero"><small>PARTNER · RENTAL</small><h1>'+esc(p.name)+'</h1><p>'+esc(p.region)+'</p><p>'+esc(p.contact||"")+'</p><p>'+esc(p.notes||"")+'</p></section>'+lobbySection("Каталог аренды",managesRental(id)?button("＋ Оборудование","new-rental-listing",id):"",list.map(rentalListing).join("")||'<p>Предложений пока нет.</p>')+lobbySection("Merit · RENTAL","",finLine("Начислено партнёру",meritFmt(NVModel.rentalCapital(state).partners[id]||0))+'<p class="hint">Локальный профиль контрагента, не отдельная серверная учётная запись.</p>')+'</div>'}
+function rentalPartnerProfile(id){const p=(state.rentalPartners||[]).find(x=>x.id===id);if(!p)return heading("Партнёр не найден");const list=(state.rentalListings||[]).filter(l=>l.partnerId===id);return '<div class="nt99-network"><button data-route="grid/partners">← Партнёры Grid</button><section class="nt99-hero"><small>PARTNER · RENTAL</small><h1>'+esc(p.name)+'</h1><p>'+esc(p.region)+'</p><p>'+esc(p.contact||"")+'</p><p>'+esc(p.notes||"")+'</p></section>'+lobbySection("Каталог аренды",managesRental(id)?button("＋ Оборудование","new-rental-listing",id):"",list.map(rentalListing).join("")||'<p>Предложений пока нет.</p>')+lobbySection("Merit · RENTAL","",finLine("Начислено партнёру",meritFmt(NVModel.rentalCapital(state).partners[id]||0))+'<p class="hint">Локальный профиль контрагента, не отдельная серверная учётная запись.</p>')+'</div>'}
 function rentalRecord(id){const r=(state.rentals||[]).find(x=>x.id===id);if(!r||!(managesRental(r.partnerId)||r.renterId===state.actor||r.brokerId===state.actor))return heading("Сделка недоступна");return '<div class="nt99-network">'+lobbyLink("merit","← Паспорт Merit")+rentalDeal(r)+'</div>'}
 function rentalDeal(r){const q=NVModel.rentalQuote(r),p=(state.rentalPartners||[]).find(x=>x.id===r.partnerId),l=(state.rentalListings||[]).find(x=>x.id===r.listingId),c=state.cases.find(x=>x.id===r.caseId);let actions="";
 if(managesRental(r.partnerId)&&r.status==="requested")actions+=button("Подтвердить условия","rental-confirm",r.id);
@@ -889,40 +898,243 @@ if(kind==="rental-listing"){const own=ps.filter(p=>managesRental(p.id));if(!own.
 if(kind==="rental-request"){const l=ls.find(x=>x.id===id);if(!l)throw Error("Предложение не найдено");return '<p>'+esc(l.title)+' · '+euroCents(l.dailyCents)+' / сутки</p><label>С даты<input name="start" type="date" value="'+localDay()+'" required></label><label>По дату включительно<input name="end" type="date" value="'+localDay()+'" required></label><label>Связанный Case<select name="caseId"><option value="">Без Case</option>'+options(state.cases.map(c=>[c.id,c.title]),networkContext())+'</select></label><label>Посредник<select name="brokerId"><option value="">Без посредника</option>'+options(state.crew.filter(c=>c.id!==state.actor&&c.id!==NVModel.rentalProvider(state,l.partnerId)).map(c=>[c.id,c.name]))+'</select></label><p class="hint">Заявка локальная, не бронирование у поставщика. Срок считается по календарным дням включительно.</p>'}
 if(kind==="rental-settle"){if(!r||r.status!=="returned")throw Error("Сначала подтвердите возврат");const q=NVModel.rentalQuote(r);return finAmountInput("Фактически оплачено, €",q.gross/100)+finAmountInput("Прямые расходы из комиссии, €",0,"0").replace('name="amount"','name="cost"')+'<label>Дата расчёта<input name="date" type="date" value="'+localDay()+'" required></label>'+input("ref","Уникальная ссылка на оплату")+'<p>Суммы без НДС; подтвердите фактическую оплату. Фонд и Merit начисляются один раз.</p>'}throw Error("Неизвестная форма Rental")}
 
-function networkContext(){const [page,tab,id]=location.hash.slice(1).split("/");return page==="network"&&["rental","case"].includes(tab)&&state.cases.some(c=>c.id===id)?id:null}
-function networkRoute(path){const [tab]=path.split("/");networkTab=tab==="case"?"all":["all","video","market","partners","rental","rental-deals","deals"].includes(tab)?tab:"all";return network()}
-function network(){const d=networkData(),tabs=[["all","Лента"],["video","Видео"],["market","Рынок"],["partners","Партнёры"],["rental","Аренда"],["rental-deals","Арендные сделки"],["deals","Сделки"]],posts=d.posts.slice().reverse().filter(p=>networkTab==="video"?p.mediaKind==="video":networkTab==="market"?["offer","available"].includes(p.kind):true);return '<div class="nt99-network">'+(networkContext()?'<div class="panel nv109-context"><button data-route="case/'+esc(networkContext())+'/network">← '+esc(state.cases.find(c=>c.id===networkContext()).title)+'</button><p>Связь с выбранным Case</p></div>':'')+'<header class="nt99-hero"><small>NVTSK · PROFESSIONAL NETWORK</small><h1>Network</h1><p>Покажи свою работу. Найди партнёров. Создай сделку.</p><div class="nt99-hero-actions"><button class="nt99-primary" data-network="compose">＋ Публикация</button><button data-route="team">Люди и бригады →</button></div></header><p class="nt99-notice">LOCAL FIRST · Лента, медиа и черновики доступны только в этом рабочем пространстве на устройстве. Общение между пользователями ещё не подключено.</p><nav class="nt99-tabs" aria-label="Network">'+tabs.map(([k,t])=>'<button data-network="tab" data-tab="'+k+'" aria-pressed="'+(networkTab===k)+'" class="'+(networkTab===k?"active":"")+'">'+t+'</button>').join("")+'</nav><section class="nt99-composer" id="nt99-composer" '+(location.hash.startsWith("#network/case/")?"":"hidden")+'> <h2>Новая публикация</h2><form id="nt99-post-form"><label>Формат<select name="kind" id="nt99-kind">'+Object.entries(networkKinds).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join("")+'</select></label><div id="nt99-market-fields" hidden><label>Название предложения<input name="title" maxlength="120" disabled></label><label>Регион / город<input name="region" maxlength="120" disabled></label><label>Бюджет, €<input name="budget" type="number" min="0" max="1000000000000" step=".01" disabled></label></div><label>Описание<textarea name="text" rows="3" maxlength="1200" placeholder="Что нового? Какие работы предлагаешь?" required></textarea></label><label>Фото или короткое видео · до 30 МБ<input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"></label><label>Связать с Case<select name="caseId"><option value="">Без Case</option>'+state.cases.map(c=>'<option value="'+esc(c.id)+'" '+(networkContext()===c.id?"selected":"")+'>'+esc(c.title)+'</option>').join("")+'</select></label><button type="submit" class="nt99-primary">Опубликовать</button><p id="nt99-error" role="alert"></p></form></section><section class="nt99-feed">'+(["partners","rental","rental-deals"].includes(networkTab)?rentalNetwork(networkTab):networkTab==="deals"?(d.deals.map(networkDeal).join("")||'<div class="nt99-empty">Пока нет черновиков сделок. Открой предложение в разделе «Рынок».</div>'):(posts.map(networkPost).join("")||'<div class="nt99-empty">'+(networkTab==="market"?"Размести первое предложение работы или объявление о свободной бригаде.":networkTab==="video"?"Загрузи первое короткое видео с объекта.":"Поделись первым рабочим моментом.")+'</div>')+(networkTab==="all"?communityWorkFeed(acceptedWorkEvents()):""))+'</section></div>'}
-document.addEventListener("change",e=>{if(e.target.id!=="nt99-kind")return;const market=["offer","available"].includes(e.target.value),fields=$("#nt99-market-fields");fields.hidden=!market;fields.querySelectorAll("input").forEach(x=>{x.disabled=!market;x.required=market})});
-document.addEventListener("click",async e=>{const b=e.target.closest("[data-network]");if(!b||!account())return;const action=b.dataset.network,id=b.dataset.id;try{if(action==="tab"){networkTab=b.dataset.tab;if(location.hash.startsWith("#network/"))location.hash="network";render();return}if(action==="compose"){const el=$("#nt99-composer");el.hidden=!el.hidden;if(!el.hidden){el.querySelector("select").focus();el.scrollIntoView({block:"nearest"})}return}const d=networkData(),p=d.posts.find(x=>x.id===id);if(action==="like"&&p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];await networkSave(d)}else if(action==="delete"&&p&&p.author===state.actor){if(d.deals.some(x=>x.postId===id))throw Error("Публикация связана со сделкой");if(!confirm("Удалить публикацию?"))return;d.posts=d.posts.filter(x=>x.id!==id);await networkSave(d);/* Media bytes retained for local undo/history. */}else if(action==="draft"&&p&&["offer","available"].includes(p.kind)){if(!d.deals.some(x=>x.postId===id)){d.deals.push({id:crypto.randomUUID(),postId:id,title:p.title,region:p.region,budget:p.budget,terms:p.text,caseId:null});await networkSave(d)}networkTab="deals"}else if(action==="case"){const deal=d.deals.find(x=>x.id===id);if(!deal)return;if(deal.caseId){location.hash="case/"+deal.caseId;return}if(!confirm("Создать Case из сделки? Данные будут связаны в одном реестре."))return;b.disabled=true;try{if(await change(()=>apply(state,"network-case",{dealId:id})))location.hash="case/network-"+id}finally{b.disabled=false}return}else return;render()}catch(err){alert(err.message)}});
-document.addEventListener("submit",async e=>{const form=e.target;if(form.id!=="nt99-post-form"&&!form.matches(".nt99-comment,.nt99-dealform"))return;e.preventDefault();if(!account())return;const btn=form.querySelector('button[type="submit"]');btn.disabled=true;let mediaId=null;try{const p=Object.fromEntries(new FormData(form)),d=networkData();if(form.id==="nt99-post-form"){const kind=p.kind,text=String(p.text||"").trim(),file=form.elements.media.files[0],market=["offer","available"].includes(kind),budget=Number(p.budget);if(!Object.hasOwn(networkKinds,kind)||!text||text.length>1200)throw Error("Заполните описание");if(market&&(!p.title.trim()||!p.region.trim()||!p.budget||!Number.isFinite(budget)||budget<0||budget>1e12))throw Error("Укажите название, регион и бюджет");const id=crypto.randomUUID();let mediaKind=null;if(file){if(file.size>30000000||!["image/jpeg","image/png","image/webp","video/mp4","video/webm","video/quicktime"].includes(file.type))throw Error("Допустимы фото и видео до 30 МБ");mediaKind=file.type.startsWith("video/")?"video":"image";if(kind==="video"&&mediaKind!=="video")throw Error("Выберите видео");await networkMedia("put",id,file);mediaId=id}else if(kind==="video")throw Error("Выберите видео");const current=networkData();current.posts.push({id,kind,text,author:state.actor,created:new Date().toISOString(),caseId:state.cases.some(c=>c.id===p.caseId)?p.caseId:null,likes:[],comments:[],mediaKind,...(market?{title:p.title.trim(),region:p.region.trim(),budget}:{})});await networkSave(current);mediaId=null;networkTab=kind==="video"?"video":market?"market":"all"}else if(form.matches(".nt99-comment")){const post=d.posts.find(x=>x.id===form.dataset.id),text=String(p.text||"").trim();if(!post||!text||text.length>500)throw Error("Введите комментарий");post.comments=post.comments||[];post.comments.push({id:crypto.randomUUID(),author:state.actor,text});await networkSave(d)}else{const deal=d.deals.find(x=>x.id===form.dataset.id),terms=String(p.terms||"").trim(),budget=Number(p.budget);if(!deal||deal.caseId||!terms||terms.length>4000||!Number.isFinite(budget)||budget<0||budget>1e12)throw Error("Проверьте условия и бюджет");deal.terms=terms;deal.budget=budget;await networkSave(d)}render()}catch(err){if(mediaId)await networkMedia("delete",mediaId).catch(()=>{});const el=$("#nt99-error");if(form.id==="nt99-post-form"&&el)el.textContent=err.message;else alert(err.message);btn.disabled=false}});
+/* Grid renders the existing workspace records. Its URL carries the active section and context. */
+const gridSections = [
+  {home:"all", label:"Поток", short:"Поток", icon:"grid", tabs:[["all","Всё"],["posts","Публикации"],["video","Видео"],["results","Принятые работы"]]},
+  {home:"market", label:"Объекты и услуги", short:"Работа", icon:"layers", tabs:[["market","Предложения"],["projects","Объекты"],["rental","Аренда"],["partners","Партнёры"]]},
+  {home:"people", label:"Люди и бригады", short:"Люди", icon:"team", tabs:[["people","Участники"],["teams","Бригады"],["achievements","Достижения"]]},
+  {home:"deals", label:"Сделки", short:"Сделки", icon:"shard", tabs:[["deals","По работам"],["rental-deals","По аренде"]]}
+];
 
-const pages={"alpha-lab":alphaLabPage,network,company:companyProfile,finance:personalFinance,merit:meritWorkspace,analytics:analyticsWorkspace,dashboard:personalLobby,projects,garage,tasks,team,settings,pulse,social:()=>communityShell("feed",social()),lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
+function gridRoute(hash = location.hash.slice(1)) {
+  const [path, query] = hash.split("?");
+  const [root, tab, legacyId] = path.split("/");
+  if (!["grid","network","team","social"].includes(root)) return null;
+  const params = new URLSearchParams(query);
+  let view = tab || "all";
+  if (root === "team") view = tab === "feed" ? "posts" : tab || "people";
+  if (root === "social") view = "all";
+  if (tab === "case") view = "all";
+  const section = gridSections.find(s => s.tabs.some(([key]) => key === view)) || gridSections[0];
+  if (!section.tabs.some(([key]) => key === view)) view = section.home;
+  const caseId = params.get("case") || legacyId;
+  return {
+    view, section,
+    caseId:caseId && state.cases.some(c => c.id === caseId) ? caseId : "",
+    postId:params.get("post"), dealId:params.get("deal"),
+    compose:tab === "case" || params.get("compose") === "1"
+  };
+}
+
+function gridPath(view, options = {}) {
+  const params = new URLSearchParams();
+  const context = options.case ?? gridRoute()?.caseId;
+  if (context) params.set("case", context);
+  for (const key of ["post","deal","compose"]) if (options[key]) params.set(key,options[key]);
+  const suffix = params.toString();
+  return (view === "all" ? "grid" : "grid/"+view) + (suffix ? "?"+suffix : "");
+}
+
+function openGrid(view, options) {
+  const url = gridPath(view, options);
+  if (location.hash.slice(1) === url) render();
+  else location.hash = url;
+}
+
+function gridLink(path, body, active=false) {
+  return `<a href="#${esc(path)}"${active?' aria-current="page"':""}>${body}</a>`;
+}
+
+function gridMasthead(route, counts) {
+  const metrics = [
+    ["people", "Люди", counts.people],
+    ["projects", "Объекты", counts.projects],
+    ["deals", "Сделки по работам", counts.deals]
+  ];
+  const stats = metrics.map(([view,label,count]) => gridLink(gridPath(view),`<b>${count}</b><span>${label}</span>`)).join("");
+  if (route.view !== "all" || route.postId || route.compose) {
+    return `<header class="grid-mast-compact">${gridLink(gridPath("all"),icon("grid")+" Grid")}<span>${esc(route.section.label)}</span></header>`;
+  }
+  return `<header class="grid-mast">
+    <div class="grid-mast-body"><span class="grid-signature">МУЛЬТИВСЕЛЕННАЯ NVTSK</span><h1>Grid</h1>
+    <p>Здесь встречаются люди,<br>объекты и сделки.</p></div>
+    <div class="grid-metrics" aria-label="Связи рабочего пространства">${stats}</div>
+  </header>`;
+}
+
+function gridNav(route) {
+  const main = gridSections.map(s => gridLink(gridPath(s.home),icon(s.icon)+
+    `<span class="grid-label-wide">${s.label}</span><span class="grid-label-small">${s.short}</span>`,s === route.section)).join("");
+  const sub = route.section.tabs.map(([key,text]) => gridLink(gridPath(key),text,key === route.view)).join("");
+  return `<nav class="grid-nav" aria-label="Разделы Grid">${main}</nav>
+    <nav class="grid-subnav" aria-label="${esc(route.section.label)}">${sub}</nav>`;
+}
+
+function gridComposer(route) {
+  const cases = state.cases.map(c => `<option value="${esc(c.id)}"${route.caseId === c.id ? " selected" : ""}>${esc(c.title)}</option>`);
+  return `<section class="nt99-composer" id="nt99-composer"${route.compose ? "" : " hidden"} aria-labelledby="grid-compose-title">
+    <div class="grid-compose-head"><h2 id="grid-compose-title">Новая публикация</h2><button type="button" data-network="compose" aria-label="Закрыть форму">×</button></div>
+    <form id="nt99-post-form">
+    <label>Формат<select name="kind" id="nt99-kind">${Object.entries(networkKinds).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select></label>
+    <div id="nt99-market-fields" hidden><label>Название предложения<input name="title" maxlength="120" disabled></label><label>Регион или город<input name="region" maxlength="120" disabled></label><label>Бюджет, €<input name="budget" type="number" min="0" max="1000000000000" step=".01" disabled></label></div>
+    <label>Описание<textarea name="text" rows="3" maxlength="1200" placeholder="Что сделано или какая работа предстоит?" required></textarea></label>
+    <label>Фото или видео · до 30 МБ<input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"></label>
+    <label>Связанный объект<select name="caseId"><option value="">Без Case</option>${cases.join("")}</select></label>
+    <button type="submit" class="nt99-primary">Опубликовать</button><p id="nt99-error" role="alert"></p></form></section>`;
+}
+
+function gridEmpty(title, text="") {
+  return `<div class="grid-empty"><strong>${esc(title)}</strong>${text ? `<p>${esc(text)}</p>` : ""}</div>`;
+}
+
+function gridSearch(kind) {
+  const market = kind === "market";
+  const labels={market:["Поиск предложений","Работа, бригада или город"],projects:["Поиск объектов","Название или адрес объекта"],teams:["Поиск бригад","Бригада, участник или город"],people:["Поиск участников","Имя, специализация или город"]};
+  const [label,placeholder]=labels[kind];
+  return `<div class="grid-search"><label>${icon("search")}<input type="search" data-grid-search autocomplete="off" aria-label="${label}" placeholder="${placeholder}"></label>
+    ${market?'<select data-grid-kind-filter aria-label="Тип предложения"><option value="">Все типы</option><option value="offer">Предложения работ</option><option value="available">Свободные бригады</option></select>':""}</div>`;
+}
+
+function gridFilter() {
+  const field = document.querySelector("[data-grid-search]");
+  if (!field) return;
+  const kind = document.querySelector("[data-grid-kind-filter]")?.value;
+  const words = field.value.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  let shown = 0;
+  for (const el of document.querySelectorAll("[data-grid-entry]")) {
+    el.hidden = Boolean((kind && el.dataset.gridKind !== kind) || words.some(w => !el.dataset.gridEntry.includes(w)));
+    if (!el.hidden) shown++;
+  }
+  document.getElementById("grid-no-matches").hidden = shown > 0;
+}
+document.addEventListener("input",e => { if (e.target.matches("[data-grid-search]")) gridFilter(); });
+document.addEventListener("change",e => { if (e.target.matches("[data-grid-kind-filter]")) gridFilter(); });
+
+function gridSearchList(view, rows) {
+  return gridSearch(view)+rows+'<p id="grid-no-matches" role="status" hidden>Совпадений нет. Попробуйте другой город или название.</p>';
+}
+
+function gridProjects(projects) {
+  if (!projects.length) return gridEmpty("Доступных объектов пока нет","Созданные и переданные вам Case появятся здесь.");
+  const rows = projects.map(({c,percent,status}) =>
+    `<a class="grid-project" href="#case/${esc(c.id)}" data-grid-entry="${esc([c.title,c.city,c.address].filter(Boolean).join(" ").toLocaleLowerCase())}">
+      <span class="grid-project-symbol">${icon("layers")}</span><span><strong>${esc(c.title)}</strong><small>${esc(c.address||c.city||"Адрес не указан")}</small></span>
+      <span class="grid-project-state"><b>${percent}%</b><small>${esc(projectHubStatusLabel[status]||"Планирование")}</small></span></a>`
+  ).join("");
+  return gridSearchList("projects",rows);
+}
+
+function gridConnections(data, visibleProjects) {
+  const posts = new Map(data.posts.map(p => [p.id,p]));
+  // Only draw a relationship when both endpoints are present in this workspace.
+  const deal = data.deals.slice().reverse().find(d => posts.has(d.postId) && visibleProjects.has(d.caseId)) ||
+    data.deals.slice().reverse().find(d => posts.has(d.postId));
+  if (!deal) return "";
+  const post = posts.get(deal.postId);
+  const author = state.crew.find(c => c.id === post.author);
+  const project = visibleProjects.get(deal.caseId);
+  const links = [];
+  if (author) links.push(["team","Автор","member/"+author.id,displayMemberName(author)]);
+  links.push(["layers",networkKinds[post.kind]||"Предложение",gridPath("all",{post:post.id}),post.region||post.title||post.text]);
+  links.push(["shard",project?"Условия сделки":"Черновик сделки",gridPath("deals",{deal:deal.id}),money(deal.budget)+" €"]);
+  if (project) links.push(["folder","Созданный Case","case/"+project.id,project.title]);
+  return `<aside class="grid-thread"><details${matchMedia("(min-width:860px)").matches?" open":""}><summary><span class="grid-section-icon">${icon("grid")}</span>Цепочка сделки</summary>
+    <ol>${links.map(([symbol,label,path,title])=>`<li><a href="#${esc(path)}"><i>${icon(symbol)}</i><span><small>${label}</small><strong>${esc(title)}</strong></span>${icon("open")}</a></li>`).join("")}</ol></details></aside>`;
+}
+
+function gridView(route, data, projects, projectMap) {
+  const {view} = route;
+  if (view === "projects") return gridProjects(projects);
+  if (["teams","people","achievements"].includes(view)) return gridPeopleContent(view);
+  if (["partners","rental","rental-deals"].includes(view)) return rentalNetwork(view);
+  if (view === "deals") {
+    const deals = data.deals.slice().reverse().filter(d=>!route.dealId||d.id===route.dealId);
+    return deals.map(networkDeal).join("") || gridEmpty(route.dealId?"Сделка недоступна":"Сделок пока нет","В предложении работы выберите «Подготовить условия», чтобы создать черновик.");
+  }
+  if (view === "results") return communityWorkFeed(acceptedWorkEvents()) || gridEmpty("Принятых работ пока нет","Здесь появятся Shard, которые прошли приёмку.");
+  const posts = data.posts.slice().reverse();
+  const dealsByPost = new Map(data.deals.map(d=>[d.postId,d]));
+  const postCard = p => networkPost(p,dealsByPost.get(p.id),projectMap.get(p.caseId));
+  if (view === "market") {
+    const offers = posts.filter(p=>["available","offer"].includes(p.kind));
+    if (!offers.length) return gridEmpty("Пока нет предложений","Опубликуйте работу или укажите, где свободна ваша бригада.");
+    const rows = offers.map(p=>{
+      const terms = [p.title,p.text,p.region,networkKinds[p.kind]].join(" ").toLocaleLowerCase();
+      return `<div data-grid-entry="${esc(terms)}" data-grid-kind="${esc(p.kind)}">${postCard(p)}</div>`;
+    }).join("");
+    return gridSearchList(view,rows);
+  }
+  const records = posts.filter(p=>(!route.postId||p.id===route.postId) && (view !== "video" || p.mediaKind === "video"));
+  const work = view==="all" && !route.postId ? acceptedWorkEvents() : [];
+  const cards=records.map(postCard);
+  if(work.length) cards.splice(Math.min(1,cards.length),0,communityWorkFeed(work.slice(0,1)));
+  return cards.join("")+communityWorkFeed(work.slice(1)) || gridEmpty(route.postId?"Публикация недоступна":view==="video"?"Видео пока нет":"Поток пока пуст",
+    route.postId?"":view==="video"?"Прикрепите видео к публикации с объекта.":"Поделитесь работой с объекта или опубликуйте предложение для бригады.");
+}
+
+function gridPage(route) {
+  const data = state.network || {posts:[],deals:[]};
+  const projects = visibleProjectHub();
+  const projectMap = new Map(projects.map(({c})=>[c.id,c]));
+  const viewName = route.section.tabs.find(([key])=>key===route.view)[1];
+  const title = route.postId?"Публикация":route.dealId?"Сделка":route.view==="all"?"Поток событий":route.view==="deals"?"Сделки по работам":route.view==="rental-deals"?"Сделки по аренде":viewName;
+  const context = route.caseId ? state.cases.find(c=>c.id===route.caseId) : null;
+  const toolbar = ["all","posts","video","market"].includes(route.view) ? `<button type="button" class="nt99-primary grid-publish" data-network="compose" aria-controls="nt99-composer" aria-expanded="${route.compose}"><b aria-hidden="true">＋</b> Публикация</button>` : "";
+  const thread = route.view==="all" && !route.postId ? gridConnections(data,projectMap) : "";
+  const heading = route.view==="all" && !route.postId && !route.compose ? "h2" : "h1";
+  return `<div class="grid-world nt99-network">
+    ${context?`<a class="grid-context" href="#case/${esc(context.id)}/network">← ${esc(context.title)}</a>`:""}
+    ${gridMasthead(route,{people:state.crew.length,projects:projects.length,deals:data.deals.length})}
+    ${gridNav(route)}
+    <div class="grid-content${thread?" has-thread":""}"><div class="grid-main">
+    ${route.dealId||route.postId?gridLink(gridPath(route.view),route.dealId?"← Все сделки":"← Весь поток"):""}
+    <div class="grid-heading"><${heading}>${esc(title)}</${heading}>${toolbar}</div>
+    ${toolbar?gridComposer(route):""}
+    <p class="grid-save-status" id="grid-save-status" role="status"></p>
+    <section class="nt99-feed" aria-label="${esc(title)}">${gridView(route,data,projects,projectMap)}</section>
+    </div>${thread}</div>
+    <footer class="grid-local"><i aria-hidden="true"></i>Локальное пространство · записи на этом устройстве</footer></div>`;
+}
+
+function networkContext(){return gridRoute()?.caseId || null}
+document.addEventListener("change",e=>{if(e.target.id!=="nt99-kind")return;const market=["offer","available"].includes(e.target.value),fields=$("#nt99-market-fields");fields.hidden=!market;fields.querySelectorAll("input").forEach(x=>{x.disabled=!market;x.required=market})});
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-network]");if(!b||!account())return;const action=b.dataset.network,id=b.dataset.id;try{if(action==="compose"){
+  const el=$("#nt99-composer");
+  el.hidden=!el.hidden;
+  const trigger=$(".grid-publish");trigger?.setAttribute("aria-expanded",String(!el.hidden));
+  if(el.hidden){trigger?.focus();return}
+  el.querySelector("select").focus();el.scrollIntoView({block:"nearest"});return
+ }const d=networkData(),p=d.posts.find(x=>x.id===id);if(action==="like"&&p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];await networkSave(d)}else if(action==="delete"&&p&&p.author===state.actor){if(d.deals.some(x=>x.postId===id))throw Error("Публикация связана со сделкой");if(!confirm("Удалить публикацию?"))return;d.posts=d.posts.filter(x=>x.id!==id);await networkSave(d);/* Media bytes retained for local undo/history. */}else if(action==="draft"&&p&&["offer","available"].includes(p.kind)){if(!d.deals.some(x=>x.postId===id)){d.deals.push({id:crypto.randomUUID(),postId:id,title:p.title,region:p.region,budget:p.budget,terms:p.text,caseId:null});await networkSave(d)}openGrid("deals",{deal:d.deals.find(x=>x.postId===id).id});return}else if(action==="case"){const deal=d.deals.find(x=>x.id===id);if(!deal)return;if(deal.caseId){location.hash="case/"+deal.caseId;return}if(!confirm("Создать Case из сделки? Данные будут связаны в одном реестре."))return;b.disabled=true;try{if(await change(()=>apply(state,"network-case",{dealId:id})))location.hash="case/network-"+id}finally{b.disabled=false}return}else return;render()}catch(err){alert(err.message)}});
+document.addEventListener("submit",async e=>{const form=e.target;if(form.id!=="nt99-post-form"&&!form.matches(".nt99-comment,.nt99-dealform"))return;e.preventDefault();if(!account())return;const btn=form.querySelector('button[type="submit"]');btn.disabled=true;let mediaId=null;try{const p=Object.fromEntries(new FormData(form)),d=networkData();if(form.id==="nt99-post-form"){const kind=p.kind,text=String(p.text||"").trim(),file=form.elements.media.files[0],market=["offer","available"].includes(kind),budget=Number(p.budget);if(!Object.hasOwn(networkKinds,kind)||!text||text.length>1200)throw Error("Заполните описание");if(market&&(!p.title.trim()||!p.region.trim()||!p.budget||!Number.isFinite(budget)||budget<0||budget>1e12))throw Error("Укажите название, регион и бюджет");const id=crypto.randomUUID();let mediaKind=null;if(file){if(file.size>30000000||!["image/jpeg","image/png","image/webp","video/mp4","video/webm","video/quicktime"].includes(file.type))throw Error("Допустимы фото и видео до 30 МБ");mediaKind=file.type.startsWith("video/")?"video":"image";if(kind==="video"&&mediaKind!=="video")throw Error("Выберите видео");await networkMedia("put",id,file);mediaId=id}else if(kind==="video")throw Error("Выберите видео");const current=networkData();current.posts.push({id,kind,text,author:state.actor,created:new Date().toISOString(),caseId:state.cases.some(c=>c.id===p.caseId)?p.caseId:null,likes:[],comments:[],mediaKind,...(market?{title:p.title.trim(),region:p.region.trim(),budget}:{})});await networkSave(current);mediaId=null;openGrid(kind==="video"?"video":market?"market":"all");return}else if(form.matches(".nt99-comment")){const post=d.posts.find(x=>x.id===form.dataset.id),text=String(p.text||"").trim();if(!post||!text||text.length>500)throw Error("Введите комментарий");post.comments=post.comments||[];post.comments.push({id:crypto.randomUUID(),author:state.actor,text});await networkSave(d)}else{const deal=d.deals.find(x=>x.id===form.dataset.id),terms=String(p.terms||"").trim(),budget=Number(p.budget);if(!deal||deal.caseId||!terms||terms.length>4000||!Number.isFinite(budget)||budget<0||budget>1e12)throw Error("Проверьте условия и бюджет");deal.terms=terms;deal.budget=budget;await networkSave(d);const status=$("#grid-save-status");if(status)status.textContent="Условия сохранены на устройстве."}}catch(err){if(mediaId)await networkMedia("delete",mediaId).catch(()=>{});const el=$("#nt99-error");if(form.id==="nt99-post-form"&&el)el.textContent=err.message;else alert(err.message);btn.disabled=false}});
+
+const pages={"alpha-lab":alphaLabPage,company:companyProfile,finance:personalFinance,merit:meritWorkspace,analytics:analyticsWorkspace,dashboard:personalLobby,projects,garage,tasks,settings,pulse,lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
 function alphaLabPage(){
  if(!lab)return heading("Nvtsk System")+lobbySection("ALPHA LAB · Изолированная среда","",'<p>Тестовые участники, проекты и финансы хранятся отдельно от рабочего аккаунта.</p>'+button("Запустить лабораторию","sandbox"));
  const report=state.labReport||{operations:0,checks:[],groups:[]},fs=state.cases.map(c=>NVModel.financialCase(state,c.id));
  const metrics=[["Участники",state.crew.length],["Бригады",state.teams.length],["Активные Case",fs.filter(f=>!f.settled).length],["Закрытые Case",fs.filter(f=>f.settled).length],["Shards",state.shards.length],["Аренды",(state.rentals||[]).length]];
- return '<div class="nv103-lobby"><section class="panel nv112-labhero"><small>ALPHA LAB · Тестовая среда</small><h1>Nvtsk System</h1><p>Без реальных денег, пользователей и начислений. Меняйте тестового участника, проверяйте его задания и расчёты.</p><div class="nv104-grid">'+metrics.map(([k,v])=>'<div><small>'+k+'</small><b>'+v+'</b></div>').join("")+'</div><label>Смотреть от имени участника<select id="nv112-lab-actor">'+state.crew.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.actor?"selected":"")+'>'+esc(c.name+" · "+(c.company||""))+'</option>').join("")+'</select></label><div class="nv104-actions">'+lobbyLink("dashboard","Главная")+lobbyLink("projects","Проекты")+lobbyLink("merit","Паспорт Merit")+lobbyLink("member/"+state.actor,"Профиль")+lobbyLink("network","Network")+lobbyLink("lager","Склад")+'</div></section>'+lobbySection("Автоматический прогон · "+report.operations+" операций",button("Сбросить и прогнать снова","lab-reset"),'<p class="hint">Отчёт первоначального сценария, не непрерывный мониторинг. После ручных изменений нажмите сброс для повторного прогона.</p>'+report.checks.map(x=>'<div class="taskrow"><strong>'+esc(x.name)+'</strong><span class="nv112-ok">'+(x.ok?"✓":"Ошибка")+'</span></div>').join(""))+lobbySection("Совместные проекты · прототип Alliance","",report.groups.map(g=>{const c=state.cases.find(x=>x.id===g.caseId);return c?lobbyRow("case/"+c.id,c.title,g.teamIds.map(id=>state.teams.find(t=>t.id===id)?.name||id).join(" + "),"Открыть"):""}).join("")+'<p class="hint">Схема нескольких бригад внутри Case. Самостоятельные компании и межфирменные соглашения пока не реализованы.</p>')+meritPassportPanel(state.actor)+'</div>';
+ return '<div class="nv103-lobby"><section class="panel nv112-labhero"><small>ALPHA LAB · Тестовая среда</small><h1>Nvtsk System</h1><p>Без реальных денег, пользователей и начислений. Меняйте тестового участника, проверяйте его задания и расчёты.</p><div class="nv104-grid">'+metrics.map(([k,v])=>'<div><small>'+k+'</small><b>'+v+'</b></div>').join("")+'</div><label>Смотреть от имени участника<select id="nv112-lab-actor">'+state.crew.map(c=>'<option value="'+esc(c.id)+'" '+(c.id===state.actor?"selected":"")+'>'+esc(c.name+" · "+(c.company||""))+'</option>').join("")+'</select></label><div class="nv104-actions">'+lobbyLink("dashboard","Главная")+lobbyLink("projects","Проекты")+lobbyLink("merit","Паспорт Merit")+lobbyLink("member/"+state.actor,"Профиль")+lobbyLink("grid","Grid")+lobbyLink("lager","Склад")+'</div></section>'+lobbySection("Автоматический прогон · "+report.operations+" операций",button("Сбросить и прогнать снова","lab-reset"),'<p class="hint">Отчёт первоначального сценария, не непрерывный мониторинг. После ручных изменений нажмите сброс для повторного прогона.</p>'+report.checks.map(x=>'<div class="taskrow"><strong>'+esc(x.name)+'</strong><span class="nv112-ok">'+(x.ok?"✓":"Ошибка")+'</span></div>').join(""))+lobbySection("Совместные проекты · прототип Alliance","",report.groups.map(g=>{const c=state.cases.find(x=>x.id===g.caseId);return c?lobbyRow("case/"+c.id,c.title,g.teamIds.map(id=>state.teams.find(t=>t.id===id)?.name||id).join(" + "),"Открыть"):""}).join("")+'<p class="hint">Схема нескольких бригад внутри Case. Самостоятельные компании и межфирменные соглашения пока не реализованы.</p>')+meritPassportPanel(state.actor)+'</div>';
 }
 function render(){
  networkRelease();
  if(!account()){loginScreen(accounts().length===0);return;} stopGoogleResize();document.body.classList.remove("nv90-auth");$("#nav").hidden=false;$(".top").hidden=false;
  let r=location.hash.slice(1)||"dashboard";if(r==="field"){r="projects";location.hash="projects"}
+ const grid=gridRoute(r);
  $(".local").textContent="Local First";
- const sectionName=r.startsWith("partner/")?"Контрагент":r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Сообщество":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({company:"Профиль фирмы",finance:"Финансы",merit:"Merit",analytics:"Аналитика",projects:"Projects",tasks:"Приёмка",team:"Сообщество",network:"Network",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки","alpha-lab":"ALPHA LAB"})[r]||"Рабочее пространство";
- const sectionTitle=r==="dashboard"?"Центр":r.startsWith("network/")?"Network":r.startsWith("rental/")?"Сделка · Rental":r.startsWith("rental-partner/")?"Партнёр · Rental":sectionName;const company=lab && (r==="dashboard" || r==="alpha-lab") ? "Nvtsk System" : lab ? actor().company||"ALPHA LAB" : activeWorkspace().name;
+ const sectionName=r.startsWith("partner/")?"Контрагент":r.startsWith("member/")?"Профиль участника":r.startsWith("team/")?"Сообщество":r.startsWith("shard/")?"Shard":r.startsWith("case/")?"Project":({company:"Профиль фирмы",finance:"Финансы",merit:"Merit",analytics:"Аналитика",projects:"Projects",tasks:"Приёмка",team:"Сообщество",network:"Grid",lager:"Склад",garage:"Garage",fuhrpark:"Автопарк",pulse:"Финансы и Merit",social:"Уведомления",settings:"Настройки","alpha-lab":"ALPHA LAB"})[r]||"Рабочее пространство";
+ const sectionTitle=grid?"Grid":r==="dashboard"?"Центр":r.startsWith("rental/")?"Сделка · Rental":r.startsWith("rental-partner/")?"Партнёр · Rental":sectionName;const company=lab && (r==="dashboard" || r==="alpha-lab") ? "Nvtsk System" : lab ? actor().company||"ALPHA LAB" : activeWorkspace().name;
  const context=$("#nv108-context");if(context)context.textContent=company;
  document.body.dataset.section=r.split("/")[0];
  const workbar='<header class="nv108-workbar"><div class="workspace-ident"><span class="company-mark" aria-hidden="true">'+icon("layers")+'</span><div><b>'+esc(company)+'</b><small>Nvtsk_System</small></div></div><span class="section-location">'+esc(sectionTitle)+'</span></header>';
- $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · тестовые данные</strong><button data-route="alpha-lab">Участники</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("network/")?networkRoute(r.slice(8)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("team/")?team():r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
+ $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · тестовые данные</strong><button data-route="alpha-lab">Участники</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(grid?gridPage(grid):r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
  document.querySelectorAll("#nav button[data-route]").forEach(b=>{
-   const base=r.split("/")[0];
-   const parent={case:"projects",shard:"projects",partner:"projects",garage:"lager",fuhrpark:"lager",member:"network",team:"network",rental:"network","rental-partner":"network"};
+   const base=grid?"grid":r.split("/")[0];
+   const parent={case:"projects",shard:"projects",partner:"projects",garage:"lager",fuhrpark:"lager",member:"grid",rental:"grid","rental-partner":"grid"};
    const current=b.dataset.route===(parent[base]||base);
    b.classList.toggle("active",current);
    if(current)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");
  });
  const more=$("#nv108-more");if(more)more.setAttribute("aria-expanded",String(document.body.classList.contains?.("nv108-more")||false));
- if(r==="projects")filterProjectHub();if(r==="network"||r.startsWith("network/")||r.startsWith("case/"))networkHydrate();
+ if(r==="projects")filterProjectHub();if(grid||r.startsWith("case/"))networkHydrate();
 }
 const input=(name,text,type="text")=>'<label>'+text+'<input required name="'+name+'" type="'+type+'" '+(type==="number"?'min="0" max="1000000000000" step=".01"':'maxlength="120"')+'></label>';
 const select=(name,text,items,value)=>'<label>'+text+'<select required name="'+name+'">'+options(items,value)+'</select></label>';
@@ -1036,9 +1248,6 @@ document.addEventListener("click",async e=>{
  }
  const phFilter=e.target.closest('[data-action="project-filter"]');
  if(phFilter){projectHubFilter=phFilter.dataset.filter;render();return}
- if(e.target.closest('[data-action="feed-view"]')){const view=e.target.closest("[data-action]").dataset.view;if(["all","posts","work"].includes(view)){communityFeedView=view;render()}return}
- if(e.target.closest('[data-action="social-delete"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p&&p.author===state.actor&&!d.deals.some(x=>x.postId===id)&&confirm("Удалить свою публикацию и комментарии?")){d.posts=d.posts.filter(x=>x.id!==id);try{await networkSave(d);render()}catch(err){alert(err.message)}}return}
- if(e.target.closest('[data-action="social-like"]')){const id=e.target.closest("[data-action]").dataset.id,d=socialData(),p=d.posts.find(x=>x.id===id);if(p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];try{await networkSave(d);render()}catch(err){alert(err.message)}}return}
 
  const jump=e.target.closest("[data-pv-target]");
  if(jump){
@@ -1086,7 +1295,6 @@ document.addEventListener("click",async e=>{
  const url=URL.createObjectURL(new Blob([damaged?raw:JSON.stringify(state,null,2)],{type:"application/json"}));const link=document.createElement("a");link.href=url;link.download=lab?"NVTSK-ALPHA-LAB.json":"nvtsk-05.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),3000);
  }
 });
-document.addEventListener("submit",async e=>{const form=e.target;if(form.id!=="social-compose"&&!form.matches(".socialcommentform"))return;e.preventDefault();const d=socialData(),isPost=form.id==="social-compose",value=String(new FormData(form).get(isPost?"text":"comment")||"").trim();if(!value||value.length>(isPost?1200:500))return;try{if(isPost){const caseId=new FormData(form).get("caseId");d.posts.push({id:crypto.randomUUID(),author:state.actor,created:new Date().toISOString(),kind:"post",text:value,caseId:state.cases.some(c=>c.id===caseId)?caseId:null,likes:[],comments:[]})}else{const p=d.posts.find(x=>x.id===form.dataset.post);if(!p)return;p.comments.push({id:crypto.randomUUID(),author:state.actor,text:value})}await networkSave(d);render()}catch(err){alert(err.message)}});
 function syncMoveFields(){const type=$("#fields [name=type]")?.value;const wrap=$("#move-shard-wrap");if(!wrap)return;const linked=type==="issue"||type==="return";wrap.hidden=!linked;const picker=wrap.querySelector("select");if(picker)picker.required=linked;const recipient=wrap.querySelector('select[name="recipientId"]');if(recipient){recipient.required=linked;const sh=state.shards.find(s=>s.id===picker?.value);if(linked&&sh){const ids=type==="return"?new Set(NVModel.caseRelations(state,sh.caseId).stock.filter(x=>x.shardId===sh.id&&x.itemId===pending.id&&x.qty>0).map(x=>x.recipientId)):new Set(NVModel.caseRelations(state,sh.caseId).memberIds);const selected=recipient.value;recipient.innerHTML=options(state.crew.filter(c=>ids.has(c.id)).map(c=>[c.id,c.name]),selected)}}const reason=$("#fields [name=reason]");if(reason)reason.required=type==="writeoff";}
 document.addEventListener("change",async e=>{
  if(e.target.id==="nv112-lab-actor"){if(lab&&state.crew.some(c=>c.id===e.target.value))await change(()=>({...state,actor:e.target.value}));return}
@@ -1105,7 +1313,7 @@ document.addEventListener("change",async e=>{
  if(confirm("Заменить локальные данные данными из файла?"))await change(()=>data,false,true);
  }catch(err){alert(err.message)}finally{e.target.value=""}}
 });
-document.addEventListener("input",e=>{if(e.target.id==="project-hub-search"){projectHubQuery=e.target.value;filterProjectHub()}if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()));if(e.target.id==="member-search")document.querySelectorAll("[data-membersearch]").forEach(el=>el.hidden=!el.dataset.membersearch.includes(e.target.value.toLowerCase()))});
+document.addEventListener("input",e=>{if(e.target.id==="project-hub-search"){projectHubQuery=e.target.value;filterProjectHub()}if(e.target.id==="stock-search")document.querySelectorAll("[data-stock]").forEach(el=>el.hidden=!el.dataset.stock.includes(e.target.value.toLowerCase()))});
 $("#cancel").onclick=()=>$("#dialog").close();
 function projectSavedNotice(){document.getElementById("nv102-save-notice")?.remove();const el=document.createElement("div");el.id="nv102-save-notice";el.setAttribute("role","status");el.textContent=lab?"Проект сохранён в тестовой копии":"✓ Проект сохранён на устройстве";el.style.cssText="position:fixed;z-index:9999;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));max-width:90vw;padding:12px 18px;border:1px solid #648d98;border-radius:16px;background:#172d38;color:#eaf7fa;font:600 14px system-ui;box-shadow:0 5px 20px #0008;text-align:center;pointer-events:none";document.body.append(el);setTimeout(()=>el.remove(),4200)}
 $("#editor").onsubmit=async e=>{
@@ -1200,12 +1408,12 @@ $("#editor").onsubmit=async e=>{
      });
      return next;
    };
-   if(await change(operation)){$("#dialog").close();if(kind.startsWith("rental-")){networkTab=kind==="rental-partner"?"partners":kind==="rental-listing"?"rental":"rental-deals";location.hash="network";render()}else if(kind==="case"||kind==="electrical"){location.hash="case/"+p.id;projectSavedNotice()}else if(kind==="team"||kind==="team-update")location.hash="team/teams"}
+   if(await change(operation)){$("#dialog").close();if(kind.startsWith("rental-")){openGrid(kind==="rental-partner"?"partners":kind==="rental-listing"?"rental":"rental-deals")}else if(kind==="case"||kind==="electrical"){location.hash="case/"+p.id;projectSavedNotice()}else if(kind==="team"||kind==="team-update")location.hash="grid/teams"}
  }catch(error){alert(error.message||"Ошибка вложения")}
  finally{submit.disabled=false}
 };
 // v109: navigation is authored in the shell; no obsolete Field controls.
-const navIconNames={"alpha-lab":"lab",tasks:"check",network:"team",dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"passport",analytics:"pulse",pulse:"pulse",field:"field",social:"bell",settings:"settings"};
+const navIconNames={"alpha-lab":"lab",tasks:"check",grid:"grid",dashboard:"home",projects:"layers",team:"team",lager:"box",finance:"coins",merit:"passport",analytics:"pulse",pulse:"pulse",field:"field",social:"bell",settings:"settings"};
 document.querySelectorAll("#nav button[data-route]").forEach(b=>{const holder=b.querySelector(".nav-glyph");if(holder&&!holder.querySelector("svg"))holder.innerHTML=icon(navIconNames[b.dataset.route]||"box")});
 addEventListener("hashchange",()=>{if(projectReady){render();scrollTo(0,0)}});
 async function refreshProjectRecords(key){if(!projectReady||!projectKeys().includes(key))return;try{await projectLoad(key);if(key===KEY){if((projectRecords.get(KEY)??null)===raw)return;readProjectState();if($("#dialog").open){$("#dialog").close();alert("Проект изменён в другой вкладке. Откройте форму снова.")}}render()}catch(error){console.warn("NVTSK storage refresh",error)}}
