@@ -2,7 +2,7 @@ const CACHE="nvtsk-05-command-115";
 const CORE=[
  "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=115",
  "./pv-cases.html","./pv-cases/viewer.js?v=1","./pv-cases/viewer.css?v=1",
- "./grid.css?v=115","./art/grid-weave.webp",
+ "./case-estimate.js?v=115","./grid.css?v=115","./art/grid-weave.webp",
  "./workspace-layout.css?v=113","./silver-dna.css?v=113","./art/command-office.webp","./art/bodensee-west.svg",
  "./art/fonts/inter-latin-wght-normal.woff2","./art/fonts/inter-cyrillic-wght-normal.woff2",
  "./art/nvtsk-approved.webp","./art/roof.webp","./art/store.webp","./art/hero.webp","./art/logo.webp",
@@ -15,6 +15,8 @@ self.addEventListener("activate",event=>{event.waitUntil((async()=>{for(const ke
 self.addEventListener("fetch",event=>{
  const req=event.request;
  if(req.method!=="GET"||!req.url.startsWith(self.registration.scope))return;
+ // Let the media player negotiate byte ranges. The optional film is loaded only on demand.
+ if(new URL(req.url).pathname===new URL("art/grid-demo.mp4",self.registration.scope).pathname)return;
  event.respondWith((async()=>{
  const cache=await caches.open(CACHE);
  const url=new URL(req.url);
