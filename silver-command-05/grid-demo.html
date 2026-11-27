@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101416">
+  <title>Grid · От предложения до приёмки | Nvtsk System</title>
+  <meta name="description" content="Мобильная демонстрация Grid с русской озвучкой. Заказ на 18 солнечных модулей глазами бригады и заказчика.">
+  <meta property="og:title" content="Grid · От предложения до приёмки">
+  <meta property="og:description" content="Один учебный объект, две роли. Мобильная демонстрация Nvtsk System с озвучкой и субтитрами.">
+  <meta property="og:image" content="https://nvtsk18.github.io/nvtsk_system/silver-command-05/art/grid-demo-cover.webp">
+  <link rel="icon" href="art/nvtsk-approved.webp">
+  <style>
+    @font-face{font-family:Inter;src:url("art/fonts/inter-cyrillic-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+    @font-face{font-family:Inter;src:url("art/fonts/inter-latin-wght-normal.woff2") format("woff2");font-weight:100 900;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+2000-206F,U+20AC,U+2122,U+2190-2193}
+    :root{color-scheme:dark;--bg:#101416;--surface:#171d20;--line:#364145;--ink:#f2f4f4;--muted:#b0bcbe;--silver:#d4dcdc;--fold:13px 4px 13px 4px;font-family:Inter,system-ui,sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 16% 15%,#24303465,transparent 50%),var(--bg);color:var(--ink);line-height:1.5}
+    .shell{max-width:1080px;margin:auto;padding:0 max(20px,env(safe-area-inset-right)) max(36px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+    .topbar{min-height:62px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:16px}
+    a{color:inherit;text-decoration:none}
+    a:focus-visible,button:focus-visible,summary:focus-visible,video:focus-visible{outline:2px solid #baddf2;outline-offset:3px}
+    .brand,.back{display:inline-flex;align-items:center;min-height:44px;gap:9px}
+    .brand{font-weight:680;letter-spacing:-.025em}
+    .brand img{object-fit:contain}
+    .back{font-size:.88rem;color:var(--muted)}
+    a:hover,.back:hover,summary:hover{color:#fff}
+    .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.94fr);grid-template-areas:"screen title" "screen contents";align-items:start;column-gap:clamp(32px,6vw,88px);row-gap:18px;padding-top:clamp(24px,4vw,48px)}
+    .title{grid-area:title;align-self:end}
+    h1,h2,p{margin:0}
+    .title h1{font-size:clamp(1.65rem,3vw,2.65rem);font-weight:630;line-height:1.08;letter-spacing:-.055em}
+    .title p{color:var(--muted);margin-top:9px;font-size:.98rem;max-width:39ch}
+    .screen{grid-area:screen;min-width:0;text-align:center;position:sticky;top:16px}
+    .frame{position:relative;width:min(100%,calc(78vh * 9 / 16),462px);width:min(100%,calc(78svh * 9 / 16),462px);margin:0 auto 6px;padding:2px;border-radius:19px;background:linear-gradient(135deg,#afbbbd 0,#414a4d 14%,#253033 52%,#6c787b 79%,#343b3d);box-shadow:0 14px 42px #0005}
+    video{display:block;width:100%;height:auto;aspect-ratio:9/16;border-radius:17px;background:#090d0e;object-fit:contain}
+    .play{position:absolute;top:56%;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:9px;white-space:nowrap;min-height:48px;padding:8px 17px;border:1px solid #e2e8e8;border-radius:var(--fold);background:linear-gradient(115deg,#e5e9e8,#b9c4c5);box-shadow:0 4px 18px #0009;color:#11191c;font:650 .9rem Inter,system-ui,sans-serif;cursor:pointer}
+    .play[hidden]{display:none}.play:hover{background:#f2f5f5}.play:active{background:#acb8b9}
+    .file{color:var(--muted);display:inline-flex;align-items:center;min-height:44px;padding:0 10px;font-size:.86rem;text-decoration:underline;text-underline-offset:3px}
+    .play-error{color:#f0c99a;font-size:.9rem;margin:6px auto;max-width:34ch}
+    .contents{grid-area:contents}
+    h2{font-size:1rem;font-weight:650;margin:0 0 8px}
+    ol{list-style:none;padding:0;margin:0}
+    .chapter{display:flex;align-items:center;gap:14px;min-height:44px;padding:6px 10px;color:var(--silver);border-bottom:1px solid var(--line);font-size:.94rem}
+    .chapter time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.8rem}
+    .chapter:hover,.chapter:active{background:var(--surface)}
+    .chapter[aria-current="true"]{color:var(--ink);font-weight:630;background:linear-gradient(105deg,#43505270,#242d3040);border-radius:var(--fold);box-shadow:inset 2px 0 0 #c3cbcc}
+    .try{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:46px;margin:20px 0 14px;padding:8px 16px;color:#111718;background:linear-gradient(110deg,#e3e7e6,#b0baba);border:1px solid #ecf1f1;border-radius:var(--fold);font-weight:670;font-size:.92rem}
+    .try:hover,.try:active{color:#080a0b;background:#e9eeee}
+    details{border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}
+    summary{cursor:pointer;min-height:44px;align-content:center;padding:11px 1px;color:var(--silver)}
+    details p{margin:0 0 10px}
+    @media(max-width:720px){
+      .shell{padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+      .topbar{min-height:53px}
+      .layout{display:flex;flex-direction:column;align-items:stretch;gap:16px;padding-top:19px;max-width:520px;margin:auto}
+      .title{align-self:stretch}
+      .title p{font-size:.92rem}
+      .screen{position:static}
+      .frame{width:min(100%,calc(70vh * 9 / 16));width:min(100%,calc(70svh * 9 / 16));margin-bottom:0}
+      .try{display:flex}
+    }
+    @media(max-width:350px){.shell{padding-inline:12px}.title h1{font-size:1.5rem}}
+    @media(max-height:550px) and (orientation:landscape){.frame{width:min(100%,420px)}.screen{position:static}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="./"><img src="art/nvtsk-approved.webp" width="33" height="29" alt="">Nvtsk System</a>
+      <a class="back" href="./#start">Регистрация <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3.5 12.5 9-9m-8.5 0h8.5V12"/></svg></a>
+    </header>
+    <main class="layout">
+      <header class="title"><h1>От предложения до приёмки</h1><p>18 солнечных модулей в Зингене. Учебный заказ глазами бригады и заказчика.</p></header>
+      <div class="screen">
+        <div class="frame">
+          <video id="film" width="720" height="1280" controls playsinline preload="metadata" poster="art/grid-demo-cover.webp" aria-label="Демонстрация Grid с русской озвучкой и субтитрами" src="art/grid-demo.mp4?v=116"></video>
+          <button id="play" class="play" type="button" hidden><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M3 1.5 14 8 3 14.5z"/></svg>Смотреть со звуком</button>
+        </div>
+        <p id="play-error" class="play-error" role="status" hidden></p>
+        <a class="file" href="art/grid-demo.mp4?v=116">Открыть MP4 · 1:28</a>
+      </div>
+      <div class="contents">
+        <nav aria-label="Главы видео">
+          <h2>Главы</h2>
+          <ol>
+            <li><a data-slug="grid" class="chapter" href="art/grid-demo.mp4?v=116#t=0" data-start="0" aria-current="true"><time datetime="PT0S">0:00</time>Grid</a></li>
+            <li><a data-slug="poisk" class="chapter" href="art/grid-demo.mp4?v=116#t=8.68" data-start="8.68"><time datetime="PT8.68S">0:08</time>Поиск предложения</a></li>
+            <li><a data-slug="sdelka" class="chapter" href="art/grid-demo.mp4?v=116#t=20.36" data-start="20.36"><time datetime="PT20.36S">0:20</time>Сделка и Case</a></li>
+            <li><a data-slug="brigada" class="chapter" href="art/grid-demo.mp4?v=116#t=28.92" data-start="28.92"><time datetime="PT28.92S">0:28</time>Назначение бригады</a></li>
+            <li><a data-slug="sklad" class="chapter" href="art/grid-demo.mp4?v=116#t=41.04" data-start="41.04"><time datetime="PT41.04S">0:41</time>Выдача материалов</a></li>
+            <li><a data-slug="montazh" class="chapter" href="art/grid-demo.mp4?v=116#t=50.12" data-start="50.12"><time datetime="PT50.12S">0:50</time>Работа монтажника</a></li>
+            <li><a data-slug="priemka" class="chapter" href="art/grid-demo.mp4?v=116#t=60.64" data-start="60.64"><time datetime="PT60.64S">1:00</time>Приёмка заказчиком</a></li>
+            <li><a data-slug="profil" class="chapter" href="art/grid-demo.mp4?v=116#t=70.96" data-start="70.96"><time datetime="PT70.96S">1:10</time>Профиль исполнителя</a></li>
+            <li><a data-slug="lab" class="chapter" href="art/grid-demo.mp4?v=116#t=81.48" data-start="81.48"><time datetime="PT81.48S">1:21</time>Попробовать в ALPHA LAB</a></li>
+          </ol>
+        </nav>
+        <a class="try" href="./#grid/demo">Пройти пример в ALPHA LAB <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m3.5 12.5 9-9m-8.5 0h8.5V12"/></svg></a>
+        <details><summary>Текст озвучки</summary>
+          <p>Восемнадцать солнечных модулей в Зингене. Пройдём путь от предложения до принятой работы. Всё в мобильном Grid.</p>
+          <p>Заказчик уже опубликовал предложение. Ищем его по городу и объёму работ. Вот нужный объект: восемнадцать модулей. Бюджет — тысяча восемьсот евро.</p>
+          <p>В условиях сделки записываем, что должна сдать бригада, и сохраняем. Из сделки создаём Case — карточку объекта.</p>
+          <p>Монтаж выделяем в отдельный рабочий участок. В системе он называется Shard. Назначаем бригаду Олега. Две её задачи — сверить раскладку и закрепить модули.</p>
+          <p>Перед выездом склад выдаёт Олегу двенадцать монтажных шин. В карточке объекта остаются получатель, рабочий участок и количество.</p>
+          <p>Теперь тот же объект глазами Олега. Монтажник отмечает обе задачи выполненными. Участок готов. Олег передаёт его на проверку.</p>
+          <p>Заказчик видит участок в очереди приёмки и проверяет список задач. Он принимает участок. На карточке появляется отметка «Принято».</p>
+          <p>В Grid появилась запись о принятой работе. Она же есть в профиле Олега. Отсюда можно снова открыть участок и увидеть, какую работу он сдал.</p>
+          <p>Попробуйте обе роли в ALPHA LAB. Учебные данные хранятся на вашем устройстве.</p>
+        </details>
+      </div>
+    </main>
+  </div>
+  <script>
+    const film = document.getElementById("film");
+    const playButton = document.getElementById("play");
+    const notice = document.getElementById("play-error");
+    const chapters = Array.from(document.querySelectorAll(".chapter"));
+    let pendingStart = null;
+    function showError() {
+      playButton.hidden = true;
+      notice.textContent = "Видео не загрузилось. Проверьте подключение или откройте MP4 по ссылке ниже.";
+      notice.hidden = false;
+    }
+    function playFilm() {
+      film.play().catch(() => { if (film.error) showError(); });
+    }
+    function markChapter() {
+      let active = chapters[0];
+      for (const chapter of chapters) {
+        if (Number(chapter.dataset.start) <= film.currentTime + 0.04) active = chapter;
+      }
+      for (const chapter of chapters) {
+        if (chapter === active) chapter.setAttribute("aria-current", "true");
+        else chapter.removeAttribute("aria-current");
+      }
+    }
+    function seek(chapter) {
+      pendingStart = Number(chapter.dataset.start);
+      if (film.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        film.currentTime = pendingStart;
+        pendingStart = null;
+        markChapter();
+      }
+    }
+    function seekFromLocation() {
+      const chapter = chapters.find(link => "#" + link.dataset.slug === location.hash);
+      if (chapter) seek(chapter);
+    }
+    playButton.hidden = false;
+    playButton.addEventListener("click", () => {
+      film.muted = false;
+      film.focus({preventScroll:true});
+      playFilm();
+    });
+    film.addEventListener("play", () => { playButton.hidden = true; });
+    film.addEventListener("error", showError);
+    if (film.error) showError();
+    film.addEventListener("loadedmetadata", () => {
+      if (pendingStart !== null) { film.currentTime = pendingStart; pendingStart = null; }
+      markChapter();
+    });
+    film.addEventListener("timeupdate", markChapter);
+    for (const chapter of chapters) {
+      chapter.addEventListener("click", event => {
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        history.replaceState(null, "", "#" + chapter.dataset.slug);
+        seek(chapter);
+        playFilm();
+        if (matchMedia("(max-width:720px)").matches) film.scrollIntoView({block:"center"});
+      });
+    }
+    window.addEventListener("hashchange", seekFromLocation);
+    seekFromLocation();
+  </script>
+</body>
+</html>

@@ -1,8 +1,9 @@
-const CACHE="nvtsk-05-command-115";
+const CACHE="nvtsk-05-command-116";
 const CORE=[
- "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=115",
+ "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=116",
  "./pv-cases.html","./pv-cases/viewer.js?v=1","./pv-cases/viewer.css?v=1",
  "./case-estimate.js?v=115","./grid.css?v=115","./art/grid-weave.webp",
+ "./grid-demo.html","./art/grid-demo-cover.webp",
  "./workspace-layout.css?v=113","./silver-dna.css?v=113","./art/command-office.webp","./art/bodensee-west.svg",
  "./art/fonts/inter-latin-wght-normal.woff2","./art/fonts/inter-cyrillic-wght-normal.woff2",
  "./art/nvtsk-approved.webp","./art/roof.webp","./art/store.webp","./art/hero.webp","./art/logo.webp",
