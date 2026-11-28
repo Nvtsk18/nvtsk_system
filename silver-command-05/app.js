@@ -25,7 +25,7 @@ function rememberedAccountId(){const saved=localStorage.getItem(SESSION_KEY);if(
 function account(){const id=rememberedAccountId(),a=accounts().find(a=>a.id===id);return a&&workspaceRegistry().items.some(w=>w.id===a.workspaceId)?a:undefined}
 function forgetAccount(){localStorage.setItem(SESSION_KEY,"");sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(BASE+"_mode")}
 async function passwordHash(password,salt){const enc=new TextEncoder(),key=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveBits"]);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:enc.encode(salt),iterations:210000,hash:"SHA-256"},key,256))).map(x=>x.toString(16).padStart(2,"0")).join("")}
-function enterAccount(a){const r=workspaceRegistry();localStorage.setItem(WORKSPACES_KEY,JSON.stringify({...r,active:a.workspaceId}));localStorage.setItem(SESSION_KEY,a.id);sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(BASE+"_mode");location.hash=location.hash==="#grid/demo"?"#grid/demo":"#dashboard";location.reload()}
+function enterAccount(a){const r=workspaceRegistry();localStorage.setItem(WORKSPACES_KEY,JSON.stringify({...r,active:a.workspaceId}));localStorage.setItem(SESSION_KEY,a.id);sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem(BASE+"_mode");if(location.hash!=="#grid/demo" && !location.hash.startsWith("#map-enter/"))location.hash="#dashboard";location.reload()}
 function authIcon(name){const paths={email:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>',user:'<circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',company:'<path d="M3 21h18M5 21V7l10-4v18m0-11h4v11M8 10h1m2-1h1m-4 5h1m2-1h1m-4 5h1m2-1h1"/>',eye:'<path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/>',eyeOff:'<path d="m3 3 18 18M10 6.2c.7-.2 1.3-.2 2-.2 6.4 0 10 6 10 6a17 17 0 0 1-3 3.6M6.1 7.7A19 19 0 0 0 2 12s3.6 6 10 6c1.1 0 2.2-.2 3.2-.5"/>'};return '<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg>'}
 // Google identity for the local-first MVP. No Google token is stored.
 const GOOGLE_CLIENT_ID=(document.querySelector('meta[name="nvtsk-google-client-id"]')?.content||"").trim();
@@ -151,7 +151,60 @@ const mapTowns = [
   ["Singen",47.760,8.841], ["Stockach",47.851,9.012], ["Radolfzell",47.737,8.969],
   ["Überlingen",47.769,9.171], ["Konstanz",47.660,9.175]
 ];
+const osCity = "Osnabrück";
+const osSites = [
+  {id:"os-lab-flats", title:"Дом на 12 квартир", label:"12 квартир", district:"Westerberg", lon:8.019, lat:52.283, scope:"Два подъезда, по шесть квартир. Электромонтаж квартир, лестничных площадок и подвала."},
+  {id:"os-lab-apartment", title:"Трёхкомнатная квартира", label:"3 комнаты", district:"Innenstadt", lon:8.050, lat:52.273, scope:"Разводка освещения, розеточных групп и отдельных линий для кухни."},
+  {id:"os-lab-house", title:"Частный дом · 160 м²", label:"Дом 160 м²", district:"Schölerberg", lon:8.066, lat:52.255, scope:"Электромонтаж жилого дома, распределительный щит и подготовка линий для автоматики."},
+  {id:"os-lab-office", title:"Бюро · 250 м²", label:"Бюро 250 м²", district:"Fledder", lon:8.086, lat:52.268, scope:"Освещение бюро, питание рабочих мест и кабельные трассы в коммерческом помещении."}
+];
+function addOsLabCases(data) {
+  if(data.labSeed!=="alpha-v1") throw Error("Учебные объекты доступны только в ALPHA LAB.");
+  const previous=data.actor;
+  let next=data;
+  for(const site of osSites){
+    if(next.cases.some(c=>c.id===site.id))continue;
+    next=apply({...next,actor:"lead"},"case",{id:site.id,title:site.title,city:osCity,price:0,
+      address:osCity+" · "+site.district+" (учебная точка)",notes:"ALPHA LAB · Электромонтаж. "+site.scope});
+  }
+  return next===data?data:{...next,actor:previous};
+}
+function osMap(selected=""){
+  const site=osSites.find(s=>s.id===selected)||osSites[0];
+  const stored=id=>lab && account()?state.cases.find(c=>c.id===id):null;
+  const title=s=>esc(stored(s.id)?.title || s.title);
+  const mercator=lat=>Math.asinh(Math.tan(lat*Math.PI/180));
+  const pins=osSites.map((s,i)=>{
+    const x=(s.lon-7.991)/(8.108-7.991)*100;
+    const y=(mercator(52.303)-mercator(s.lat))/(mercator(52.303)-mercator(52.246))*100;
+    return '<button type="button" class="os-pin" style="left:'+x.toFixed(2)+'%;top:'+y.toFixed(2)+'%" data-os-pin="'+s.id+'" aria-label="'+title(s)+' · '+s.district+'" aria-pressed="'+(s.id===site.id)+'"><b>'+(i+1)+'</b><span>'+s.label+'</span></button>';
+  }).join("");
+  const options=osSites.map((s,i)=>'<option value="'+s.id+'"'+(s.id===site.id?" selected":"")+'>'+(i+1)+' · '+title(s)+'</option>').join("");
+  const record=stored(site.id);
+  const action=record?'<a class="os-open" href="#case/'+site.id+'">Открыть Case →</a>':account()?'<button class="os-open" data-action="'+(lab?'os-prepare':'sandbox')+'" data-os-case="'+site.id+'">Открыть Case в ALPHA LAB</button>':'<a class="os-open" href="#map-enter/'+site.id+'">Открыть Case в ALPHA LAB</a>';
+  return '<section class="dna-atlas surface os-atlas"><header class="module-head"><h2>Оснабрюк</h2><span class="meta">4 объекта · ALPHA LAB</span></header>'+
+    '<div class="os-map"><img src="art/osnabrueck-city.webp" width="1260" height="1003" alt="Карта улиц Оснабрюка">'+pins+
+    '<span class="os-north">↑ N</span><a class="os-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div>'+
+    '<div class="os-info"><label>Учебный объект<select data-os-select>'+options+'</select></label><p><b>'+site.district+'</b> · Электромонтаж</p><p>'+esc(site.scope)+'</p>'+action+
+    '<small>Учебные точки обозначают районы. Бюджеты не заданы.</small></div></section>';
+}
+document.addEventListener("click",e=>{
+  const pin=e.target.closest("[data-os-pin]");
+  if(pin)selectOsSite(pin,pin.dataset.osPin,true);
+});
+document.addEventListener("change",e=>{
+  if(e.target.matches("[data-os-select]"))selectOsSite(e.target,e.target.value,false);
+});
+function selectOsSite(el,id,pin){
+  const wrapper=el.closest(".os-atlas");
+  const parent=wrapper.parentElement;
+  wrapper.outerHTML=osMap(id);
+  const next=parent.querySelector(".os-atlas");
+  next.querySelector(pin?'[data-os-pin="'+id+'"]':'[data-os-select]').focus({preventScroll:true});
+}
+
 function caseMiniMap() {
+  if(lab && location.hash!=="#map-bodensee")return '<div>'+osMap()+'<a class="os-switch" href="#map-bodensee">К карте Бодензее →</a></div>';
   const projects = state.cases;
   const cityGroup = c => lab || c.id.startsWith("demo-") ? mapTowns.find(([name]) => c.city === name)?.[0] || "" : "";
   const markers = mapTowns.map(([name, lat, lon]) => {
@@ -162,7 +215,7 @@ function caseMiniMap() {
       : '<span class="map-town town-reference" '+pos+'><b></b><span>'+name+'</span></span>';
   }).join("");
   const choices = projects.map(c => '<option value="'+esc(c.id)+'" data-town="'+esc(cityGroup(c))+'">'+esc(c.title)+'</option>').join("");
-  return '<section class="dna-atlas surface"><header class="module-head"><h2>Карта объектов</h2><span class="meta">'+projects.length+' '+projectWord(projects.length)+'</span></header>'+
+  return '<section class="dna-atlas surface"><header class="module-head"><h2>Карта объектов</h2><span class="meta">'+projects.length+' '+projectWord(projects.length)+'</span></header><a class="os-switch" href="#map-osnabrueck">Оснабрюк · 4 учебных Case →</a>'+
     '<div class="map-viewport"><div class="map-sheet"><img src="art/bodensee-west.svg" alt="" width="1000" height="500">'+markers+'<i class="lake-name" aria-hidden="true">Bodensee</i></div><span class="map-north" aria-label="Север">↑ N</span></div>'+
     '<div class="map-foot">'+(choices?
       '<div class="atlas-picker-head"><label for="dna-map-case">Объект</label><button type="button" id="dna-map-clear" hidden>Все города</button></div>'+
@@ -534,7 +587,7 @@ function detail(id,tab="overview"){
   else if(tab==="docs")body=mediaPanel+PVProjectCard.render(c,state,ownsCase(id));
   else{tab="overview";body=lobbySection("Паспорт и ход работ",lobbyLink("case/"+id+"/docs","Документы →"),'<p>'+esc(estimate.description||"Описание пока не добавлено.")+'</p>'+finLine("Оплачено заказчиком",euroCents(f.received))+finLine("Ожидают приёмки",String(shards.filter(s=>s.status==="submitted").length))+finLine("Распределено",euroCents(f.allocated))+finLine("Арендные сделки",String(rel.rentals.length)))+works+partnerInfo}
   const estimateLink=estimate.plan&&tab!=="estimate"?'<a class="estimate-shortcut" href="#case/'+esc(id)+'/estimate"><strong>Смета работ</strong><span>Часы, расходы и маржа →</span></a>':"";
-  return '<div class="nv109-case">'+head+estimateLink+monitors+caseTabs(id,tab)+'<div class="nv109-case-content">'+body+'</div></div>';
+  return '<div class="nv109-case">'+(lab && osSites.some(s=>s.id===id)?'<a class="os-switch" href="#map-osnabrueck/'+esc(id)+'">← На карту Оснабрюка</a>':"")+head+estimateLink+monitors+caseTabs(id,tab)+'<div class="nv109-case-content">'+body+'</div></div>';
 }
 const warehousePhotos=[
  {name:"novotegra Einlegeschiene",brand:"novotegra",kind:"Einlegesystem · не привязано к артикулу",image:"https://www.novotegra.com/fileadmin/_processed_/d/9/csm_einlegeschiene-kombination-03-0013xx_e3262ee072.jpg",url:"https://www.novotegra.com/fileadmin/04_Downloads/Certificates/novotegra_system/Montagesystemkatalog/DE-novotegra-Montage-Systemkatalog.pdf",verified:false},
@@ -1197,7 +1250,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-netw
  }const d=networkData(),p=d.posts.find(x=>x.id===id);if(action==="like"&&p){p.likes=p.likes||[];p.likes=p.likes.includes(state.actor)?p.likes.filter(x=>x!==state.actor):[...p.likes,state.actor];await networkSave(d)}else if(action==="delete"&&p&&p.author===state.actor){if(d.deals.some(x=>x.postId===id))throw Error("Публикация связана со сделкой");if(!confirm("Удалить публикацию?"))return;d.posts=d.posts.filter(x=>x.id!==id);await networkSave(d);/* Media bytes retained for local undo/history. */}else if(action==="draft"&&p&&["offer","available"].includes(p.kind)){if(!d.deals.some(x=>x.postId===id)){d.deals.push({id:crypto.randomUUID(),postId:id,title:p.title,region:p.region,budget:p.budget,terms:p.text,caseId:null});await networkSave(d)}openGrid("deals",{deal:d.deals.find(x=>x.postId===id).id});return}else if(action==="case"){const deal=d.deals.find(x=>x.id===id);if(!deal)return;if(deal.caseId){location.hash="case/"+deal.caseId;return}if(!confirm("Создать Case из сделки? Данные будут связаны в одном реестре."))return;b.disabled=true;try{if(await change(()=>apply(state,"network-case",{dealId:id})))location.hash="case/network-"+id}finally{b.disabled=false}return}else return;render()}catch(err){alert(err.message)}});
 document.addEventListener("submit",async e=>{const form=e.target;if(form.id!=="nt99-post-form"&&!form.matches(".nt99-comment,.nt99-dealform"))return;e.preventDefault();if(!account())return;const btn=form.querySelector('button[type="submit"]');btn.disabled=true;let mediaId=null;try{const p=Object.fromEntries(new FormData(form)),d=networkData();if(form.id==="nt99-post-form"){const kind=p.kind,text=String(p.text||"").trim(),file=form.elements.media.files[0],market=["offer","available"].includes(kind),budget=Number(p.budget);if(!Object.hasOwn(networkKinds,kind)||!text||text.length>1200)throw Error("Заполните описание");if(market&&(!p.title.trim()||!p.region.trim()||!p.budget||!Number.isFinite(budget)||budget<0||budget>1e12))throw Error("Укажите название, регион и бюджет");const id=crypto.randomUUID();let mediaKind=null;if(file){if(file.size>30000000||!["image/jpeg","image/png","image/webp","video/mp4","video/webm","video/quicktime"].includes(file.type))throw Error("Допустимы фото и видео до 30 МБ");mediaKind=file.type.startsWith("video/")?"video":"image";if(kind==="video"&&mediaKind!=="video")throw Error("Выберите видео");await networkMedia("put",id,file);mediaId=id}else if(kind==="video")throw Error("Выберите видео");const current=networkData();current.posts.push({id,kind,text,author:state.actor,created:new Date().toISOString(),caseId:state.cases.some(c=>c.id===p.caseId)?p.caseId:null,likes:[],comments:[],mediaKind,...(market?{title:p.title.trim(),region:p.region.trim(),budget}:{})});await networkSave(current);mediaId=null;openGrid(kind==="video"?"video":market?"market":"all");return}else if(form.matches(".nt99-comment")){const post=d.posts.find(x=>x.id===form.dataset.id),text=String(p.text||"").trim();if(!post||!text||text.length>500)throw Error("Введите комментарий");post.comments=post.comments||[];post.comments.push({id:crypto.randomUUID(),author:state.actor,text});await networkSave(d)}else{const deal=d.deals.find(x=>x.id===form.dataset.id),terms=String(p.terms||"").trim(),budget=Number(p.budget);if(!deal||deal.caseId||!terms||terms.length>4000||!Number.isFinite(budget)||budget<0||budget>1e12)throw Error("Проверьте условия и бюджет");deal.terms=terms;deal.budget=budget;await networkSave(d);const status=$("#grid-save-status");if(status)status.textContent="Условия сохранены на устройстве."}}catch(err){if(mediaId)await networkMedia("delete",mediaId).catch(()=>{});const el=$("#nt99-error");if(form.id==="nt99-post-form"&&el)el.textContent=err.message;else alert(err.message);btn.disabled=false}});
 
-const pages={start:()=>heading("Открыть свою компанию")+'<section class="panel"><p>Сейчас открыто пространство «'+esc(activeWorkspace().name)+'». Для приглашения создаётся отдельный локальный аккаунт.</p><button data-auth-logout>Выйти и открыть приглашение</button><button data-route="dashboard">К рабочему пространству</button></section>',"alpha-lab":alphaLabPage,company:companyProfile,finance:personalFinance,merit:meritWorkspace,analytics:analyticsWorkspace,dashboard:personalLobby,projects,garage,tasks,settings,pulse,lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
+const pages={"map-osnabrueck":()=>osMap()+lobbyLink("dashboard","← В центр"),"map-bodensee":()=>caseMiniMap()+lobbyLink("dashboard","← В центр"),start:()=>heading("Открыть свою компанию")+'<section class="panel"><p>Сейчас открыто пространство «'+esc(activeWorkspace().name)+'». Для приглашения создаётся отдельный локальный аккаунт.</p><button data-auth-logout>Выйти и открыть приглашение</button><button data-route="dashboard">К рабочему пространству</button></section>',"alpha-lab":alphaLabPage,company:companyProfile,finance:personalFinance,merit:meritWorkspace,analytics:analyticsWorkspace,dashboard:personalLobby,projects,garage,tasks,settings,pulse,lager:()=>garage("material"),fuhrpark:()=>garage("fuhrpark")};
 function alphaLabPage(){
  if(!lab)return heading("Nvtsk System")+lobbySection("ALPHA LAB · Изолированная среда","",'<p>Тестовые участники, проекты и финансы хранятся отдельно от рабочего аккаунта.</p>'+button("Запустить лабораторию","sandbox"));
  const report=state.labReport||{operations:0,checks:[],groups:[]},fs=state.cases.map(c=>NVModel.financialCase(state,c.id));
@@ -1206,6 +1259,10 @@ function alphaLabPage(){
 }
 function render(){
  networkRelease();
+ if(!account() && location.hash.split("/")[0]==="#map-osnabrueck"){
+   stopGoogleResize();document.body.classList.remove("nv90-auth");$("#nav").hidden=true;$(".top").hidden=true;
+   $("#app").innerHTML='<div class="os-public">'+osMap(location.hash.split("/")[1])+'<a class="os-switch" href="#register">Регистрация в Nvtsk System</a></div>';return;
+ }
  if(!account()){
    const register=location.hash==="#register" || (location.hash!=="#login" && accounts().length===0);
    loginScreen(register);return;
@@ -1220,7 +1277,7 @@ function render(){
  const context=$("#nv108-context");if(context)context.textContent=company;
  document.body.dataset.section=r.split("/")[0];
  const workbar='<header class="nv108-workbar"><div class="workspace-ident"><span class="company-mark" aria-hidden="true">'+icon("layers")+'</span><div><b>'+esc(company)+'</b><small>Nvtsk_System</small></div></div><span class="section-location">'+esc(sectionTitle)+'</span></header>';
- $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · тестовые данные</strong><button data-route="alpha-lab">Участники</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(grid?gridPage(grid):r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
+ $("#app").innerHTML=(lab?'<div class="labnotice nv112-labbar"><strong>ALPHA LAB · тестовые данные</strong><button data-route="alpha-lab">Участники</button><button data-action="sandbox">Выйти</button></div>':"")+(damaged?'<p role="alert">Ошибка чтения. Для восстановления откройте настройки и импортируйте копию.</p>':'')+workbar+(grid?gridPage(grid):(r.startsWith("map-enter/")||r.startsWith("map-osnabrueck/"))?osMap(r.split("/")[1]):r.startsWith("case/")?detail(...r.slice(5).split("/")):r.startsWith("shard/")?shardDetail(r.slice(6)):r.startsWith("lager/")?garage("material",r.slice(6)):r.startsWith("member/")?memberProfile(r.slice(7)):r.startsWith("rental/")?rentalRecord(r.slice(7)):r.startsWith("rental-partner/")?rentalPartnerProfile(r.slice(15)):r.startsWith("partner/")?counterpartyProfile(r.slice(8)):r.startsWith("finance/")?personalFinance(r.slice(8)):Object.hasOwn(pages,r)?pages[r]():personalLobby());
  document.querySelectorAll("#nav button[data-route]").forEach(b=>{
    const base=grid?"grid":r.split("/")[0];
    const parent={case:"projects",shard:"projects",partner:"projects",garage:"lager",fuhrpark:"lager",member:"grid",rental:"grid","rental-partner":"grid"};
@@ -1356,10 +1413,17 @@ document.addEventListener("click",async e=>{
  if(["finance-activate","finance-deactivate","finance-convert","finance-settle","finance-case-cancel","finance-shard-cancel","finance-self-accept"].includes(a)){const msg={"finance-activate":"Активировать бесплатный план? Бюджет распределён полностью; комиссий нет.","finance-deactivate":"Вернуть план в редактирование? До первого платежа можно менять распределение.","finance-convert":"Перевести исторический план на бесплатную модель? Подтверждённых платежей ещё нет.","finance-settle":"Подтвердить окончательный расчёт? Будут разблокированы выплаты и Merit согласно правилам Case.","finance-case-cancel":"Отменить Case?","finance-shard-cancel":"Отменить Shard?","finance-self-accept":"Подтвердить собственную работу? Это не независимая приёмка."}[a];if(confirm(msg)){if(await change(()=>apply(state,a,{caseId:id,shardId:id,date:localDay()}))&&a.endsWith("-cancel"))location.hash="#projects"}return}
  if(["rental-confirm","rental-return","rental-cancel"].includes(a)){if(confirm("Подтвердить действие с арендой? Запись локальная."))await change(()=>apply(state,a,{id,date:localDay()}));return}
  if(a==="cash-void"){if(confirm("Аннулировать запись? Она останется в истории, но не будет учитываться в итогах."))await change(()=>apply(state,"cash-void",{id}));return}
- if(a==="lab-reset"){if(!lab||!confirm("Сбросить только тестовые данные ALPHA LAB?"))return;try{const data=NVModel.alphaLab();const record=JSON.stringify({format:1,data,history:[]});await projectWrite(KEY,raw,record);raw=record;state=data;history=[];damaged=false;render()}catch(err){alert(err.message)}return}
+ if(a==="os-prepare"){
+   if(lab && osSites.some(s=>s.id===b.dataset.osCase) && await change(()=>addOsLabCases(state)))location.hash="case/"+b.dataset.osCase;
+   return;
+ }
+ if(a==="lab-reset"){if(!lab||!confirm("Сбросить только тестовые данные ALPHA LAB?"))return;try{const data=addOsLabCases(NVModel.alphaLab());const record=JSON.stringify({format:1,data,history:[]});await projectWrite(KEY,raw,record);raw=record;state=data;history=[];damaged=false;render()}catch(err){alert(err.message)}return}
  if(a==="sandbox"){
    try{
-     if(!lab){const key=workspaceKey(activeWorkspace().id)+"_alpha_lab_v1";const prior=await projectLoad(key);if(prior===null){const data=NVModel.alphaLab();await projectWrite(key,null,JSON.stringify({format:1,data,history:[]}))}sessionStorage.setItem(BASE+"_mode","alpha");location.hash=b.hasAttribute("data-grid-demo")?"grid/demo":"alpha-lab"}
+     if(!lab){const key=workspaceKey(activeWorkspace().id)+"_alpha_lab_v1";const prior=await projectLoad(key);const osTarget=osSites.find(s=>s.id===b.dataset.osCase);
+       if(prior===null){const data=addOsLabCases(NVModel.alphaLab());await projectWrite(key,null,JSON.stringify({format:1,data,history:[]}))}
+       else if(osTarget){const record=JSON.parse(prior);const source=record.format===1?record.data:record;const updated=addOsLabCases(source);if(updated!==source)await projectWrite(key,prior,JSON.stringify(record.format===1?{...record,data:updated}:{format:1,data:updated,history:[]}))}
+       sessionStorage.setItem(BASE+"_mode","alpha");location.hash=osTarget?"case/"+osTarget.id:b.hasAttribute("data-grid-demo")?"grid/demo":"alpha-lab"}
      else {sessionStorage.removeItem(BASE+"_mode");location.hash="dashboard"}
      location.reload();
    }catch(error){alert(error.message)}

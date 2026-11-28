@@ -214,3 +214,23 @@
 .grid-film svg {width:15px;height:15px}
 .shard-workspace-heading .fieldstatus {display:inline-flex;align-items:center;min-height:24px;gap:6px;border:1px solid var(--edge);border-radius:var(--fold);padding:2px 8px;color:var(--ink);font-size:12px}
 .shard-workspace-heading .fieldstatus[data-status="accepted"]::before {content:"";width:6px;height:6px;border-radius:50%;background:#8fbea5}
+
+/* Osnabrück: marks and local map use the same Web Mercator extent. */
+.os-public,.os-atlas{width:100%;max-width:800px;margin-inline:auto}
+.os-public{padding:clamp(8px,3vw,24px)}
+.os-map{position:relative;isolation:isolate;background:#222b2d}
+.os-map>img{width:100%;height:auto;display:block}
+.os-pin{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;display:grid;place-items:center;padding:0;background:transparent;border:0;box-shadow:none}
+.os-pin b{display:grid;place-items:center;width:29px;height:29px;border:2px solid #e9eeed;border-radius:50% 50% 5px 50%;background:#273737;color:#fff;box-shadow:0 2px 6px #0009;font:700 14px system-ui}
+.os-pin[aria-pressed=true] b{background:#c8e7fc;color:#17252a;border-color:white;outline:3px solid #263f4e}
+.os-north,.os-credit{position:absolute;color:#e7eded;background:#162022ed;padding:2px 6px;font-size:11px}
+.os-north{top:6px;right:6px}.os-credit{bottom:0;right:0}
+.os-info{display:grid;gap:7px;padding:13px 16px 15px}
+.os-info label,.os-info small{color:var(--muted);font-size:13px}
+.os-info select{display:block;width:100%;margin-top:5px;min-height:44px}
+.os-info p{margin:0;font-size:14px;line-height:1.5}
+.os-open,.os-switch{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.os-open{width:fit-content;padding:6px 14px;border-radius:12px 4px;background:#d2dbdc;color:#182225;font-weight:650}
+.os-switch{padding:4px 15px;color:var(--ink)}
+.os-pin span{position:absolute;top:calc(50% + 16px);color:#eef4f4;background:#172225ef;border-radius:4px;padding:2px 5px;white-space:nowrap;font:600 11px/1.25 system-ui;pointer-events:none}
+.os-pin:nth-of-type(2) span,.os-pin:nth-of-type(3) span{top:auto;bottom:calc(50% + 16px)}
