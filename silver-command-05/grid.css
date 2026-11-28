@@ -215,22 +215,51 @@
 .shard-workspace-heading .fieldstatus {display:inline-flex;align-items:center;min-height:24px;gap:6px;border:1px solid var(--edge);border-radius:var(--fold);padding:2px 8px;color:var(--ink);font-size:12px}
 .shard-workspace-heading .fieldstatus[data-status="accepted"]::before {content:"";width:6px;height:6px;border-radius:50%;background:#8fbea5}
 
-/* Osnabrück: marks and local map use the same Web Mercator extent. */
-.os-public,.os-atlas{width:100%;max-width:800px;margin-inline:auto}
-.os-public{padding:clamp(8px,3vw,24px)}
-.os-map{position:relative;isolation:isolate;background:#222b2d}
-.os-map>img{width:100%;height:auto;display:block}
-.os-pin{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;display:grid;place-items:center;padding:0;background:transparent;border:0;box-shadow:none}
-.os-pin b{display:grid;place-items:center;width:29px;height:29px;border:2px solid #e9eeed;border-radius:50% 50% 5px 50%;background:#273737;color:#fff;box-shadow:0 2px 6px #0009;font:700 14px system-ui}
-.os-pin[aria-pressed=true] b{background:#c8e7fc;color:#17252a;border-color:white;outline:3px solid #263f4e}
-.os-north,.os-credit{position:absolute;color:#e7eded;background:#162022ed;padding:2px 6px;font-size:11px}
-.os-north{top:6px;right:6px}.os-credit{bottom:0;right:0}
-.os-info{display:grid;gap:7px;padding:13px 16px 15px}
-.os-info label,.os-info small{color:var(--muted);font-size:13px}
-.os-info select{display:block;width:100%;margin-top:5px;min-height:44px}
-.os-info p{margin:0;font-size:14px;line-height:1.5}
-.os-open,.os-switch{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
-.os-open{width:fit-content;padding:6px 14px;border-radius:12px 4px;background:#d2dbdc;color:#182225;font-weight:650}
-.os-switch{padding:4px 15px;color:var(--ink)}
-.os-pin span{position:absolute;top:calc(50% + 16px);color:#eef4f4;background:#172225ef;border-radius:4px;padding:2px 5px;white-space:nowrap;font:600 11px/1.25 system-ui;pointer-events:none}
-.os-pin:nth-of-type(2) span,.os-pin:nth-of-type(3) span{top:auto;bottom:calc(50% + 16px)}
+/* Regional training maps share their selector, projection and Case navigation. */
+#app:has(> .region-public){margin:0;padding:clamp(10px,3vw,30px) max(12px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+#app>.region-public {width:100%;max-width:1000px;margin-inline:auto}
+.region-brand {display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 2px 13px;border-bottom:1px solid var(--edge)}
+.region-brand a {display:inline-flex;align-items:center;gap:8px;min-height:45px;color:var(--muted);font-size:14px;text-decoration:none}
+.region-brand a:first-child {color:var(--ink);font-weight:680;letter-spacing:-.03em}
+.region-brand img {object-fit:contain}
+.region-atlas {container-type:inline-size;min-width:0;width:100%;margin-inline:auto}
+.map-locations {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0 clamp(10px,2vw,18px) 12px;padding:4px;background:#111719;border:1px solid var(--edge);border-radius:var(--fold)}
+.map-locations a {display:grid;align-content:center;gap:2px;min-width:0;min-height:52px;padding:6px clamp(8px,2.2vw,16px);border:1px solid transparent;border-radius:var(--fold);color:var(--ink);text-decoration:none}
+.map-locations a b {font-size:15px;font-weight:650;line-height:1.16}
+.map-locations a span {font-size:12px;color:var(--muted);line-height:1.18}
+.map-locations a:hover {background:#263034}
+.map-locations a[aria-current=location] {border-color:#d7dfe0;background:linear-gradient(115deg,#e2e8e8 0%,#c5cecf 68%,#b5c1c2);color:#172024}
+.map-locations a[aria-current=location] span {color:#354347}
+.map-locations a:active {box-shadow:inset 0 1px 4px #0003}
+.map-locations a:focus-visible,.region-pin:focus-visible,.region-open:focus-visible,.map-workspace-link:focus-visible {outline:2px solid #abd9f0;outline-offset:2px}
+.map-demo-label {display:block;color:var(--muted);margin:0 14px 6px;font-size:12px}
+.region-body {display:grid;min-width:0}
+.region-map {position:relative;isolation:isolate;align-self:start;background:#263132;overflow:hidden}
+.region-map>img {display:block;width:100%;height:auto;aspect-ratio:1260/1003}
+.region-pin {position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;width:46px;height:46px;min-height:46px;padding:0;border:0;border-radius:50%;background:transparent;box-shadow:none}
+.region-pin b {display:grid;place-items:center;width:28px;height:28px;border:2px solid #e9efee;border-radius:50% 50% 5px 50%;background:#273637;color:#fff;box-shadow:0 2px 7px #000b;font:700 14px/1 system-ui}
+.region-pin span {position:absolute;top:calc(50% + 15px);color:#f4f7f7;background:#172124f2;border-radius:4px;padding:2px 5px;white-space:nowrap;font:600 11px/1.25 system-ui;pointer-events:none}
+.region-pin[aria-pressed=true] {z-index:1}
+.region-pin[aria-pressed=true] b {background:#c3e4f4;color:#182b32;border-color:#fff;outline:3px solid #344c54}
+.region-pin:hover b {border-color:#b3d7e9}
+.region-atlas[data-region=map-osnabrueck] .region-pin:nth-of-type(2) span,.region-atlas[data-region=map-osnabrueck] .region-pin:nth-of-type(3) span,.region-atlas[data-region=map-bodensee] .region-pin:nth-of-type(2) span {top:auto;bottom:calc(50% + 15px)}
+.region-north,.region-credit {position:absolute;color:#e7eded;background:#172125e8;padding:2px 6px;font-size:11px}
+.region-north {top:6px;right:6px}.region-credit {bottom:0;right:0}
+.region-details {display:flex;flex-direction:column;align-items:stretch;justify-content:center;gap:9px;min-width:0;padding:clamp(12px,2vw,22px)}
+.region-details label>span {display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin:0 0 6px;font-weight:620}
+.region-details label small,.region-details>small {color:var(--muted);font-size:12px;font-weight:450}
+.region-details select {width:100%;min-height:46px}
+.region-details p {margin:0;font-size:14px;line-height:1.5}
+.region-details .region-place {color:var(--ink);font-weight:650}
+.region-open,.map-workspace-link {display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.region-open {justify-content:center;width:fit-content;padding:7px 16px;border:1px solid #d2dbdc;border-radius:var(--fold);background:linear-gradient(110deg,#dce3e4,#b3bfc0);color:#162024;text-decoration:none;font-weight:650}
+.region-open:hover,.region-open:active {background:#e4ebeb;color:#0c1418}
+.map-workspace-link {padding:5px 15px;color:var(--ink)}
+.region-atlas>.map-workspace-link {display:flex;border-top:1px solid var(--edge);color:var(--muted)}
+@container (min-width:680px) {
+  .region-body {grid-template-columns:minmax(0,1.55fr) minmax(220px,1fr);align-items:center;border-top:1px solid var(--edge)}
+  .region-map {border-right:1px solid var(--edge)}
+}
+@media(prefers-reduced-motion:no-preference) {
+  .map-locations a,.region-pin b {transition:background-color .14s,color .14s,border-color .14s}
+}

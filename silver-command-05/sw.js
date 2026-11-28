@@ -1,10 +1,10 @@
-const CACHE="nvtsk-05-command-118";
+const CACHE="nvtsk-05-command-119";
 const CORE=[
- "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./app.js?v=118",
+ "./","./index.html","./model.js?v=97","./pv-project-card-v62.js?v=74","./training-maps.js?v=119","./app.js?v=119",
  "./pv-cases.html","./pv-cases/viewer.js?v=1","./pv-cases/viewer.css?v=1",
- "./case-estimate.js?v=115","./grid.css?v=118","./art/grid-weave.webp",
+ "./case-estimate.js?v=115","./grid.css?v=119","./art/grid-weave.webp",
  "./grid-demo.html","./art/grid-demo-cover.webp",
- "./workspace-layout.css?v=113","./silver-dna.css?v=113","./art/command-office.webp","./art/bodensee-west.svg","./art/osnabrueck-city.webp",
+ "./workspace-layout.css?v=113","./silver-dna.css?v=113","./art/command-office.webp","./art/bodensee-west.svg","./art/osnabrueck-city.webp","./art/bodensee-pv.webp",
  "./art/fonts/inter-latin-wght-normal.woff2","./art/fonts/inter-cyrillic-wght-normal.woff2",
  "./art/nvtsk-approved.webp","./art/roof.webp","./art/store.webp","./art/hero.webp","./art/logo.webp",
  "./art/tile0.webp","./art/tile1.webp","./art/tile2.webp","./art/tile3.webp","./art/van.webp","./art/car.webp","./art/trailer.webp",
